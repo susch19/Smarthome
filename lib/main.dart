@@ -1,0 +1,411 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:signalr_client/signalr_client.dart';
+import 'package:smarthome/devices/base_model.dart';
+import 'package:smarthome/devices/device_exporter.dart';
+import 'dart:async';
+import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/helper/simple_dialog_single_input.dart';
+import 'package:flutter/foundation.dart';
+import 'package:smarthome/syncfusion.dart';
+
+void main() {
+  SyncFusionLicense.RegisterLicense();
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Smarthome',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MyHomePage(title: 'Smarthome Home Page'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  MyHomePage({Key key, this.title}) : super(key: key);
+
+  final String title;
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+  final widgets = List<Widget>();
+  // var devices = List<Device>();
+  var serverUrl = "http://192.168.49.56:5055/SmartHome";
+  SharedPreferences prefs;
+  ForInput urlAddressInput = new ForInput();
+  IconData infoIcon;
+  HubConnection hubConnection;
+  AppLifecycleState _notification;
+
+  @override
+  void initState() {
+    infoIcon = Icons.refresh;
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    doStuff();
+    var regex = RegExp("([1-9\.]{7,})");
+    var ipOfServer = regex.stringMatch(serverUrl);
+    Timer.periodic(Duration(milliseconds: 500), (timer) async {
+      setState(() {
+        if (hubConnection == null || hubConnection.state == HubConnectionState.Disconnected)
+          infoIcon = Icons.warning;
+        else if (hubConnection.state == HubConnectionState.Connected) infoIcon = Icons.check;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    //resumed: 0, inactive: 1, paused: 2
+    if (state.index == 0)
+      newHubConnection();
+    else if (state.index == 2) {
+      infoIcon = Icons.error_outline;
+      if (hubConnection.state == HubConnectionState.Connected) hubConnection.stop();
+    }
+  }
+
+  dynamic subscribeToDevive(List<int> deviceIds) async => await hubConnection.invoke("Subscribe", args: [deviceIds]);
+
+  Future doStuff() async {
+    setState(() {
+      infoIcon = Icons.refresh;
+    });
+    prefs = await SharedPreferences.getInstance();
+    var mainUrl = prefs?.getString("mainserverurl") ?? "";
+    serverUrl = mainUrl == "" ? "http://192.168.49.56:5055/SmartHome" : mainUrl;
+    urlAddressInput.textEditingController.text = serverUrl;
+
+    hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
+    hubConnection.serverTimeoutInMilliseconds = 30000;
+    hubConnection.onclose((e) async {
+      if (e == null) return;
+      while (true) {
+        if (hubConnection.state != HubConnectionState.Connected) {
+          if (infoIcon != Icons.error_outline) {
+            infoIcon = Icons.error_outline;
+            setState(() {});
+          }
+          DeviceManager.stopSubbing();
+          try {
+            hubConnection.stop();
+            hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
+            await hubConnection.start();
+          } catch (e) {}
+          sleep(Duration(seconds: 1));
+        } else {
+          if (infoIcon != Icons.check) {
+            setState(() {
+              infoIcon = Icons.check;
+            });
+          }
+          var dev = await subscribeToDevive(DeviceManager.devices.map((x) => x.id).toList());
+          for (var d in DeviceManager.devices) {
+            if (!dev.any((x) => x["id"] == d.id)) DeviceManager.notSubscribedDevices.add(d);
+          }
+          DeviceManager.subToNonSubscribed(hubConnection);
+          break;
+        }
+      }
+    });
+    hubConnection.on("Update", updateMethod);
+
+    if (serverUrl != "") {
+      await hubConnection.start();
+      setState(() {
+        infoIcon = Icons.check;
+      });
+      var ids = new List<int>();
+      for (var key in prefs?.getKeys()?.where((x) => x.startsWith("SHD"))) {
+        var id = prefs?.getInt(key);
+        ids.add(id);
+      }
+      var subs = await subscribeToDevive(ids);
+
+      for (var id in ids) {
+        var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
+        var type = prefs?.getString("Type" + id.toString());
+        BaseModel model = DeviceManager.jsonFactory[type](jsonDecode(prefs?.getString("Json" + id.toString())));
+        model.isConnected = false;
+        if (model.friendlyName == null) model.friendlyName = "";
+        model.friendlyName += "(old)";
+        if (sub != null) {
+          model = DeviceManager.jsonFactory[type](sub);
+          var dev = DeviceManager.ctorFactory[type](id, model, hubConnection, prefs);
+          DeviceManager.devices.add(dev);
+        } else {
+          var dev = DeviceManager.ctorFactory[type](id, model, hubConnection, prefs);
+          DeviceManager.devices.add(dev);
+          DeviceManager.notSubscribedDevices.add(dev);
+          DeviceManager.subToNonSubscribed(hubConnection);
+        }
+      }
+      DeviceManager.currentSort = SortTypes.values[prefs?.getInt("SortOrder") ?? 0];
+      DeviceManager.sortDevices(prefs);
+    }
+    setState(() {});
+  }
+
+  void newHubConnection() async {
+    setState(() {
+      infoIcon = Icons.refresh;
+    });
+    hubConnection.off("Update");
+    hubConnection.stop();
+    hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
+
+    hubConnection.on("Update", updateMethod);
+
+    await hubConnection.start();
+    setState(() {
+      infoIcon = Icons.check;
+    });
+    for (var device in DeviceManager.devices) {
+      device.connection = hubConnection;
+    }
+    await subscribeToDevive(DeviceManager.devices.map((x) => x.id).toList());
+  }
+
+  void updateMethod(List<Object> arguments) {
+    arguments.forEach((a) {
+      var asd = a as Map;
+      if (asd["id"] == 0)
+        DeviceManager.devices.where((x) => x.id == asd["id"]).forEach((x) => x.updateFromServer(asd));
+      else
+        DeviceManager.getDeviceWithId(asd["id"])?.updateFromServer(asd);
+    });
+    setState(() {});
+  }
+
+  renameDevice(Device x) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) => SimpleDialogSingleInput.create(
+            context: context,
+            title: "Gerät benennen",
+            hintText: "Name für das Gerät",
+            labelText: "Name",
+            defaultText: x.baseModel.friendlyName,
+            maxLines: 2,
+            onSubmitted: (s) async {
+              x.baseModel.friendlyName = s;
+              x.updateDeviceOnServer();
+              setState(() {});
+            })).then((x) => Navigator.of(context).pop());
+  }
+
+  Widget buildBody() {
+    return RefreshIndicator(
+      child: ConstrainedBox(
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            return GridView.count(
+                padding: EdgeInsets.only(top: 16.0),
+                crossAxisCount: orientation == Orientation.portrait ? 2 : 4,
+                childAspectRatio: 1.8,
+                shrinkWrap: true,
+                children: DeviceManager.devices
+                    .map((x) => GestureDetector(
+                          child: MaterialButton(
+                            child: x.dashboardView(),
+                            onPressed: () => x.navigateToDevice(context),
+                          ),
+                          onLongPress: () {
+                            deviceAction(x);
+                            setState(() {});
+                          },
+                        ))
+                    .toList(growable: true));
+          },
+        ),
+        constraints: BoxConstraints.tight(Size.infinite),
+      ),
+      onRefresh: () async {
+        newHubConnection();
+        setState(() {});
+        return null;
+      },
+    );
+  }
+
+  Future addDevice(int id, dynamic device) async {
+    DeviceManager.devices.add(DeviceManager.ctorFactory[device["typeName"]](
+        device["id"], DeviceManager.jsonFactory[device["typeName"]](device), hubConnection, prefs));
+    prefs?.setInt("SHD" + device["id"].toString(), device["id"]);
+    prefs?.setString("Json" + device["id"].toString(), jsonEncode(device));
+    prefs?.setString("Type" + device["id"].toString(), device["typeName"]);
+
+    var subs = await subscribeToDevive([device["id"]]);
+    DeviceManager.sortDevices(prefs);
+    Navigator.pop(context);
+    setState(() {});
+  }
+
+  void removeDevice(Device d) {
+    DeviceManager.devices.remove(d);
+    prefs?.remove("SHD" + d.id.toString());
+    prefs?.remove("Json" + d.id.toString());
+    prefs?.remove("Type" + d.id.toString());
+    Navigator.pop(context);
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Smart Home App"),
+        leading: Icon(infoIcon),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            child: Icon(Icons.sort),
+            onSelected: selectedSort,
+            itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
+              PopupMenuItem<String>(value: 'Name', child: Text("Name")),
+              PopupMenuItem<String>(value: 'Typ', child: Text("Gerätetyp")),
+              PopupMenuItem<String>(value: 'Id', child: Text("Id")),
+            ],
+          ),
+          PopupMenuButton<String>(
+            onSelected: selectedOption,
+            itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
+              PopupMenuItem<String>(value: 'URL', child: Text("Ändere Server Url")),
+              PopupMenuItem<String>(value: 'Time', child: Text("Zeit Update")),
+              PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
+            ],
+          )
+        ],
+      ),
+      body: buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: IconButton(icon: Icon(Icons.add), onPressed: addNewDevice),
+      ),
+    );
+  }
+
+  void selectedOption(String value) {
+    switch (value) {
+      case "URL":
+        var sd = SimpleDialogSingleInput.create(
+            hintText: "URL of LED Strip",
+            labelText: "URL",
+            defaultText: serverUrl,
+            onSubmitted: (s) {
+              serverUrl = s;
+              prefs?.setString("mainserverurl", s);
+              newHubConnection();
+            },
+            title: "Change URL",
+            context: context);
+        showDialog(builder: (BuildContext context) => sd, context: context);
+        break;
+      case "Time":
+        hubConnection.invoke("UpdateTime");
+        break;
+      case "Debug":
+        DeviceManager.showDebugInformation = !DeviceManager.showDebugInformation;
+        setState(() {});
+        break;
+    }
+  }
+
+  void selectedSort(String value) {
+    switch (value) {
+      case "Name":
+        DeviceManager.currentSort =
+            DeviceManager.currentSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
+        break;
+      case "Typ":
+        DeviceManager.currentSort =
+            DeviceManager.currentSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
+        break;
+      case "Id":
+        DeviceManager.currentSort = DeviceManager.currentSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
+        break;
+    }
+
+    setState(() => DeviceManager.sortDevices(prefs));
+  }
+
+  void deviceAction(Device d) {
+    var actions = List<Widget>();
+
+    actions.add(
+      SimpleDialogOption(
+        child: Text("Umbenennen"),
+        onPressed: () => renameDevice(d),
+      ),
+    );
+    actions.add(
+      SimpleDialogOption(
+        child: Text("Entfernen"),
+        onPressed: () => removeDevice(d),
+      ),
+    );
+
+    var dialog = SimpleDialog(
+      children: actions,
+      title: Text("Gerät " + (d.baseModel.friendlyName ?? "Kein Name")),
+    );
+    showDialog(context: context, builder: (b) => dialog);
+  }
+
+  Future addNewDevice() async {
+    Device choosen;
+    if (hubConnection.state != HubConnectionState.Connected) {
+      await hubConnection.start();
+    }
+    List<dynamic> serverDevices = await hubConnection.invoke("GetAllDevices", args: []);
+
+    var devicesToSelect = List<Widget>();
+    serverDevices.sort((x, y) => x["typeName"].compareTo(y["typeName"]));
+    for (var i in serverDevices) {
+      if (!DeviceManager.devices.any((x) => x.id == i["id"]))
+        devicesToSelect.add(
+          SimpleDialogOption(
+            child: Text((i["friendlyName"] ?? i["id"].toString()) + ": " + i["typeName"].toString()),
+            onPressed: () async => await addDevice(i["Id"], i),
+          ),
+        );
+    }
+    var dialog = SimpleDialog(
+      children: devicesToSelect,
+      title: Text((devicesToSelect.length == 0 ? "No new Devices found" : "Add new Smarthome Device")),
+    );
+    showDialog(context: context, builder: (b) => dialog).then((x) {
+      if (choosen != null)
+        setState(
+          () => widgets.add(
+            MaterialButton(
+              child: Column(
+                children: <Widget>[
+                  choosen,
+                ],
+              ),
+              onPressed: () {},
+            ),
+          ),
+        );
+    });
+    setState(() {});
+  }
+}
