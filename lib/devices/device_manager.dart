@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:signalr_client/signalr_client.dart';
+// import 'package:signalr_client/signalr_client.dart';
+import 'package:signalr_core/signalr_core.dart';
 
 import '../icons/smarthome_icons.dart';
 import 'device_exporter.dart';

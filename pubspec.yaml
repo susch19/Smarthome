@@ -16,16 +16,20 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences:
-  signalr_client:
-  #signalr_core: ^1.0.2
+  # signalr_client:
+  signalr_core:
+    git:
+      url: git://github.com/jamiewest/signalr_core.git
     # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.2
-  json_annotation: ^2.0.0
-  shared_preferences_web: ^0.1.0
-  flutter_swiper: ^1.1.6
-  charts_flutter: ^0.8.1
-  syncfusion_flutter_charts: ^17.4.43
+  cupertino_icons:
+  json_annotation: 
+  shared_preferences_web: 
+  flutter_swiper:
+  charts_flutter: 
+  syncfusion_flutter_charts:
+  file_picker: 
+  http:
 
 dev_dependencies:
   flutter_test:

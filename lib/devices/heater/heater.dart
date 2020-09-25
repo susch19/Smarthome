@@ -4,13 +4,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:signalr_client/signalr_client.dart';
+// import 'package:signalr_client/signalr_client.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/double_wheel.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
-import 'package:smarthome/models/message.dart';
+import 'package:smarthome/models/message.dart' as sm;
 import 'package:smarthome/icons/icons.dart';
 
 import 'temp_scheduling.dart';
@@ -36,9 +37,9 @@ class Heater extends Device<HeaterModel> {
   }
 
   @override
-  Future sendToServer(MessageType messageType, Command command, List<String> parameters) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String> parameters) async {
     super.sendToServer(messageType, command, parameters);
-    var message = new Message(id, messageType, command, parameters);
+    var message = new sm.Message(id, messageType, command, parameters);
     await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
 
@@ -165,7 +166,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
             builder: (BuildContext context) => TempScheduling(heaterConf: hc), fullscreenDialog: true));
     if (res == null) return;
 
-    widget.heater.sendToServer(MessageType.Options, Command.Temp, res.map((f) => jsonEncode(f)).toList());
+    widget.heater.sendToServer(sm.MessageType.Options, sm.Command.Temp, res.map((f) => jsonEncode(f)).toList());
   }
 
   buildColumnView(double width, XiaomiTempSensor xs) {
@@ -253,7 +254,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 ),
                 MaterialButton(
                   onPressed: () =>
-                      this.widget.heater.sendToServer(MessageType.Update, Command.Temp, <String>[temp.toString()]),
+                      this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.Temp, <String>[temp.toString()]),
                   child: Text("SENDEN"),
                 )
               ],
@@ -269,7 +270,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
                           ))
                       .toList()),
                   onChanged: (a) {
-                    this.widget.heater.sendToServer(MessageType.Update, Command.DeviceMapping, [
+                    this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping, [
                       a.id.toString(),
                       this.widget.heater.baseModel.xiaomiTempSensor == null
                           ? "0"
@@ -282,7 +283,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
               ],
             ),
             FlatButton(
-              onPressed: () => this.widget.heater.sendToServer(MessageType.Options, Command.Mode, []),
+              onPressed: () => this.widget.heater.sendToServer(sm.MessageType.Options, sm.Command.Mode, []),
               child: Text("HeizLED an/ausschalten"),
             ),
             FlatButton(

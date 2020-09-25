@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:signalr_client/signalr_client.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/xiaomi/temp_sensor_model.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
-import 'package:smarthome/models/message.dart';
+import 'package:smarthome/models/message.dart' as sm;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
@@ -27,9 +27,9 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
   State<StatefulWidget> createState() => _XiaomiTempSensorState();
 
   @override
-  Future sendToServer(MessageType messageType, Command command, [List<String> parameters]) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String> parameters]) async {
     await super.sendToServer(messageType, command, parameters);
-    var message = new Message(id, messageType, command, parameters);
+    var message = new sm.Message(id, messageType, command, parameters);
     var s = message.toJson();
     await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
@@ -68,7 +68,10 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
       Text((baseModel?.humidity?.toStringAsFixed(2) ?? "") + " %"),
       Text((baseModel?.pressure?.toStringAsFixed(1) ?? "") + " kPA"),
       
-    ]+(DeviceManager.showDebugInformation ? <Widget>[Text(baseModel.lastReceived.add(Duration(hours: 1))?.toString())] : <Widget>[])));
+    ]+(DeviceManager.showDebugInformation ? <Widget>[
+      Text(baseModel.lastReceived.add(Duration(hours: 1))?.toString()),
+      Text(baseModel.id.toRadixString(16))
+      ] : <Widget>[])));
   }
 
   @override
@@ -121,7 +124,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
   void changeColor() {}
 
   void changeDelay(int delay) {
-    this.widget.tempSensor.sendToServer(MessageType.Options, Command.Delay, ["delay=$delay"]);
+    this.widget.tempSensor.sendToServer(sm.MessageType.Options, sm.Command.Delay, ["delay=$delay"]);
   }
 
   @override
@@ -266,6 +269,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
   }
 
   Widget buildTimeSeriesRangeAnnotationChart(IoBrokerHistoryModel h, String unit, String valueName, Color lineColor) {
+    h.historyRecords = h.historyRecords.where((x) => x.value != null).toList(growable: false);
     return Flex(
       direction: Axis.vertical,
       children: <Widget>[

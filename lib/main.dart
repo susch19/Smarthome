@@ -1,16 +1,22 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:signalr_client/signalr_client.dart';
+// // import 'package:signalr_client/signalr_client.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
+import 'package:smarthome/session/cert_file.dart';
+import 'package:smarthome/session/requests.dart';
+import 'package:smarthome/session/responses.dart';
 import 'package:smarthome/syncfusion.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   SyncFusionLicense.RegisterLicense();
@@ -42,12 +48,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final widgets = List<Widget>();
   // var devices = List<Device>();
-  var serverUrl = "http://192.168.49.56:5055/SmartHome";
+  var serverUrl = "http://192.168.49.56:5055/smarthome";
   SharedPreferences prefs;
   ForInput urlAddressInput = new ForInput();
   IconData infoIcon;
   HubConnection hubConnection;
   AppLifecycleState _notification;
+  CertFile certFile;
 
   @override
   void initState() {
@@ -59,9 +66,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     var ipOfServer = regex.stringMatch(serverUrl);
     Timer.periodic(Duration(milliseconds: 500), (timer) async {
       setState(() {
-        if (hubConnection == null || hubConnection.state == HubConnectionState.Disconnected)
+        if (hubConnection == null || hubConnection.state == HubConnectionState.disconnected)
           infoIcon = Icons.warning;
-        else if (hubConnection.state == HubConnectionState.Connected) infoIcon = Icons.check;
+        else if (hubConnection.state == HubConnectionState.connected) infoIcon = Icons.check;
       });
     });
   }
@@ -79,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       newHubConnection();
     else if (state.index == 2) {
       infoIcon = Icons.error_outline;
-      if (hubConnection.state == HubConnectionState.Connected) hubConnection.stop();
+      if (hubConnection.state == HubConnectionState.connected) hubConnection.stop();
     }
   }
 
@@ -90,16 +97,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       infoIcon = Icons.refresh;
     });
     prefs = await SharedPreferences.getInstance();
-    var mainUrl = prefs?.getString("mainserverurl") ?? "";
-    serverUrl = mainUrl == "" ? "http://192.168.49.56:5055/SmartHome" : mainUrl;
+    certFile = await loadCertFile(prefs);
+    if (certFile != null) serverUrl = certFile.serverUrl + "/smarthome";
     urlAddressInput.textEditingController.text = serverUrl;
 
-    hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
+    hubConnection = createHubConnection();
     hubConnection.serverTimeoutInMilliseconds = 30000;
     hubConnection.onclose((e) async {
       if (e == null) return;
       while (true) {
-        if (hubConnection.state != HubConnectionState.Connected) {
+        if (hubConnection.state != HubConnectionState.connected) {
           if (infoIcon != Icons.error_outline) {
             infoIcon = Icons.error_outline;
             setState(() {});
@@ -107,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           DeviceManager.stopSubbing();
           try {
             hubConnection.stop();
-            hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
+            hubConnection = createHubConnection();
             await hubConnection.start();
           } catch (e) {}
           sleep(Duration(seconds: 1));
@@ -168,9 +175,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     setState(() {
       infoIcon = Icons.refresh;
     });
-    hubConnection.off("Update");
-    hubConnection.stop();
-    hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
+    if (hubConnection != null) {
+      hubConnection.off("Update");
+      hubConnection.stop();
+    }
+    hubConnection = createHubConnection();
 
     hubConnection.on("Update", updateMethod);
 
@@ -371,10 +380,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Future addNewDevice() async {
     Device choosen;
-    if (hubConnection.state != HubConnectionState.Connected) {
+    if (hubConnection.state != HubConnectionState.connected) {
       await hubConnection.start();
     }
-    List<dynamic> serverDevices = await hubConnection.invoke("GetAllDevices", args: []);
+       
+    var s = hubConnection.invoke("GetAllDevices", args: []);
+    
+    List<dynamic> serverDevices= await s;
 
     var devicesToSelect = List<Widget>();
     serverDevices.sort((x, y) => x["typeName"].compareTo(y["typeName"]));
@@ -407,5 +419,60 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         );
     });
     setState(() {});
+  }
+
+  HubConnection createHubConnection() {
+    var mainUrl = prefs?.getString("mainserverurl") ?? "";
+    serverUrl = mainUrl == "" ? "http://192.168.49.56:5055/SmartHome" : mainUrl;
+    return HubConnectionBuilder()
+        .withUrl(serverUrl, HttpConnectionOptions(
+          //accessTokenFactory: () async => await getAccessToken(prefs),
+            logging: (level, message) => print('$level: $message')))
+        .build();
+  }
+
+  Future<String> getAccessToken(SharedPreferences prefs) async {
+    var lastTime = prefs.getInt("TokenGetTime");
+
+    if (DateTime.fromMillisecondsSinceEpoch(lastTime).add(Duration(days: 10)).millisecondsSinceEpoch <
+        DateTime.now().millisecondsSinceEpoch) {
+      var res =
+          (await post(certFile.serverUrl, "/session", UserLoginArgs(certFile.username, certFile.email, certFile.pw)));
+      if (res.statusCode == 200) {
+        UserLoginResult tokenRes = jsonDecode(res.body);
+        prefs.setInt("TokenGetTime", DateTime.now().millisecondsSinceEpoch);
+        prefs.setString("Token", tokenRes.token);
+        return tokenRes.token;
+      }
+    } else
+      return prefs.getString("Token");
+  }
+
+  Future<String> getAccessTokenNewFile(SharedPreferences prefs) async {
+    var file = (await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ["smarthome"])).files.first;
+    prefs.setString("ServerTokenFileLocation", file.path);
+    return getAccessToken(prefs);
+  }
+
+  Future<CertFile> loadCertFile(SharedPreferences prefs) async {
+    var location = prefs.getString("ServerTokenFileLocation");
+    if (location?.isEmpty ?? false) {
+      var file = (await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ["smarthome"])).files.first;
+      location = file.path;
+      prefs.setString("ServerTokenFileLocation", location);
+    }
+    if (location == null) {
+      return null;
+    }
+    var cert = File(location);
+    var lines = await cert.readAsLines();
+    return CertFile(lines[0], lines[1], lines[2], lines[3]);
+  }
+
+  static Future<http.Response> post(String url, String path, [Object body]) async {
+    var g = http.post("$url/$path", body: jsonEncode(body), headers: {"Content-Type": "application/json"});
+    http.Response res;
+    await g.then((x) => res = x);
+    return res;
   }
 }

@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:signalr_client/signalr_client.dart';
+// import 'package:signalr_client/signalr_client.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_manager.dart';
-import 'package:smarthome/models/message.dart';
+import 'package:smarthome/models/message.dart' as sm;
 
 abstract class Device<T extends BaseModel> extends StatefulWidget {
   final Icon icon;
@@ -20,21 +21,21 @@ abstract class Device<T extends BaseModel> extends StatefulWidget {
   void updateFromServer(Map<String, dynamic> message);
 
   Future<dynamic> getFromServer(String methodName, List<Object> args) async {
-    if (connection.state == HubConnectionState.Disconnected) {
+    if (connection.state == HubConnectionState.disconnected) {
       await connection.start();
     }
 
     return await connection.invoke(methodName, args: args);
   }
 
-  Future sendToServer(MessageType messageType, Command command, List<String> parameters) async {
-    if (connection.state == HubConnectionState.Disconnected) {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String> parameters) async {
+    if (connection.state == HubConnectionState.disconnected) {
       await connection.start();
     }
   }
 
   Future updateDeviceOnServer() async {
-    if (connection.state == HubConnectionState.Disconnected) {
+    if (connection.state == HubConnectionState.disconnected) {
       await connection.start();
     }
     return await connection.invoke("UpdateDevice", args: [baseModel.id, baseModel.friendlyName]);

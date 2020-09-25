@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:signalr_client/signalr_client.dart';
+// import 'package:signalr_client/signalr_client.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
-import 'package:smarthome/models/message.dart';
+import 'package:smarthome/models/message.dart' as sm;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../device_manager.dart';
@@ -18,9 +19,9 @@ class OsramB40RW extends Device<OsramB40RWModel> {
   State<StatefulWidget> createState() => _OsramB40RWState();
 
   @override
-  Future sendToServer(MessageType messageType, Command command, [List<String> parameters]) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String> parameters]) async {
     await super.sendToServer(messageType, command, parameters);
-    var message = new Message(id, messageType, command, parameters);
+    var message = new sm.Message(id, messageType, command, parameters);
     var s = message.toJson();
     await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
@@ -44,7 +45,7 @@ class OsramB40RW extends Device<OsramB40RWModel> {
       Text(baseModel?.friendlyName ?? baseModel?.id.toString() ?? ""),
       MaterialButton(
         child: Text("An/Aus"),
-        onPressed: () async => await sendToServer(MessageType.Update, Command.Off),
+        onPressed: () async => await sendToServer(sm.MessageType.Update, sm.Command.Off),
       )
     ]));
   }
@@ -91,15 +92,15 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
   }
 
   void changeDelay(double delay) {
-    this.widget.osramB40RW.sendToServer(MessageType.Options, Command.Delay, [delay.toString()]);
+    this.widget.osramB40RW.sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()]);
   }
 
   void changeBrightness(double brightness) {
-    this.widget.osramB40RW.sendToServer(MessageType.Update, Command.Brightness, [brightness.round().toString()]);
+    this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
   }
 
   void changeColorTemp(double colorTemp) {
-    this.widget.osramB40RW.sendToServer(MessageType.Update, Command.Temp, [colorTemp.round().toString()]);
+    this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()]);
   }
 
   @override
@@ -113,7 +114,7 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
         child: const Icon(
           Icons.power_settings_new
         ),
-        onPressed: () => this.widget.osramB40RW.sendToServer(MessageType.Update, Command.Off, []),
+        onPressed: () => this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }
