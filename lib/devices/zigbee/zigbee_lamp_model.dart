@@ -3,21 +3,20 @@ import 'package:json_annotation/json_annotation.dart';
 import '../device_exporter.dart';
 
 
-part 'zigbee_lamp_model.g.dart';
+ part 'zigbee_lamp_model.g.dart';
 
 
 @JsonSerializable()
 class ZigbeeLampModel extends ZigbeeModel {
-     int brightness;
-     bool state;
-     int colorTemp;
+     late int brightness;
+     late bool state;
+     late int colorTemp;
   @JsonKey(name: 'transition_Time')
-     double transitionTime;
+     late double transitionTime;
 
-  ZigbeeLampModel() {
-  }
+  ZigbeeLampModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
 
-  factory ZigbeeLampModel.fromJson(Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
+   factory ZigbeeLampModel.fromJson(Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$ZigbeeLampModelToJson(this);
+   Map<String, dynamic> toJson() => _$ZigbeeLampModelToJson(this);
 }

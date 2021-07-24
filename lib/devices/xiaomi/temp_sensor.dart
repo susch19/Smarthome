@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device.dart';
@@ -18,16 +19,16 @@ import 'package:smarthome/icons/icons.dart';
 import '../device_manager.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
-  XiaomiTempSensor(int id, TempSensorModel model, HubConnection connection, Icon icon, SharedPreferences prefs)
+  XiaomiTempSensor(int? id, TempSensorModel model, HubConnection connection, Icon icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
-  Function func;
+  Function? func;
 
   @override
   State<StatefulWidget> createState() => _XiaomiTempSensorState();
 
   @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String> parameters]) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String>? parameters]) async {
     await super.sendToServer(messageType, command, parameters);
     var message = new sm.Message(id, messageType, command, parameters);
     var s = message.toJson();
@@ -37,7 +38,7 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
   @override
   void updateFromServer(Map<String, dynamic> message) {
     baseModel = TempSensorModel.fromJson(message);
-    if (func != null) func(() {});
+    if (func != null) func!(() {});
   }
 
   @override
@@ -63,13 +64,13 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
         ],
         mainAxisAlignment: MainAxisAlignment.center,
       ),
-      Text(baseModel?.friendlyName ?? baseModel?.id.toString() ?? ""),
-      Text((baseModel?.temperature?.toStringAsFixed(2) ?? "") + " °C"),
-      Text((baseModel?.humidity?.toStringAsFixed(2) ?? "") + " %"),
-      Text((baseModel?.pressure?.toStringAsFixed(1) ?? "") + " kPA"),
+      Text(baseModel.friendlyName),
+      Text((baseModel.temperature.toStringAsFixed(2)) + " °C"),
+      Text((baseModel.humidity.toStringAsFixed(2) ) + " %"),
+      Text((baseModel.pressure.toStringAsFixed(1) ) + " kPA"),
       
     ]+(DeviceManager.showDebugInformation ? <Widget>[
-      Text(baseModel.lastReceived.add(Duration(hours: 1))?.toString()),
+      Text(baseModel.lastReceived.add(Duration(hours: 1)).toString()),
       Text(baseModel.id.toRadixString(16))
       ] : <Widget>[])));
   }
@@ -86,7 +87,7 @@ class _XiaomiTempSensorState extends State<XiaomiTempSensor> {
 }
 
 class XiaomiTempSensorScreen extends DeviceScreen {
-  final XiaomiTempSensor tempSensor;
+  final XiaomiTempSensor? tempSensor;
   final bool showAppBar;
   XiaomiTempSensorScreen(this.tempSensor, {this.showAppBar = true});
 
@@ -95,21 +96,21 @@ class XiaomiTempSensorScreen extends DeviceScreen {
 }
 
 class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with SingleTickerProviderStateMixin {
-  List<IoBrokerHistoryModel> histories;
-  DateTime currentShownTime;
+  late List<IoBrokerHistoryModel> histories;
+  late DateTime currentShownTime;
 
   @override
   void initState() {
     super.initState();
-    this.widget.tempSensor.func = setState;
-    histories = new List<IoBrokerHistoryModel>();
+    this.widget.tempSensor!.func = setState;
+    histories = <IoBrokerHistoryModel>[];
     currentShownTime = DateTime.now();
     this
         .widget
-        .tempSensor
-        .getFromServer("GetIoBrokerHistories", [this.widget.tempSensor.id, currentShownTime.toString()]).then((x) {
+        .tempSensor!
+        .getFromServer("GetIoBrokerHistories", [this.widget.tempSensor!.id, currentShownTime.toString()]).then((x) {
       for (var hist in x) {
-        histories.add(IoBrokerHistoryModel.fromJson(hist));
+        // histories.add(IoBrokerHistoryModel.fromJson(hist));
       }
       setState(() {});
     });
@@ -118,13 +119,13 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
   @override
   void deactivate() {
     super.deactivate();
-    this.widget.tempSensor.func = null;
+    this.widget.tempSensor!.func = null;
   }
 
   void changeColor() {}
 
   void changeDelay(int delay) {
-    this.widget.tempSensor.sendToServer(sm.MessageType.Options, sm.Command.Delay, ["delay=$delay"]);
+    this.widget.tempSensor!.sendToServer(sm.MessageType.Options, sm.Command.Delay, ["delay=$delay"]);
   }
 
   @override
@@ -149,7 +150,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
         ),
         body: TabBarView(
           children: [
-            buildListView(this.widget.tempSensor.baseModel),
+            buildListView(this.widget.tempSensor!.baseModel),
             buildGraphViewTemp(),
             buildGraphViewHumidity(),
             buildGraphViewPressure(),
@@ -192,7 +193,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
                   title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
                 ),
                 ListTile(
-                  title: Text("Zuletzt empfangen: " + (model.lastReceived.add(Duration(hours: 1))?.toString())),
+                  title: Text("Zuletzt empfangen: " + (model.lastReceived.add(Duration(hours: 1)).toString())),
                 ),
               ],
         );
@@ -217,19 +218,19 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
   // }
 
   Widget buildGraphViewHumidity() {
-    var h = histories.firstWhere((x) => x.propertyName == "humidity", orElse: () => null);
+    var h = histories.firstWhereOrNull((x) => x.propertyName == "humidity");
     if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " %", "rel. Luftfeuchtigkeit", Colors.blueAccent);
     return buildDataMissing();
   }
 
   Widget buildGraphViewTemp() {
-    var h = histories.firstWhere((x) => x.propertyName == "temperature", orElse: () => null);
+    var h = histories.firstWhereOrNull((x) => x.propertyName == "temperature");
     if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " °C", "Temperatur", Colors.redAccent);
     return buildDataMissing();
   }
 
   Widget buildGraphViewPressure() {
-    var h = histories.firstWhere((x) => x.propertyName == "pressure", orElse: () => null);
+    var h = histories.firstWhereOrNull((x) => x.propertyName == "pressure");
     if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " hPA", "Luftdruck", Colors.greenAccent);
     return buildDataMissing();
   }
@@ -286,7 +287,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
               yValueMapper: (TimeSeriesValue value, _) => value.value,
               pointColorMapper: (TimeSeriesValue value, _) => value.lineColor,
               width: 2)
-        ], h.historyRecords.map((x) => x.value).fold(10000, min), h.historyRecords.map((x) => x.value).fold(0, max),
+        ], h.historyRecords.map((x) => x.value).fold(10000, min as double Function(double, double?)), h.historyRecords.map((x) => x.value).fold(0, max as double Function(double, double?)),
                 unit, valueName)),
         Row(
           children: <Widget>[
@@ -313,13 +314,13 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
 
   getNewData(DateTime dt) {
     if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) return;
-    this.widget.tempSensor.getFromServer("GetIoBrokerHistories", [this.widget.tempSensor.id, dt.toString()]).then((x) {
+    this.widget.tempSensor!.getFromServer("GetIoBrokerHistories", [this.widget.tempSensor!.id, dt.toString()]).then((x) {
       currentShownTime = dt;
       histories.clear();
       for (var hist in x) {
-        var histo = IoBrokerHistoryModel.fromJson(hist);
-        histo.historyRecords = histo.historyRecords.where((x) => x.value != null).toList();
-        histories.add(histo);
+        // var histo = IoBrokerHistoryModel.fromJson(hist);
+        // histo.historyRecords = histo.historyRecords.where((x) => x.value != null).toList();
+        // histories.add(histo);
       }
       setState(() {});
     });
@@ -374,7 +375,7 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
         primaryXAxis: DateTimeAxis(
             interval: orientation == Orientation.landscape ? 3 : 6,
             intervalType: DateTimeIntervalType.hours,
-            dateFormat: DateFormat("d.M HH:MM"),
+            dateFormat: DateFormat("d.M HH:mm"),
             majorGridLines: MajorGridLines(width: 0),
             title: AxisTitle(text: 'Zeit')),
         primaryYAxis: NumericAxis(
@@ -399,7 +400,7 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
 /// Sample time series data type.
 class TimeSeriesValue {
   final DateTime time;
-  final double value;
+  final double? value;
   final Color lineColor;
 
   TimeSeriesValue(this.time, this.value, this.lineColor);

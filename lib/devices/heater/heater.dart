@@ -17,8 +17,8 @@ import 'package:smarthome/icons/icons.dart';
 import 'temp_scheduling.dart';
 
 class Heater extends Device<HeaterModel> {
-  Function func;
-  Heater(int id, HeaterModel baseModel, HubConnection connection, Icon icon, SharedPreferences prefs)
+  Function? func;
+  Heater(int? id, HeaterModel baseModel, HubConnection connection, Icon icon, SharedPreferences? prefs)
       : super(id, baseModel, connection, icon, prefs);
 
   @override
@@ -31,28 +31,29 @@ class Heater extends Device<HeaterModel> {
 
   @override
   void updateFromServer(Map<String, dynamic> message) {
-    baseModel = HeaterModel.fromJson(message);
-    prefs?.setString("Json" + id.toString(), jsonEncode(message));
-    if (func != null) func(() {});
+    // baseModel = HeaterModel.fromJson(message);
+    // prefs?.setString("Json" + id.toString(), jsonEncode(message));
+    if (func != null) func!(() {});
+    
   }
 
   @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String> parameters) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String>? parameters) async {
     super.sendToServer(messageType, command, parameters);
     var message = new sm.Message(id, messageType, command, parameters);
-    await connection.invoke("Update", args: <Object>[message.toJson()]);
+    // await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
 
 //{"nodeId":3257168818,"subs":[{"nodeId":3257232294},{"nodeId":3257153067}]},{"nodeId":3257144719,"subs":[{"nodeId":3257232527}]}]},{"nodeId":3257231619}]},{"nodeId":3257233774}]}]}]}
   @override
   Widget dashboardView() {
-    XiaomiTempSensor xs = DeviceManager.devices.firstWhere((x) => x.id == baseModel.xiaomiTempSensor, orElse: () {
+    XiaomiTempSensor? xs = DeviceManager.devices.firstWhere((x) => x!.id == baseModel.xiaomiTempSensor, orElse: () {
       return;
-    });
+    }) as XiaomiTempSensor?;
     return Column(
         children: (<Widget>[
               Row(
-                children: [icon, Icon((baseModel.isConnected ? Icons.check : Icons.close))],
+                children: [icon, Icon((baseModel.isConnected? Icons.check : Icons.close))],
                 mainAxisAlignment: MainAxisAlignment.center,
               ),
               Text(baseModel.friendlyName.toString()),
@@ -101,9 +102,9 @@ class HeaterScreen extends DeviceScreen {
 }
 
 class _HeaterScreenState extends State<HeaterScreen> {
-  double temp = 11;
-  String tempString() => temp.toStringAsPrecision(3) + "°C";
-  TextEditingController textEditingController;
+  double? temp = 11;
+  String tempString() => temp!.toStringAsPrecision(3) + "°C";
+  TextEditingController? textEditingController;
 
   @override
   void initState() {
@@ -122,10 +123,10 @@ class _HeaterScreenState extends State<HeaterScreen> {
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
-    XiaomiTempSensor xs =
-        DeviceManager.devices.firstWhere((x) => x.id == this.widget.heater.baseModel.xiaomiTempSensor, orElse: () {
+    XiaomiTempSensor? xs =
+        DeviceManager.devices.firstWhere((x) => x!.id == this.widget.heater.baseModel.xiaomiTempSensor, orElse: () {
       return;
-    });
+    }) as XiaomiTempSensor?;
 
     return DefaultTabController(
       length: 2,
@@ -154,11 +155,11 @@ class _HeaterScreenState extends State<HeaterScreen> {
 
   _pushTempSettings(BuildContext context) async {
     var dc = await widget.heater.getFromServer("GetConfig", [widget.heater.id]);
-    List<HeaterConfig> hc;
+    List<HeaterConfig>? hc;
     if (dc != "[]" && dc != null)
-      hc = new List<HeaterConfig>.from(jsonDecode(dc).map((f) => HeaterConfig.fromJson(f)));
-    else
-      hc = new List<HeaterConfig>();
+      // hc = new List<HeaterConfig>.from(jsonDecode(dc).map((f) => HeaterConfig.fromJson(f)));
+    // else
+      hc = <HeaterConfig>[];
 
     final res = await Navigator.push(
         context,
@@ -169,7 +170,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
     widget.heater.sendToServer(sm.MessageType.Options, sm.Command.Temp, res.map((f) => jsonEncode(f)).toList());
   }
 
-  buildColumnView(double width, XiaomiTempSensor xs) {
+  buildColumnView(double width, XiaomiTempSensor? xs) {
     return Column(
       children: (DeviceManager.showDebugInformation
               ? <Widget>[
@@ -184,7 +185,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
           ([
             Row(
               children: <Widget>[
-                Text("Erreichbar: " + ((widget.heater.baseModel.isConnected) ?? false ? "Ja" : "Nein"))
+                Text("Erreichbar: " + ((widget.heater.baseModel.isConnected) ? "Ja" : "Nein"))
               ],
             ),
             //Text(this.widget.heater.printableInformation.length > 0 ? this.widget.heater.printableInformation.first : ""),
@@ -200,9 +201,9 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 Text("Zuletzt Empfangen: "),
                 Text(widget.heater.baseModel.temperature == null
                     ? "Keine Daten vorliegend"
-                    : DayOfWeekToStringMap[widget.heater.baseModel.temperature.dayOfWeek] +
+                    : DayOfWeekToStringMap[widget.heater.baseModel.temperature!.dayOfWeek!] +
                         " " +
-                        widget.heater.baseModel.temperature.timeOfDay.format(context)),
+                        widget.heater.baseModel.temperature!.timeOfDay!.format(context)),
               ],
             ),
             Row(
@@ -210,12 +211,12 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 Text("Aktuelles Ziel: "),
                 Text(widget.heater.baseModel.currentConfig?.temperature == null
                     ? "Kein Ziel"
-                    : widget.heater.baseModel.currentConfig.temperature.toStringAsFixed(1) +
+                    : widget.heater.baseModel.currentConfig!.temperature!.toStringAsFixed(1) +
                         "°C " +
                         "(" +
-                        DayOfWeekToStringMap[widget.heater.baseModel.currentConfig.dayOfWeek] +
+                        DayOfWeekToStringMap[widget.heater.baseModel.currentConfig!.dayOfWeek!] +
                         " " +
-                        widget.heater.baseModel.currentConfig.timeOfDay.format(context) +
+                        widget.heater.baseModel.currentConfig!.timeOfDay!.format(context) +
                         ")"),
               ],
             ),
@@ -224,12 +225,12 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 Text("Kalibrierung: "),
                 Text(widget.heater.baseModel.currentCalibration?.temperature == null
                     ? "Kein Ziel"
-                    : widget.heater.baseModel.currentCalibration.temperature.toStringAsFixed(1) +
+                    : widget.heater.baseModel.currentCalibration!.temperature!.toStringAsFixed(1) +
                         "°C " +
                         "(" +
-                        DayOfWeekToStringMap[widget.heater.baseModel.currentCalibration.dayOfWeek] +
+                        DayOfWeekToStringMap[widget.heater.baseModel.currentCalibration!.dayOfWeek!] +
                         " " +
-                        widget.heater.baseModel.currentCalibration.timeOfDay.format(context) +
+                        widget.heater.baseModel.currentCalibration!.timeOfDay!.format(context) +
                         ")"),
               ],
             ),
@@ -244,13 +245,13 @@ class _HeaterScreenState extends State<HeaterScreen> {
                   minValue: 5.0,
                   maxValue: 35.1,
                   step: 0.1,
-                  initValue: (((widget.heater.baseModel).temperature?.temperature ?? 0) < 5)
+                  initValue: temp = (((widget.heater.baseModel).temperature?.temperature ?? 0) < 5)
                       ? 21.0
-                      : (widget.heater.baseModel).temperature.temperature,
+                      : (widget.heater.baseModel).temperature!.temperature,
                   diameter: 2,
                   itemSize: 48,
-                  selectTextStyle: TextStyle(color: Colors.black, fontSize: 14),
-                  unSelectTextStyle: TextStyle(color: Colors.black45, fontSize: 11),
+                  selectTextStyle: TextStyle( fontSize: 14, fontWeight: FontWeight.bold),
+                  unSelectTextStyle: TextStyle( fontSize: 11),
                 ),
                 MaterialButton(
                   onPressed: () =>
@@ -269,7 +270,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
                             value: f,
                           ))
                       .toList()),
-                  onChanged: (a) {
+                  onChanged: (dynamic a) {
                     this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping, [
                       a.id.toString(),
                       this.widget.heater.baseModel.xiaomiTempSensor == null
@@ -282,11 +283,11 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 ),
               ],
             ),
-            FlatButton(
+            TextButton(
               onPressed: () => this.widget.heater.sendToServer(sm.MessageType.Options, sm.Command.Mode, []),
               child: Text("HeizLED an/ausschalten"),
             ),
-            FlatButton(
+            TextButton(
               onPressed: () => _pushTempSettings(context),
               child: Text("Temperatur Einstellungen"),
             ),

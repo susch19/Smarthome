@@ -6,48 +6,53 @@ part of 'message.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Message _$MessageFromJson(Map<String, dynamic> json) {
-  return Message(
-      json['id'] as int,
-      _$enumDecodeNullable(_$MessageTypeEnumMap, json['m']),
-      _$enumDecodeNullable(_$CommandEnumMap, json['c']),
-      (json['p'] as List)?.map((e) => e as String)?.toList());
-}
+Message _$MessageFromJson(Map<String, dynamic> json) => Message(
+      json['id'] as int?,
+      _$enumDecode(_$MessageTypeEnumMap, json['m']),
+      _$enumDecode(_$CommandEnumMap, json['c']),
+      (json['p'] as List<dynamic>?)?.map((e) => e as String).toList(),
+    );
 
 Map<String, dynamic> _$MessageToJson(Message instance) => <String, dynamic>{
       'id': instance.id,
       'm': _$MessageTypeEnumMap[instance.messageType],
       'c': _$CommandEnumMap[instance.command],
-      'p': instance.parameters
+      'p': instance.parameters,
     };
 
-T _$enumDecode<T>(Map<T, dynamic> enumValues, dynamic source) {
+K _$enumDecode<K, V>(
+  Map<K, V> enumValues,
+  Object? source, {
+  K? unknownValue,
+}) {
   if (source == null) {
-    throw ArgumentError('A value must be provided. Supported values: '
-        '${enumValues.values.join(', ')}');
+    throw ArgumentError(
+      'A value must be provided. Supported values: '
+      '${enumValues.values.join(', ')}',
+    );
   }
-  return enumValues.entries
-      .singleWhere((e) => e.value == source,
-          orElse: () => throw ArgumentError(
-              '`$source` is not one of the supported values: '
-              '${enumValues.values.join(', ')}'))
-      .key;
+
+  return enumValues.entries.singleWhere(
+    (e) => e.value == source,
+    orElse: () {
+      if (unknownValue == null) {
+        throw ArgumentError(
+          '`$source` is not one of the supported values: '
+          '${enumValues.values.join(', ')}',
+        );
+      }
+      return MapEntry(unknownValue, enumValues.values.first);
+    },
+  ).key;
 }
 
-T _$enumDecodeNullable<T>(Map<T, dynamic> enumValues, dynamic source) {
-  if (source == null) {
-    return null;
-  }
-  return _$enumDecode<T>(enumValues, source);
-}
-
-const _$MessageTypeEnumMap = <MessageType, dynamic>{
+const _$MessageTypeEnumMap = {
   MessageType.Get: 'Get',
   MessageType.Update: 'Update',
-  MessageType.Options: 'Options'
+  MessageType.Options: 'Options',
 };
 
-const _$CommandEnumMap = <Command, dynamic>{
+const _$CommandEnumMap = {
   Command.WhoIAm: 'WhoIAm',
   Command.IP: 'IP',
   Command.Time: 'Time',
@@ -69,5 +74,5 @@ const _$CommandEnumMap = <Command, dynamic>{
   Command.Reverse: 'Reverse',
   Command.SingleColor: 'SingleColor',
   Command.DeviceMapping: 'DeviceMapping',
-  Command.Calibration: 'Calibration'
+  Command.Calibration: 'Calibration',
 };

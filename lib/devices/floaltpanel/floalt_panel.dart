@@ -10,16 +10,16 @@ import '../device_manager.dart';
 import 'floalt_panel_model.dart';
 
 class FloaltPanel extends Device<FloaltPanelModel> {
-  FloaltPanel(int id, FloaltPanelModel model, HubConnection connection, Icon icon, SharedPreferences prefs)
+  FloaltPanel(int? id, FloaltPanelModel model, HubConnection connection, Icon icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
-  Function func;
+  Function? func;
 
   @override
   State<StatefulWidget> createState() => _FloaltPanelState();
 
   @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String> parameters]) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String>? parameters]) async {
     await super.sendToServer(messageType, command, parameters);
     var message = new sm.Message(id, messageType, command, parameters);
     var s = message.toJson();
@@ -29,7 +29,7 @@ class FloaltPanel extends Device<FloaltPanelModel> {
   @override
   void updateFromServer(Map<String, dynamic> message) {
     baseModel = FloaltPanelModel.fromJson(message);
-    if (func != null) func(() {});
+    if (func != null) func!(() {});
   }
 
   @override
@@ -41,8 +41,8 @@ class FloaltPanel extends Device<FloaltPanelModel> {
   Widget dashboardView() {
     return Column(
         children: (<Widget>[
-      Row(children:[icon, Icon((baseModel.isConnected ? Icons.check : Icons.close))], mainAxisAlignment: MainAxisAlignment.center,),
-      Text(baseModel?.friendlyName ?? baseModel?.id.toString() ?? ""),
+      Row(children:[icon, Icon((baseModel.isConnected? Icons.check : Icons.close))], mainAxisAlignment: MainAxisAlignment.center,),
+      Text(baseModel.friendlyName),
       MaterialButton(
         child: Text("An/Aus"),
         onPressed: () async => await sendToServer(sm.MessageType.Update, sm.Command.Off),
@@ -72,7 +72,7 @@ class FloaltPanelScreen extends DeviceScreen {
 class _FloaltPanelScreenState extends State<FloaltPanelScreen> {
   DateTime dateTime = DateTime.now();
 
-  void sliderChange(Function f, int dateTimeMilliseconds, [double val]) {
+  void sliderChange(Function f, int dateTimeMilliseconds, [double? val]) {
     if (DateTime.now().isAfter(dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
       Function.apply(f, val == null ? [] : [val]);
       dateTime = DateTime.now();
@@ -91,7 +91,7 @@ class _FloaltPanelScreenState extends State<FloaltPanelScreen> {
     this.widget.floaltPanel.func = null;
   }
 
-  void changeDelay(double delay) {
+  void changeDelay(double? delay) {
     this.widget.floaltPanel.sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()]);
   }
 

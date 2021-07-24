@@ -2,7 +2,7 @@ export 'device.dart';
 export 'heater/heater.dart';
 export 'heater/heater_model.dart';
 export 'lamp.dart';
-export 'led_strip.dart';
+export 'painless_led_strip/led_strip.dart';
 export 'xiaomi/temp_sensor.dart';
 export 'base_model.dart';
 export 'xiaomi/temp_sensor_model.dart';

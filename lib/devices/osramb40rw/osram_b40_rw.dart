@@ -10,16 +10,16 @@ import '../device_manager.dart';
 import 'osram_b40_rw_model.dart';
 
 class OsramB40RW extends Device<OsramB40RWModel> {
-  OsramB40RW(int id, OsramB40RWModel model, HubConnection connection, Icon icon, SharedPreferences prefs)
+  OsramB40RW(int? id, OsramB40RWModel model, HubConnection connection, Icon icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
-  Function func;
+  Function? func;
 
   @override
   State<StatefulWidget> createState() => _OsramB40RWState();
 
   @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String> parameters]) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String>? parameters]) async {
     await super.sendToServer(messageType, command, parameters);
     var message = new sm.Message(id, messageType, command, parameters);
     var s = message.toJson();
@@ -28,8 +28,8 @@ class OsramB40RW extends Device<OsramB40RWModel> {
 
   @override
   void updateFromServer(Map<String, dynamic> message) {
-    baseModel = OsramB40RWModel.fromJson(message);
-    if (func != null) func(() {});
+     baseModel = OsramB40RWModel.fromJson(message);
+    if (func != null) func!(() {});
   }
 
   @override
@@ -41,8 +41,8 @@ class OsramB40RW extends Device<OsramB40RWModel> {
   Widget dashboardView() {
     return Column(
         children: (<Widget>[
-      Row(children:[icon, Icon((baseModel.isConnected ? Icons.check : Icons.close))], mainAxisAlignment: MainAxisAlignment.center,),
-      Text(baseModel?.friendlyName ?? baseModel?.id.toString() ?? ""),
+      Row(children:[icon, Icon((baseModel.isConnected? Icons.check : Icons.close))], mainAxisAlignment: MainAxisAlignment.center,),
+      Text(baseModel.friendlyName),
       MaterialButton(
         child: Text("An/Aus"),
         onPressed: () async => await sendToServer(sm.MessageType.Update, sm.Command.Off),
@@ -72,7 +72,7 @@ class OsramB40RWScreen extends DeviceScreen {
 class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
   DateTime dateTime = DateTime.now();
 
-  void sliderChange(Function f, int dateTimeMilliseconds, [double val]) {
+  void sliderChange(Function f, int dateTimeMilliseconds, [double? val]) {
     if (DateTime.now().isAfter(dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
       Function.apply(f, val == null ? [] : [val]);
       dateTime = DateTime.now();
@@ -91,7 +91,7 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
     this.widget.osramB40RW.func = null;
   }
 
-  void changeDelay(double delay) {
+  void changeDelay(double? delay) {
     this.widget.osramB40RW.sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()]);
   }
 

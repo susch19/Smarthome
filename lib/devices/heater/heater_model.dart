@@ -6,15 +6,16 @@ part 'heater_model.g.dart';
 
 @JsonSerializable()
 class HeaterModel extends BaseModel {
-  HeaterConfig temperature;
-  int xiaomiTempSensor;
-  HeaterConfig currentConfig;
-  HeaterConfig currentCalibration;
-  String firmwareVersion;
+  HeaterConfig? temperature;
+  int? xiaomiTempSensor;
+  HeaterConfig? currentConfig;
+  HeaterConfig? currentCalibration;
+  String? firmwareVersion;
 
-  HeaterModel();
 
-  factory HeaterModel.fromJson(Map<String, dynamic> json) => _$HeaterModelFromJson(json);
+  HeaterModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
+
+ factory HeaterModel.fromJson(Map<String, dynamic> json) => _$HeaterModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$HeaterModelToJson(this);
 }

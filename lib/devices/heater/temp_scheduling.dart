@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_swiper/flutter_swiper.dart';
-import 'package:smarthome/controls/double_wheel.dart';
+
 
 import 'heater_config.dart';
 
@@ -11,7 +10,7 @@ enum DismissDialogAction {
 }
 
 class TempScheduling extends StatefulWidget {
-  List<HeaterConfig> heaterConf = List<HeaterConfig>();
+  List<HeaterConfig>? heaterConf = <HeaterConfig>[];
 
   TempScheduling({this.heaterConf});
 
@@ -35,48 +34,48 @@ class TempSchedulingState extends State<TempScheduling> {
 
   bool _autovalidate = false;
   bool _saveNeeded = false;
-  List<HeaterConfig> heaterConfigs;
-  List<HistoryAction> actions;
+  List<HeaterConfig>? heaterConfigs;
+  late List<HistoryAction> actions;
   @override
   void initState() {
     super.initState();
     if (widget.heaterConf != null)
       heaterConfigs = widget.heaterConf;
     else
-      heaterConfigs = List<HeaterConfig>();
-    actions = List<HistoryAction>();
+      heaterConfigs = <HeaterConfig>[];
+    actions = <HistoryAction>[];
   }
 
   Future<bool> _onWillPop() async {
     if (!_saveNeeded) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!.copyWith(color: theme.textTheme.caption!.color);
 
-    return await showDialog<bool>(
+    return await (showDialog<bool>(
             context: context,
             builder: (BuildContext context) =>
                 new AlertDialog(content: Text("Einstellung abbrechen?", style: dialogTextStyle), actions: <Widget>[
-                  FlatButton(
+                  TextButton(
                       child: Text("Nein"),
                       onPressed: () {
                         Navigator.of(context).pop(false);
                       }),
-                  FlatButton(
+                  TextButton(
                       child: Text("Ja"),
                       onPressed: () {
                         Navigator.of(context).pop(true);
                       })
-                ])) ??
+                ]))) ??
         false;
   }
 
   void showInSnackBar(String value) {
-    _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(value)));
+    ScaffoldMessenger.of(context).showSnackBar(new SnackBar(content: new Text(value)));
   }
 
   Future<bool> _handleSubmitted() async {
-    final FormState form = _formKey.currentState;
+    final FormState form = _formKey.currentState!;
     if (!form.validate()) {
       _autovalidate = true;
       return false;
@@ -102,7 +101,7 @@ class TempSchedulingState extends State<TempScheduling> {
         new IconButton(
           icon: Icon(Icons.sort),
           onPressed: () {
-            heaterConfigs.sort((x, y) => x.compareTo(y));
+            heaterConfigs!.sort((x, y) => x.compareTo(y));
             setState(() {});
           },
         ),
@@ -123,7 +122,7 @@ class TempSchedulingState extends State<TempScheduling> {
           autovalidate: _autovalidate,
           child: new ListView(
               padding: const EdgeInsets.all(16.0),
-              children: heaterConfigs.map((x) => heaterConfigToWidget(x)).toList())),
+              children: heaterConfigs!.map((x) => heaterConfigToWidget(x)).toList())),
     );
   }
 
@@ -133,7 +132,7 @@ class TempSchedulingState extends State<TempScheduling> {
     actions.remove(action);
     switch (action.action) {
       case Action.Add:
-        heaterConfigs.remove(action.heaterConfig);
+        heaterConfigs!.remove(action.heaterConfig);
         break;
       case Action.Delete:
         // heaterConfigs.insert(action.prevValue, action.heaterConfig);
@@ -155,18 +154,18 @@ class TempSchedulingState extends State<TempScheduling> {
   final List<String> weekdayListText = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
   final List<DropdownMenuItem> itemsForDropdown = buildItems();
   Widget heaterConfigToWidget(HeaterConfig conf) {
-    double width = MediaQuery.of(context).size.width;
-    var val = null;
+    // double width = MediaQuery.of(context).size.width;
+    // var val = null;
     return Dismissible(
       key: ValueKey(conf),
       child: ListTile(
         title: Row(
           children: <Widget>[
             DropdownButton(
-              value: conf.dayOfWeek.index,
-              onChanged: (newValue) {
+              value: conf.dayOfWeek!.index,
+              onChanged: (dynamic newValue) {
                 setState(() {
-                  actions.add(HistoryAction<DayOfWeek>(Action.WeekdayChanged, conf, conf.dayOfWeek));
+                  actions.add(HistoryAction<DayOfWeek?>(Action.WeekdayChanged, conf, conf.dayOfWeek));
                   conf.dayOfWeek = DayOfWeek.values[newValue];
                 });
               },
@@ -177,14 +176,14 @@ class TempSchedulingState extends State<TempScheduling> {
                 );
               }).toList(),
             ),
-            FlatButton(
+            TextButton(
               child: Text(
-                "${conf.timeOfDay.hour}:${conf.timeOfDay.minute}",
+                "${conf.timeOfDay!.hour}:${conf.timeOfDay!.minute}",
               ),
               onPressed: () async {
-                var tod = await showTimePicker(context: context, initialTime: conf.timeOfDay);
+                var tod = await showTimePicker(context: context, initialTime: conf.timeOfDay!);
                 if (tod == null) return;
-                actions.add(HistoryAction<TimeOfDay>(Action.TimeChanged, conf, conf.timeOfDay));
+                actions.add(HistoryAction<TimeOfDay?>(Action.TimeChanged, conf, conf.timeOfDay));
                 conf.timeOfDay = tod;
                 setState(() {});
               },
@@ -209,10 +208,10 @@ class TempSchedulingState extends State<TempScheduling> {
             // ),
             DropdownButton(
                 items: itemsForDropdown,
-                onChanged: (s) => setState(() {
+                onChanged: (dynamic s) => setState(() {
                       conf.temperature = (s/10.0);
                     }),
-                value: (conf.temperature * 10).round()), // ,)
+                value: (conf.temperature! * 10).round()), // ,)
 
             IconButton(
               icon: Icon(Icons.content_copy),
@@ -230,9 +229,9 @@ class TempSchedulingState extends State<TempScheduling> {
         ),
       ),
       confirmDismiss: (dir) async {
-        var index = heaterConfigs.indexOf(conf);
+        var index = heaterConfigs!.indexOf(conf);
         var ha = HistoryAction<Future<bool> Function(int, HistoryAction)>(Action.Delete, conf, (i, ha) async {
-          HistoryAction before;
+          HistoryAction? before;
           if (actions.length > 1) before = actions.elementAt(actions.length - 2);
           while (true) {
             if (actions.last == ha && actions.last.action == Action.Delete) {
@@ -253,7 +252,7 @@ class TempSchedulingState extends State<TempScheduling> {
         return await ha.prevValue(index, ha);
       },
       onDismissed: (DismissDirection d) {
-        heaterConfigs.remove(conf);
+        heaterConfigs!.remove(conf);
       },
       direction: DismissDirection.horizontal,
       background: Container(
@@ -266,7 +265,7 @@ class TempSchedulingState extends State<TempScheduling> {
   }
 
   static List<DropdownMenuItem> buildItems() {
-    var menuItems = List<DropdownMenuItem>();
+    var menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
       menuItems.add(DropdownMenuItem(child: Text(d.toStringAsFixed(1)), value: (d * 10).round()));
     }
@@ -274,7 +273,7 @@ class TempSchedulingState extends State<TempScheduling> {
   }
 
   void addHeaterConfig(HeaterConfig hc) {
-    heaterConfigs.add(hc);
+    heaterConfigs!.add(hc);
     actions.add(HistoryAction<bool>(Action.Add, hc, false));
     setState(() {});
   }

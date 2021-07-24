@@ -17,10 +17,10 @@ const DayOfWeekToStringMap = <DayOfWeek, dynamic>{
 
 @JsonSerializable()
 class HeaterConfig extends Comparable {
-  DayOfWeek dayOfWeek;
+  DayOfWeek? dayOfWeek;
   @JsonKey(toJson: timeOfDayToJson, fromJson: timeOfDayFromJson)
-  TimeOfDay timeOfDay;
-  double temperature;
+  TimeOfDay? timeOfDay;
+  double? temperature;
 
   HeaterConfig() {
     dayOfWeek = DayOfWeek.Mon;
@@ -28,13 +28,15 @@ class HeaterConfig extends Comparable {
     temperature = 21.0;
   }
 
-  static String timeOfDayToJson(TimeOfDay val) {
+  static String timeOfDayToJson(TimeOfDay? val) {
+    if(val == null)
+    return "";
     final now = new DateTime.now();
     return (new DateTime(now.year, now.month, now.day, val.hour, val.minute)).toIso8601String();
   }
 
-  static TimeOfDay timeOfDayFromJson(String val) {
-    final dt = DateTime.tryParse(val).toLocal();
+  static TimeOfDay? timeOfDayFromJson(String val) {
+    final dt = DateTime.tryParse(val)!.toLocal();
     if (dt == null) return new TimeOfDay(hour: 0, minute: 0);
     return TimeOfDay.fromDateTime(dt);
   }
@@ -45,6 +47,6 @@ class HeaterConfig extends Comparable {
 
   @override
   int compareTo(other) {
-    return (dayOfWeek.index * 1440 + timeOfDay.hour * 60 + timeOfDay.minute) - (other.dayOfWeek.index * 1440 + other.timeOfDay.hour * 60 + other.timeOfDay.minute);
+    return (dayOfWeek!.index * 1440 + timeOfDay!.hour * 60 + timeOfDay!.minute) - (other.dayOfWeek.index * 1440 + other.timeOfDay.hour * 60 + other.timeOfDay.minute) as int;
   }
 }

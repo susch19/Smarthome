@@ -5,25 +5,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 class WheelChooser extends StatefulWidget {
-  final TextStyle selectTextStyle;
-  final TextStyle unSelectTextStyle;
+  final TextStyle? selectTextStyle;
+  final TextStyle? unSelectTextStyle;
   final Function(dynamic) onValueChanged;
-  final List<dynamic> datas;
+  final List<dynamic>? datas;
   final int startPosition;
   final double itemSize;
   final double squeeze;
   final double magnification;
   final double perspective;
-  final double listHeight;
-  final double listWidth;
-  final List<Widget> children;
+  final double? listHeight;
+  final double? listWidth;
+  final List<Widget>? children;
   final bool horizontal;
   final double diameter;
   static const double _defaultItemSize = 48.0;
 
   WheelChooser({
-    @required this.onValueChanged,
-    @required this.datas,
+    required this.onValueChanged,
+    required this.datas,
     this.selectTextStyle,
     this.unSelectTextStyle,
     this.startPosition = 0,
@@ -39,8 +39,8 @@ class WheelChooser extends StatefulWidget {
         children = null;
 
   WheelChooser.custom({
-    @required this.onValueChanged,
-    @required this.children,
+    required this.onValueChanged,
+    required this.children,
     this.datas,
     this.startPosition = 0,
     this.squeeze = 1.0,
@@ -52,16 +52,16 @@ class WheelChooser extends StatefulWidget {
     this.listHeight,
     this.horizontal = false,
   })  : assert(perspective <= 0.01),
-        assert(datas == null || datas.length == children.length),
+        assert(datas == null || datas.length == children!.length),
         selectTextStyle = null,
         unSelectTextStyle = null;
     
 
   WheelChooser.integer({
-    @required this.onValueChanged,
-    @required int maxValue,
-    @required int minValue,
-    int initValue,
+    required this.onValueChanged,
+    required int maxValue,
+    required int minValue,
+    int? initValue,
     int step = 1,
     this.selectTextStyle,
     this.unSelectTextStyle,
@@ -84,10 +84,10 @@ class WheelChooser extends StatefulWidget {
         startPosition = initValue == null ? 0 : reverse ? (maxValue - initValue) ~/ step : (initValue - minValue) ~/ step;
 
   WheelChooser.double({
-    @required this.onValueChanged,
-    @required double maxValue,
-    @required double minValue,
-    double initValue,
+    required this.onValueChanged,
+    required double maxValue,
+    required double minValue,
+    double? initValue,
     double step = 0.1,
     this.selectTextStyle,
     this.unSelectTextStyle,
@@ -144,13 +144,13 @@ class WheelChooser extends StatefulWidget {
 }
 
 class _WheelChooserState extends State<WheelChooser> {
-  FixedExtentScrollController fixedExtentScrollController;
-  int currentPosition;
+  FixedExtentScrollController? fixedExtentScrollController;
+  int? currentPosition;
   @override
   void initState() {
     super.initState();
     currentPosition = widget.startPosition;
-    fixedExtentScrollController = FixedExtentScrollController(initialItem: currentPosition);
+    fixedExtentScrollController = FixedExtentScrollController(initialItem: currentPosition!);
   }
 
   void _listener(int position) {
@@ -160,7 +160,7 @@ class _WheelChooserState extends State<WheelChooser> {
     if (widget.datas == null) {
       widget.onValueChanged(currentPosition);
     } else {
-      widget.onValueChanged(widget.datas[currentPosition]);
+      widget.onValueChanged(widget.datas![currentPosition!]);
     }
   }
 
@@ -187,12 +187,12 @@ class _WheelChooserState extends State<WheelChooser> {
 
   List<Widget> _buildListItems() {
     List<Widget> result = [];
-    for (int i = 0; i < widget.datas.length; i++) {
+    for (int i = 0; i < widget.datas!.length; i++) {
       result.add(
         RotatedBox(
           quarterTurns: widget.horizontal ? 1 : 0,
           child: Text(
-            widget.datas[i] is double ? widget.datas[i].toStringAsFixed(1) : widget.datas[i].toString(),
+            widget.datas![i] is double ? widget.datas![i].toStringAsFixed(1) : widget.datas![i].toString(),
             textAlign: TextAlign.center,
             textScaleFactor: 1.5,
             style: i == currentPosition ? widget.selectTextStyle ?? null : widget.unSelectTextStyle ?? null,
@@ -203,16 +203,16 @@ class _WheelChooserState extends State<WheelChooser> {
     return result;
   }
 
-  List<Widget> _convertListItems() {
+  List<Widget>? _convertListItems() {
     if (widget.children == null) {
       return null;
     }
     if (widget.horizontal) {
       List<Widget> result = [];
-      for (int i = 0; i < widget.children.length; i++) {
+      for (int i = 0; i < widget.children!.length; i++) {
         result.add(RotatedBox(
           quarterTurns: 1,
-          child: widget.children[i],
+          child: widget.children![i],
         ));
       }
       return result;
@@ -227,14 +227,14 @@ class _WheelChooserState extends State<WheelChooser> {
 class ListWheelScrollViewX extends StatelessWidget {
   final Widget Function(BuildContext, int) builder;
   final Axis scrollDirection;
-  final FixedExtentScrollController controller;
+  final FixedExtentScrollController? controller;
   final double itemExtent;
   final double diameterRatio;
-  final void Function(int) onSelectedItemChanged;
+  final void Function(int)? onSelectedItemChanged;
   const ListWheelScrollViewX({
-    Key key,
-    @required this.builder,
-    @required this.itemExtent,
+    Key? key,
+    required this.builder,
+    required this.itemExtent,
     this.controller,
     this.onSelectedItemChanged,
     this.scrollDirection = Axis.vertical,
@@ -244,7 +244,7 @@ class ListWheelScrollViewX extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RotatedBox(
-      quarterTurns: scrollDirection == Axis.horizontal ? 3 : 0,
+      quarterTurns: scrollDirection == Axis.horizontal ? 0 : 0,
       child: ListWheelScrollView.useDelegate(
         onSelectedItemChanged: onSelectedItemChanged,
         controller: controller,

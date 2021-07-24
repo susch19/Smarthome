@@ -6,50 +6,61 @@ part of 'heater_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-HeaterConfig _$HeaterConfigFromJson(Map<String, dynamic> json) {
-  return HeaterConfig()
-    ..dayOfWeek = _$enumDecodeNullable(_$DayOfWeekEnumMap, json['dayOfWeek'])
-    ..timeOfDay = json['timeOfDay'] == null
-        ? null
-        : HeaterConfig.timeOfDayFromJson(json['timeOfDay'] as String)
-    ..temperature = (json['temperature'] as num)?.toDouble();
-}
+HeaterConfig _$HeaterConfigFromJson(Map<String, dynamic> json) => HeaterConfig()
+  ..dayOfWeek = _$enumDecodeNullable(_$DayOfWeekEnumMap, json['dayOfWeek'])
+  ..timeOfDay = HeaterConfig.timeOfDayFromJson(json['timeOfDay'] as String)
+  ..temperature = (json['temperature'] as num?)?.toDouble();
 
 Map<String, dynamic> _$HeaterConfigToJson(HeaterConfig instance) =>
     <String, dynamic>{
       'dayOfWeek': _$DayOfWeekEnumMap[instance.dayOfWeek],
-      'timeOfDay': instance.timeOfDay == null
-          ? null
-          : HeaterConfig.timeOfDayToJson(instance.timeOfDay),
-      'temperature': instance.temperature
+      'timeOfDay': HeaterConfig.timeOfDayToJson(instance.timeOfDay),
+      'temperature': instance.temperature,
     };
 
-T _$enumDecode<T>(Map<T, dynamic> enumValues, dynamic source) {
+K _$enumDecode<K, V>(
+  Map<K, V> enumValues,
+  Object? source, {
+  K? unknownValue,
+}) {
   if (source == null) {
-    throw ArgumentError('A value must be provided. Supported values: '
-        '${enumValues.values.join(', ')}');
+    throw ArgumentError(
+      'A value must be provided. Supported values: '
+      '${enumValues.values.join(', ')}',
+    );
   }
-  return enumValues.entries
-      .singleWhere((e) => e.value == source,
-          orElse: () => throw ArgumentError(
-              '`$source` is not one of the supported values: '
-              '${enumValues.values.join(', ')}'))
-      .key;
+
+  return enumValues.entries.singleWhere(
+    (e) => e.value == source,
+    orElse: () {
+      if (unknownValue == null) {
+        throw ArgumentError(
+          '`$source` is not one of the supported values: '
+          '${enumValues.values.join(', ')}',
+        );
+      }
+      return MapEntry(unknownValue, enumValues.values.first);
+    },
+  ).key;
 }
 
-T _$enumDecodeNullable<T>(Map<T, dynamic> enumValues, dynamic source) {
+K? _$enumDecodeNullable<K, V>(
+  Map<K, V> enumValues,
+  dynamic source, {
+  K? unknownValue,
+}) {
   if (source == null) {
     return null;
   }
-  return _$enumDecode<T>(enumValues, source);
+  return _$enumDecode<K, V>(enumValues, source, unknownValue: unknownValue);
 }
 
-const _$DayOfWeekEnumMap = <DayOfWeek, dynamic>{
+const _$DayOfWeekEnumMap = {
   DayOfWeek.Mon: 'Mon',
   DayOfWeek.Tue: 'Tue',
   DayOfWeek.Wed: 'Wed',
   DayOfWeek.Thu: 'Thu',
   DayOfWeek.Fri: 'Fri',
   DayOfWeek.Sat: 'Sat',
-  DayOfWeek.Sun: 'Sun'
+  DayOfWeek.Sun: 'Sun',
 };

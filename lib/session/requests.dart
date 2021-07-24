@@ -1,7 +1,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
-part 'requests.g.dart';
+ part 'requests.g.dart';
 
 @JsonSerializable()
 class UserLoginArgs {

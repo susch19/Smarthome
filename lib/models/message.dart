@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'message.g.dart';
+ part 'message.g.dart';
 enum MessageType { Get, Update, Options }
 
 enum Command {
@@ -30,19 +30,19 @@ enum Command {
 
 @JsonSerializable()
 class Message {
-  int id;
+  int? id;
   @JsonKey(name:"m")
   MessageType messageType;
   @JsonKey(name:"c")
   Command command;
   @JsonKey(name:"p")
-  List<String> parameters;
+  List<String>? parameters;
 
   Message(this.id, this.messageType, this.command, [this.parameters]);
 
-  factory Message.fromJson(Map<String, dynamic> json) => _$MessageFromJson(json);
+   factory Message.fromJson(Map<String, dynamic> json) => _$MessageFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MessageToJson(this);
+   Map<String, dynamic> toJson() => _$MessageToJson(this);
 
   // Map<String, dynamic> toJson() {
   //   var va = {"id": id, "m": messageType, "c": command, "p": parameters};

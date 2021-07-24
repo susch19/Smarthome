@@ -10,17 +10,18 @@ import 'package:smarthome/models/message.dart' as sm;
 
 abstract class Device<T extends BaseModel> extends StatefulWidget {
   final Icon icon;
-  final int id;
+  final int? id;
   T baseModel;
-  DeviceScreen screen;
-  HubConnection connection;
-  SharedPreferences prefs;
+  late HubConnection connection;
+  final SharedPreferences? prefs;
 
   Device(this.id, this.baseModel, this.connection, this.icon, this.prefs);
 
+  
+
   void updateFromServer(Map<String, dynamic> message);
 
-  Future<dynamic> getFromServer(String methodName, List<Object> args) async {
+  Future<dynamic> getFromServer(String methodName, List<Object?> args) async {
     if (connection.state == HubConnectionState.disconnected) {
       await connection.start();
     }
@@ -28,7 +29,7 @@ abstract class Device<T extends BaseModel> extends StatefulWidget {
     return await connection.invoke(methodName, args: args);
   }
 
-  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String> parameters) async {
+  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String>? parameters) async {
     if (connection.state == HubConnectionState.disconnected) {
       await connection.start();
     }

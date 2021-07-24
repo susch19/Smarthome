@@ -1,5 +1,5 @@
 name: smarthome
-description: A new Flutter project.
+description: Controlling Smarthome devices with AppBroker.
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -10,32 +10,35 @@ description: A new Flutter project.
 version: 1.0.0+3
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
   
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences:
+  shared_preferences: ^2.0.6
   # signalr_client:
-  signalr_core:
-    git:
-      url: git://github.com/jamiewest/signalr_core.git
+  signalr_core: ^1.1.1
+    # git:
+    #   url: git://github.com/jamiewest/signalr_core.git
     # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons:
-  json_annotation: 
-  shared_preferences_web: 
-  flutter_swiper:
-  charts_flutter: 
-  syncfusion_flutter_charts:
-  file_picker: 
-  http:
+  cupertino_icons: ^1.0.3
+  json_annotation: ^4.1.0 
+  shared_preferences_web: ^2.0.0 
+  # flutter_swiper:
+  charts_flutter: ^0.11.0 
+  syncfusion_flutter_charts: ^19.2.48
+  # file_picker: 
+  http: ^0.13.3
+  adaptive_theme: ^2.2.0
+  flutter_staggered_grid_view: ^0.4.0
+  collection: ^1.15.0-nullsafety.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^1.0.0
-  json_serializable: ^2.0.0
+  build_runner: ^2.0.6 
+  json_serializable: ^5.0.0 
 
 
 # For information on the generic Dart part of this file, see the
