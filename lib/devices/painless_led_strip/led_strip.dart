@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LedStrip extends Device<LedStripModel> {
   Function? func;
-  LedStrip(int? id, BaseModel name, HubConnection connection, Icon icon, SharedPreferences? prefs)
+  LedStrip(int? id, BaseModel name, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, name as LedStripModel, connection, icon, prefs);
 
   @override
@@ -28,6 +28,7 @@ class LedStrip extends Device<LedStripModel> {
 
   @override
   void updateFromServer(Map<String, dynamic> message) {
+    super.updateFromServer(message);
     baseModel = LedStripModel.fromJson(message);
     if (func != null) func!(() {});
   }
@@ -44,29 +45,53 @@ class LedStrip extends Device<LedStripModel> {
   @override
   Widget dashboardView() {
     return Column(
-      children: (<Widget>[
-        Row(
-          children: [icon, Icon((baseModel.isConnected? Icons.check : Icons.close))],
-          mainAxisAlignment: MainAxisAlignment.center,
-        ),
-        Text(this.baseModel.friendlyName.toString()),
+      children: getDefaultHeader(Container(
+            margin: EdgeInsets.only(right: 32.0),
+          ), baseModel.isConnected)
+          +(<Widget>[
+        
         MaterialButton(
-          child: Text("Essen fertig"),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Essen fertig",
+                style: baseModel.colorMode == "Mode" ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
+              ),
+            ],
+          ),
           onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             MaterialButton(
-              child: Text("An"),
+              child: Row(
+                children: [
+                  Text(
+                    "An",
+                    style: baseModel.colorMode != "Off" && baseModel.colorMode != "Mode"
+                        ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                        : TextStyle(),
+                  ),
+                ],
+              ),
               onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]),
             ),
             MaterialButton(
-              child: Text("Aus"),
+              child: Row(
+                children: [
+                  Text(
+                    "Aus",
+                    style: baseModel.colorMode == "Off" ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
+                  ),
+                ],
+              ),
               onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
             ),
           ],
         ),
+        (DeviceManager.showDebugInformation ? Text(baseModel.id.toString()) : Container())
       ]),
     ); // + printableInformation.map((f) => Text(f)).toList()));
   }
@@ -102,8 +127,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
   int get ibrightness => brightness.toInt();
 
   @override
-  void initState(){
-    
+  void initState() {
     this.widget.strip.func = setState;
     this.rgbw.r = (this.widget.strip.baseModel.colorNumber & 0xFF) >> 0;
     this.rgbw.g = (this.widget.strip.baseModel.colorNumber & 0xFF00) >> 8;
@@ -141,7 +165,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
       body: ListView(
         children: <Widget>[
           new ListTile(
-            leading: this.widget.strip.baseModel.colorMode == "Off" ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.colorMode == "Off" ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'Off',
@@ -151,7 +175,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: this.widget.strip.baseModel.colorMode == "RGB" ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.colorMode == "RGB" ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'Fast RGB',
@@ -161,7 +185,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: this.widget.strip.baseModel.colorMode == "Mode" ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.colorMode == "Mode" ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'Flicker',
@@ -171,7 +195,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: this.widget.strip.baseModel.colorMode == "Strobo" ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.colorMode == "Strobo" ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'Strobo',
@@ -181,7 +205,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: this.widget.strip.baseModel.colorMode == "RGBCycle" ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.colorMode == "RGBCycle" ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'RGBCycle',
@@ -191,7 +215,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: this.widget.strip.baseModel.colorMode == "LightWander" ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.colorMode == "LightWander" ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'Wander',
@@ -201,7 +225,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: this.widget.strip.baseModel.colorMode == "RGBWander" ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.colorMode == "RGBWander" ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'Wander RGB',
@@ -211,7 +235,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: (this.widget.strip.baseModel.colorMode == "SingleColor" && this.widget.strip.baseModel.colorNumber == 0xFF000000) ? Icon(Icons.check) :Text(""),
+            leading: (this.widget.strip.baseModel.colorMode == "SingleColor" &&
+                    this.widget.strip.baseModel.colorNumber == 0xFF000000)
+                ? Icon(Icons.check)
+                : Text(""),
             title: new MaterialButton(
                 child: const Text(
                   'White',
@@ -222,7 +249,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ListTile(
-            leading: this.widget.strip.baseModel.reverse ? Icon(Icons.check) :Text(""), 
+            leading: this.widget.strip.baseModel.reverse ? Icon(Icons.check) : Text(""),
             title: new MaterialButton(
               child: const Text(
                 'Reverse',
@@ -232,8 +259,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
             trailing: Text(""),
           ),
           new ExpansionTile(
-             leading: (this.widget.strip.baseModel.colorMode == "SingleColor" && this.widget.strip.baseModel.colorNumber != 0xFF000000) ? Icon(Icons.check) :Text(""),
-            
+            leading: (this.widget.strip.baseModel.colorMode == "SingleColor" &&
+                    this.widget.strip.baseModel.colorNumber != 0xFF000000)
+                ? Icon(Icons.check)
+                : Text(""),
             title: const Text(
               'SingleColor',
             ),

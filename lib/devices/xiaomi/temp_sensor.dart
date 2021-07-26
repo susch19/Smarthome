@@ -19,7 +19,7 @@ import 'package:smarthome/icons/icons.dart';
 import '../device_manager.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
-  XiaomiTempSensor(int? id, TempSensorModel model, HubConnection connection, Icon icon, SharedPreferences? prefs)
+  XiaomiTempSensor(int? id, TempSensorModel model, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
   Function? func;
@@ -49,30 +49,28 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
   @override
   Widget dashboardView() {
     return Column(
-        children: (<Widget>[
-      Row(
-        children: [
-          icon,
-          Icon((baseModel.battery > 80
-              ? SmarthomeIcons.bat4
-              : (baseModel.battery > 60
-                  ? SmarthomeIcons.bat3
-                  : (baseModel.battery > 40
-                      ? SmarthomeIcons.bat2
-                      : (baseModel.battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge))))),
-          Icon((baseModel.isConnected ? Icons.check : Icons.close))
-        ],
-        mainAxisAlignment: MainAxisAlignment.center,
-      ),
-      Text(baseModel.friendlyName),
-      Text((baseModel.temperature.toStringAsFixed(2)) + " °C"),
-      Text((baseModel.humidity.toStringAsFixed(2) ) + " %"),
-      Text((baseModel.pressure.toStringAsFixed(1) ) + " kPA"),
-      
-    ]+(DeviceManager.showDebugInformation ? <Widget>[
-      Text(baseModel.lastReceived.add(Duration(hours: 1)).toString()),
-      Text(baseModel.id.toRadixString(16))
-      ] : <Widget>[])));
+        children: getDefaultHeader(
+                Container(
+                    margin: EdgeInsets.only(right: 8.0),
+                    child: Icon((baseModel.battery > 80
+                        ? SmarthomeIcons.bat4
+                        : (baseModel.battery > 60
+                            ? SmarthomeIcons.bat3
+                            : (baseModel.battery > 40
+                                ? SmarthomeIcons.bat2
+                                : (baseModel.battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))))),
+                baseModel.available) +
+            (<Widget>[
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text((baseModel.temperature.toStringAsFixed(2)), style: TextStyle()), Text(" °C")]),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text((baseModel.humidity.toStringAsFixed(2)), style: TextStyle()), Text(" %")]),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text((baseModel.pressure.toStringAsFixed(1)), style: TextStyle()), Text(" kPA")]),
+                ] +
+                (DeviceManager.showDebugInformation
+                    ? <Widget>[
+                        Text(baseModel.lastReceived.add(Duration(hours: 1)).toString()),
+                        Text(baseModel.id.toRadixString(16))
+                      ]
+                    : <Widget>[])));
   }
 
   @override
@@ -102,15 +100,15 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
   @override
   void initState() {
     super.initState();
+    currentShownTime = DateTime.now();
     this.widget.tempSensor!.func = setState;
     histories = <IoBrokerHistoryModel>[];
-    currentShownTime = DateTime.now();
     this
         .widget
         .tempSensor!
         .getFromServer("GetIoBrokerHistories", [this.widget.tempSensor!.id, currentShownTime.toString()]).then((x) {
       for (var hist in x) {
-        // histories.add(IoBrokerHistoryModel.fromJson(hist));
+        histories.add(IoBrokerHistoryModel.fromJson(hist));
       }
       setState(() {});
     });
@@ -143,7 +141,10 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
               Tab(icon: Icon(SmarthomeIcons.temperature)),
               Tab(icon: Icon(Icons.cloud)),
               Tab(
-                icon: Icon(SmarthomeIcons.wi_barometer, size: 38.0,),
+                icon: Icon(
+                  SmarthomeIcons.wi_barometer,
+                  size: 38.0,
+                ),
               )
             ],
           ),
@@ -275,20 +276,27 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
       direction: Axis.vertical,
       children: <Widget>[
         Expanded(
-            child: TimeSeriesRangeAnnotationChart([
-          LineSeries<TimeSeriesValue, DateTime>(
-              enableTooltip: true,
-              animationDuration: 2500,
-              dataSource: h.historyRecords
-                  .map((x) =>
-                      TimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
-                  .toList(),
-              xValueMapper: (TimeSeriesValue value, _) => value.time,
-              yValueMapper: (TimeSeriesValue value, _) => value.value,
-              pointColorMapper: (TimeSeriesValue value, _) => value.lineColor,
-              width: 2)
-        ], h.historyRecords.map((x) => x.value).fold(10000, min as double Function(double, double?)), h.historyRecords.map((x) => x.value).fold(0, max as double Function(double, double?)),
-                unit, valueName)),
+          child: TimeSeriesRangeAnnotationChart([
+            LineSeries<TimeSeriesValue, DateTime>(
+                enableTooltip: true,
+                animationDuration: 500,
+                // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
+                markerSettings: const MarkerSettings(isVisible: true, shape: DataMarkerType.circle),
+                dataSource: h.historyRecords
+                    .map((x) =>
+                        TimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
+                    .toList(),
+                xValueMapper: (TimeSeriesValue value, _) => value.time,
+                yValueMapper: (TimeSeriesValue value, _) => value.value,
+                pointColorMapper: (TimeSeriesValue value, _) => value.lineColor,
+                width: 2)
+          ],
+              h.historyRecords.where((x) => x.value != null).map((x) => x.value!).fold(10000, min),
+              h.historyRecords.where((x) => x.value != null).map((x) => x.value!).fold(0, max),
+              unit,
+              valueName,
+              currentShownTime),
+        ),
         Row(
           children: <Widget>[
             Expanded(
@@ -314,13 +322,16 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
 
   getNewData(DateTime dt) {
     if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) return;
-    this.widget.tempSensor!.getFromServer("GetIoBrokerHistories", [this.widget.tempSensor!.id, dt.toString()]).then((x) {
+    this
+        .widget
+        .tempSensor!
+        .getFromServer("GetIoBrokerHistories", [this.widget.tempSensor!.id, dt.toString()]).then((x) {
       currentShownTime = dt;
       histories.clear();
       for (var hist in x) {
-        // var histo = IoBrokerHistoryModel.fromJson(hist);
-        // histo.historyRecords = histo.historyRecords.where((x) => x.value != null).toList();
-        // histories.add(histo);
+        var histo = IoBrokerHistoryModel.fromJson(hist);
+        histo.historyRecords = histo.historyRecords.where((x) => x.value != null).toList();
+        histories.add(histo);
       }
       setState(() {});
     });
@@ -347,8 +358,9 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
   final double max;
   final String unit;
   final String valueName;
+  final DateTime shownDate;
 
-  TimeSeriesRangeAnnotationChart(this.seriesList, this.min, this.max, this.unit, this.valueName);
+  TimeSeriesRangeAnnotationChart(this.seriesList, this.min, this.max, this.unit, this.valueName, this.shownDate);
 
   // @override
   // Widget build(BuildContext context) {
@@ -373,11 +385,11 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
     return OrientationBuilder(builder: (context, orientation) {
       return SfCartesianChart(
         primaryXAxis: DateTimeAxis(
-            interval: orientation == Orientation.landscape ? 3 : 6,
+            interval: orientation == Orientation.landscape ? 2 : 4,
             intervalType: DateTimeIntervalType.hours,
-            dateFormat: DateFormat("d.M HH:mm"),
+            dateFormat: DateFormat("HH:mm"),
             majorGridLines: MajorGridLines(width: 0),
-            title: AxisTitle(text: 'Zeit')),
+            title: AxisTitle(text: DateFormat("dd.MM.yyyy").format(shownDate))),
         primaryYAxis: NumericAxis(
             minimum: (min - (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
             maximum: (max + (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
@@ -392,6 +404,7 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
             activationMode: ActivationMode.singleTap,
             lineType: TrackballLineType.vertical,
             tooltipSettings: InteractiveTooltip(format: '{point.x} : {point.y}')),
+        enableAxisAnimation: false,
       );
     });
   }

@@ -38,12 +38,10 @@ class MyApp extends StatelessWidget {
         light: ThemeData(
           brightness: Brightness.light,
           primarySwatch: Colors.blue,
-          accentColor: Colors.green,
         ),
         dark: ThemeData(
           brightness: Brightness.dark,
           primarySwatch: Colors.blue,
-          accentColor: Colors.green,
         ),
         initial: savedThemeMode ?? AdaptiveThemeMode.system,
         builder: (theme, darkTheme) => MaterialApp(
@@ -142,9 +140,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               infoIcon = Icons.check;
             });
           }
-          var dev = await subscribeToDevive(DeviceManager.devices.map((x) => x!.id).toList());
+          var dev = await subscribeToDevive(DeviceManager.devices.map((x) => x.id).toList());
           for (var d in DeviceManager.devices) {
-            if (!dev.any((x) => x["id"] == d!.id)) DeviceManager.notSubscribedDevices.add(d);
+            if (!dev.any((x) => x["id"] == d.id)) DeviceManager.notSubscribedDevices.add(d);
           }
           DeviceManager.subToNonSubscribed(hubConnection);
           break;
@@ -176,12 +174,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           model = DeviceManager.jsonFactory[type]!(sub);
           try {
             var dev = DeviceManager.ctorFactory[type]!(id, model, hubConnection, prefs);
-            DeviceManager.devices.add(dev as Device<BaseModel>?);
+            DeviceManager.devices.add(dev as Device<BaseModel>);
           } catch (e) {}
         } else {
           var dev = DeviceManager.ctorFactory[type]!(id, model, hubConnection, prefs);
-          DeviceManager.devices.add(dev as Device<BaseModel>?);
-          DeviceManager.notSubscribedDevices.add(dev as Device<BaseModel>?);
+          DeviceManager.devices.add(dev as Device<BaseModel>);
+          DeviceManager.notSubscribedDevices.add(dev);
           DeviceManager.subToNonSubscribed(hubConnection);
         }
       }
@@ -208,9 +206,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       infoIcon = Icons.check;
     });
     for (var device in DeviceManager.devices) {
-      device!.connection = hubConnection;
+      device.connection = hubConnection;
     }
-    await subscribeToDevive(DeviceManager.devices.map((x) => x!.id).toList());
+    await subscribeToDevive(DeviceManager.devices.map((x) => x.id).toList());
   }
 
   void updateMethod(List<Object?>? arguments) {
@@ -218,10 +216,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       var asd = a as Map;
       if (asd["id"] == 0)
         DeviceManager.devices
-            .where((x) => x!.id == asd["id"])
-            .forEach((x) => x!.updateFromServer(asd as Map<String, dynamic>));
+            .where((x) => x.id == asd["id"])
+            .forEach((x) => x.updateFromServer(asd as Map<String, dynamic>));
       else
-        DeviceManager.getDeviceWithId(asd["id"])?.updateFromServer(asd as Map<String, dynamic>);
+        DeviceManager.getDeviceWithId(asd["id"]).updateFromServer(asd as Map<String, dynamic>);
     });
     setState(() {});
   }
@@ -257,11 +255,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       child: GestureDetector(
                         child: MaterialButton(
                           padding: EdgeInsets.all(5.0),
-                          child: DeviceManager.devices[i]!.dashboardView(),
-                          onPressed: () => DeviceManager.devices[i]!.navigateToDevice(context),
+                          child: DeviceManager.devices[i].dashboardView(),
+                          onPressed: () => DeviceManager.devices[i].navigateToDevice(context),
                         ),
                         onLongPress: () {
-                          deviceAction(DeviceManager.devices[i]!);
+                          deviceAction(DeviceManager.devices[i]);
                           setState(() {});
                         },
                         onTapDown: (q) => print(i),
@@ -309,14 +307,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Future addDevice(int? id, dynamic device) async {
     DeviceManager.devices.add(DeviceManager.ctorFactory[device["typeName"]]!(
             device["id"], DeviceManager.jsonFactory[device["typeName"]]!(device), hubConnection, prefs)
-        as Device<BaseModel>?);
+        as Device<BaseModel>);
     prefs.setInt("SHD" + device["id"].toString(), device["id"]);
     prefs.setString("Json" + device["id"].toString(), jsonEncode(device));
     prefs.setString("Type" + device["id"].toString(), device["typeName"]);
 
     await subscribeToDevive([device["id"]]);
     DeviceManager.sortDevices(prefs);
-    Navigator.pop(context);
     setState(() {});
   }
 
@@ -352,6 +349,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               PopupMenuItem<String>(value: 'Time', child: Text("Zeit Update")),
               PopupMenuItem<String>(value: 'Theme', child: Text("Theme umstellen")),
               PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
+              PopupMenuItem<String>(value: 'RemoveAll', child: Text("Entferne alle Geräte")),
             ],
           )
         ],
@@ -390,6 +388,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       case "Theme":
         AdaptiveTheme.of(context).toggleThemeMode();
 
+        break;
+      case "RemoveAll":
+        for (int i = DeviceManager.devices.length-1; i >= 0; i--) {
+          var d = DeviceManager.devices.removeAt(i);
+          prefs.remove("SHD" + d.id!.toString());
+          prefs.remove("Json" + d.id!.toString());
+          prefs.remove("Type" + d.id!.toString());
+        }
+        setState(() {});
         break;
     }
   }
@@ -448,14 +455,32 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     var devicesToSelect = <Widget>[];
     serverDevices.sort((x, y) => x["typeName"].compareTo(y["typeName"]));
     for (var i in serverDevices) {
-      if (!DeviceManager.devices.any((x) => x!.id == i["id"]))
+      if (!DeviceManager.devices.any((x) => x.id == i["id"]))
         devicesToSelect.add(
           SimpleDialogOption(
             child: Text((i["friendlyName"] ?? i["id"].toString()) + ": " + i["typeName"].toString()),
-            onPressed: () async => await addDevice(i["Id"], i),
+            onPressed: () async {
+              await addDevice(i["Id"], i);
+              Navigator.pop(context);
+            },
           ),
         );
     }
+    if (devicesToSelect.length > 1) {
+      devicesToSelect.insert(
+        0,
+        SimpleDialogOption(
+          child: Text("Subscribe to all"),
+          onPressed: () async {
+            for (var dev in serverDevices) {
+              if (!DeviceManager.devices.any((x) => x.id == dev["id"])) await addDevice(dev["Id"], dev);
+            }
+            Navigator.pop(context);
+          },
+        ),
+      );
+    }
+
     var dialog = SimpleDialog(
       children: devicesToSelect,
       title: Text((devicesToSelect.length == 0 ? "No new Devices found" : "Add new Smarthome Device")),

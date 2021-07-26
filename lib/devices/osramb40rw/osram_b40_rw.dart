@@ -10,7 +10,7 @@ import '../device_manager.dart';
 import 'osram_b40_rw_model.dart';
 
 class OsramB40RW extends Device<OsramB40RWModel> {
-  OsramB40RW(int? id, OsramB40RWModel model, HubConnection connection, Icon icon, SharedPreferences? prefs)
+  OsramB40RW(int? id, OsramB40RWModel model, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
   Function? func;
@@ -40,9 +40,11 @@ class OsramB40RW extends Device<OsramB40RWModel> {
   @override
   Widget dashboardView() {
     return Column(
-        children: (<Widget>[
-      Row(children:[icon, Icon((baseModel.isConnected? Icons.check : Icons.close))], mainAxisAlignment: MainAxisAlignment.center,),
-      Text(baseModel.friendlyName),
+        children: getDefaultHeader(Container(
+            margin: EdgeInsets.only(right: 32.0),
+          ), baseModel.available)
+          +(<Widget>[
+    
       MaterialButton(
         child: Text("An/Aus"),
         onPressed: () async => await sendToServer(sm.MessageType.Update, sm.Command.Off),

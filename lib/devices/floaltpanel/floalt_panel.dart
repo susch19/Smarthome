@@ -10,7 +10,7 @@ import '../device_manager.dart';
 import 'floalt_panel_model.dart';
 
 class FloaltPanel extends Device<FloaltPanelModel> {
-  FloaltPanel(int? id, FloaltPanelModel model, HubConnection connection, Icon icon, SharedPreferences? prefs)
+  FloaltPanel(int? id, FloaltPanelModel model, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
   Function? func;
@@ -23,7 +23,7 @@ class FloaltPanel extends Device<FloaltPanelModel> {
     await super.sendToServer(messageType, command, parameters);
     var message = new sm.Message(id, messageType, command, parameters);
     var s = message.toJson();
-    await connection.invoke("Update", args: <Object>[message.toJson()]);
+    // await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
 
   @override
@@ -40,14 +40,15 @@ class FloaltPanel extends Device<FloaltPanelModel> {
   @override
   Widget dashboardView() {
     return Column(
-        children: (<Widget>[
-      Row(children:[icon, Icon((baseModel.isConnected? Icons.check : Icons.close))], mainAxisAlignment: MainAxisAlignment.center,),
-      Text(baseModel.friendlyName),
-      MaterialButton(
-        child: Text("An/Aus"),
-        onPressed: () async => await sendToServer(sm.MessageType.Update, sm.Command.Off),
-      )
-    ]));
+        children: getDefaultHeader(Container(
+              margin: EdgeInsets.only(right: 32.0),
+            ), baseModel.available) +
+            (<Widget>[
+              MaterialButton(
+                child: Text("An/Aus"),
+                onPressed: () async => await sendToServer(sm.MessageType.Update, sm.Command.Off),
+              )
+            ]));
   }
 
   @override
@@ -111,9 +112,7 @@ class _FloaltPanelScreenState extends State<FloaltPanelScreen> {
       ),
       body: buildBody(this.widget.floaltPanel.baseModel),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(
-          Icons.power_settings_new
-        ),
+        child: const Icon(Icons.power_settings_new),
         onPressed: () => this.widget.floaltPanel.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
@@ -132,41 +131,51 @@ class _FloaltPanelScreenState extends State<FloaltPanelScreen> {
           title: Text("Verbindungsqualität: " + (model.linkQuality.toString())),
         ),
         ListTile(
-          title: Text("Helligkeit aktuell " + model.brightness.toStringAsFixed(0)),
+          title: Text("Helligkeit " + model.brightness.toStringAsFixed(0)),
           subtitle: GestureDetector(
-            child: Slider(
-              value: model.brightness.toDouble(),
-              onChanged: (d) {
-                setState(() => model.brightness = d.round());
-                sliderChange(changeBrightness, 500, d);
-              },
-              min: 0.0,
-              max: 100.0,
-              divisions: 100,
-              label: '${model.brightness}',
+            child: SliderTheme(
+              child: Slider(
+                value: model.brightness.toDouble(),
+                onChanged: (d) {
+                  setState(() => model.brightness = d.round());
+                  sliderChange(changeBrightness, 500, d);
+                },
+                min: 0.0,
+                max: 100.0,
+                divisions: 100,
+                label: '${model.brightness}',
+              ),
+              data: SliderTheme.of(context).copyWith(
+                  trackShape: GradientRoundedRectSliderTrackShape(
+                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
             ),
             onTapCancel: () => changeBrightness(model.brightness.toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Farbtemparatur aktuell " + (model.colorTemp - 204).toStringAsFixed(0)),
+          title: Text("Farbtemparatur " + (model.colorTemp - 204).toStringAsFixed(0)),
           subtitle: GestureDetector(
-            child: Slider(
-              value: (model.colorTemp - 204).toDouble(),
-              onChanged: (d) {
-                setState(() => model.colorTemp = d.round() + 204);
-                sliderChange(changeColorTemp, 500, d + 204.0);
-              },
-              min: 0.0,
-              max: 204.0,
-              divisions: 204,
-              label: '${model.colorTemp - 204}',
+            child: SliderTheme(
+              child: Slider(
+                value: ((model.colorTemp - 204).clamp(0, 204)).toDouble(),
+                onChanged: (d) {
+                  setState(() => model.colorTemp = d.round() + 204);
+                  sliderChange(changeColorTemp, 500, d + 204.0);
+                },
+                min: 0.0,
+                max: 204.0,
+                divisions: 204,
+                label: '${model.colorTemp - 204}',
+              ),
+              data: SliderTheme.of(context).copyWith(
+                  trackShape: GradientRoundedRectSliderTrackShape(
+                      LinearGradient(colors: [Color.fromARGB(255, 255, 147, 44), Color.fromARGB(255, 255, 209, 163)]))),
             ),
             onTapCancel: () => changeColorTemp(model.colorTemp.toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Übergangszeit aktuell " + model.transitionTime.toStringAsFixed(1) + " Sekunden"),
+          title: Text("Übergangszeit " + model.transitionTime.toStringAsFixed(1) + " Sekunden"),
           subtitle: GestureDetector(
             child: Slider(
               value: model.transitionTime,
@@ -183,6 +192,106 @@ class _FloaltPanelScreenState extends State<FloaltPanelScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSliderTrackShape {
+  final LinearGradient gradient;
+
+  /// Create a slider track that draws two rectangles with rounded outer edges.
+
+  const GradientRoundedRectSliderTrackShape(this.gradient);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 2,
+  }) {
+    assert(context != null);
+    assert(offset != null);
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    assert(sliderTheme.disabledActiveTrackColor != null);
+    assert(sliderTheme.disabledInactiveTrackColor != null);
+    assert(sliderTheme.activeTrackColor != null);
+    assert(sliderTheme.inactiveTrackColor != null);
+    assert(sliderTheme.thumbShape != null);
+    assert(enableAnimation != null);
+    assert(textDirection != null);
+    assert(thumbCenter != null);
+    // If the slider [SliderThemeData.trackHeight] is less than or equal to 0,
+    // then it makes no difference whether the track is painted or not,
+    // therefore the painting  can be a no-op.
+    if (sliderTheme.trackHeight == null || sliderTheme.trackHeight! <= 0) {
+      return;
+    }
+
+    final Rect trackRect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+
+    // Assign the track segment paints, which are leading: active and
+    // trailing: inactive.
+    final ColorTween activeTrackColorTween =
+        ColorTween(begin: sliderTheme.disabledActiveTrackColor, end: sliderTheme.activeTrackColor);
+    final ColorTween inactiveTrackColorTween =
+        ColorTween(begin: sliderTheme.disabledInactiveTrackColor, end: sliderTheme.inactiveTrackColor);
+    final Paint activePaint = Paint()
+      ..shader = gradient.createShader(trackRect)
+      ..color = activeTrackColorTween.evaluate(enableAnimation)!;
+    final Paint inactivePaint = Paint()
+      ..shader = gradient.createShader(trackRect)
+      ..color = inactiveTrackColorTween.evaluate(enableAnimation)!;
+    final Paint leftTrackPaint;
+    final Paint rightTrackPaint;
+    switch (textDirection) {
+      case TextDirection.ltr:
+        leftTrackPaint = activePaint;
+        rightTrackPaint = inactivePaint;
+        break;
+      case TextDirection.rtl:
+        leftTrackPaint = inactivePaint;
+        rightTrackPaint = activePaint;
+        break;
+    }
+
+    final Radius trackRadius = Radius.circular(trackRect.height / 2);
+    final Radius activeTrackRadius = Radius.circular((trackRect.height + additionalActiveTrackHeight) / 2);
+
+    context.canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        trackRect.left,
+        (textDirection == TextDirection.ltr) ? trackRect.top - (additionalActiveTrackHeight / 2) : trackRect.top,
+        thumbCenter.dx,
+        (textDirection == TextDirection.ltr) ? trackRect.bottom + (additionalActiveTrackHeight / 2) : trackRect.bottom,
+        topLeft: (textDirection == TextDirection.ltr) ? activeTrackRadius : trackRadius,
+        bottomLeft: (textDirection == TextDirection.ltr) ? activeTrackRadius : trackRadius,
+      ),
+      leftTrackPaint,
+    );
+    context.canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        thumbCenter.dx,
+        (textDirection == TextDirection.rtl) ? trackRect.top - (additionalActiveTrackHeight / 2) : trackRect.top,
+        trackRect.right,
+        (textDirection == TextDirection.rtl) ? trackRect.bottom + (additionalActiveTrackHeight / 2) : trackRect.bottom,
+        topRight: (textDirection == TextDirection.rtl) ? activeTrackRadius : trackRadius,
+        bottomRight: (textDirection == TextDirection.rtl) ? activeTrackRadius : trackRadius,
+      ),
+      rightTrackPaint,
     );
   }
 }
