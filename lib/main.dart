@@ -13,10 +13,7 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/session/cert_file.dart';
-import 'package:smarthome/session/requests.dart';
-import 'package:smarthome/session/responses.dart';
 import 'package:smarthome/syncfusion.dart';
-import 'package:http/http.dart' as http;
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -165,12 +162,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       for (var id in ids) {
         var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
         var type = prefs.getString("Type" + id.toString());
-        BaseModel model = DeviceManager.jsonFactory[type!]!(jsonDecode(prefs.getString("Json" + id.toString())!));
+        BaseModel model =
+            DeviceManager.stringNameJsonFactory[type!]!(jsonDecode(prefs.getString("Json" + id.toString())!));
         model.isConnected = false;
 
         model.friendlyName += "(old)";
         if (sub != null) {
-          model = DeviceManager.jsonFactory[type]!(sub);
+          model = DeviceManager.stringNameJsonFactory[type]!(sub);
           try {
             var dev = DeviceManager.ctorFactory[type]!(id, model, hubConnection, prefs);
             DeviceManager.devices.add(dev as Device<BaseModel>);
@@ -245,65 +243,38 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           builder: (context, orientation) {
             return StaggeredGridView.extentBuilder(
                 maxCrossAxisExtent: 260,
-                mainAxisSpacing: 2.0,
-                crossAxisSpacing: 2.0,
+                mainAxisSpacing: 1.0,
+                crossAxisSpacing: 1.0,
                 itemCount: DeviceManager.devices.length,
                 itemBuilder: (context, i) => Card(
                       child: GestureDetector(
                         child: MaterialButton(
-                          padding: EdgeInsets.all(5.0),
-                          child: DeviceManager.devices[i].dashboardView(),
+                          child: Container(
+                            margin: EdgeInsets.all(4.0),
+                            child: DeviceManager.devices[i].dashboardView(),
+                          ),
                           onPressed: () => DeviceManager.devices[i].navigateToDevice(context),
                         ),
                         onLongPress: () {
                           deviceAction(DeviceManager.devices[i]);
                           setState(() {});
                         },
-                        onTapDown: (q) => print(i),
+                        // onTapDown: (q) => print(i),
                       ),
                     ),
                 staggeredTileBuilder: (int index) => new StaggeredTile.fit(1));
-            // itemCount: DeviceManager.devices.length,
-            // gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            //   maxCrossAxisExtent: 220,
-            //   // crossAxisSpacing: 2.0,
-            //   // mainAxisSpacing: 2.0,
-            //   // childAspectRatio: DeviceManager.showDebugInformation ? 1.0 : 1.49,
-            // ),
-
-            // );
-            // return GridView.count(
-            //     padding: EdgeInsets.only(top: 16.0),
-            //     crossAxisCount: orientation == Orientation.portrait ? 2 : 4,
-            //     childAspectRatio: 1.8,
-            //     shrinkWrap: true,
-            //     children: DeviceManager.devices
-            //         .map((x) => GestureDetector(
-            //               child: MaterialButton(
-            //                 child: x.dashboardView(),
-            //                 onPressed: () => x.navigateToDevice(context),
-            //               ),
-            //               onLongPress: () {
-            //                 deviceAction(x);
-            //                 setState(() {});
-            //               },
-            //             ))
-            //         .toList(growable: true));
           },
         ),
         constraints: BoxConstraints.tight(Size.infinite),
       ),
-      onRefresh: () async {
-        newHubConnection();
-        setState(() {});
-        return null;
-      },
+      onRefresh: () async => refresh(),
+      triggerMode: RefreshIndicatorTriggerMode.onEdge,
     );
   }
 
   Future addDevice(int? id, dynamic device) async {
     DeviceManager.devices.add(DeviceManager.ctorFactory[device["typeName"]]!(
-            device["id"], DeviceManager.jsonFactory[device["typeName"]]!(device), hubConnection, prefs)
+            device["id"], DeviceManager.stringNameJsonFactory[device["typeName"]]!(device), hubConnection, prefs)
         as Device<BaseModel>);
     prefs.setInt("SHD" + device["id"].toString(), device["id"]);
     prefs.setString("Json" + device["id"].toString(), jsonEncode(device));
@@ -328,7 +299,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: Text("Smart Home App"),
-        leading: Icon(infoIcon),
+        leading: IconButton(icon: Icon(infoIcon), onPressed: refresh),
         actions: <Widget>[
           PopupMenuButton<String>(
             child: Icon(Icons.sort),
@@ -363,7 +334,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     switch (value) {
       case "URL":
         var sd = SimpleDialogSingleInput.create(
-            hintText: "URL of LED Strip",
+            hintText: "URL of Smarthome Server",
             labelText: "URL",
             defaultText: serverUrl,
             onSubmitted: (s) {
@@ -383,7 +354,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         setState(() {});
         break;
       case "Theme":
-        AdaptiveTheme.of(context).toggleThemeMode();
+        var adaptiveTheme = AdaptiveTheme.of(context);
+        adaptiveTheme.setThemeMode(
+            adaptiveTheme.mode == AdaptiveThemeMode.dark ? AdaptiveThemeMode.light : AdaptiveThemeMode.dark);
 
         break;
       case "RemoveAll":
@@ -489,7 +462,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             MaterialButton(
               child: Column(
                 children: <Widget>[
-                  choosen,
+                  choosen.dashboardView(),
                 ],
               ),
               onPressed: () {},
@@ -512,24 +485,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         .build();
   }
 
-  Future<String?> getAccessToken(SharedPreferences prefs) async {
-    var lastTime = prefs.getInt("TokenGetTime")!;
+  // Future<String?> getAccessToken(SharedPreferences prefs) async {
+  //   var lastTime = prefs.getInt("TokenGetTime")!;
 
-    if (DateTime.fromMillisecondsSinceEpoch(lastTime).add(Duration(days: 10)).millisecondsSinceEpoch <
-        DateTime.now().millisecondsSinceEpoch) {
-      var res = (await (post(
-          certFile!.serverUrl, "/session", UserLoginArgs(certFile!.username, certFile!.email, certFile!.pw))));
-      if (res?.statusCode == 200) {
-        UserLoginResult tokenRes = jsonDecode(res?.body ?? "{}");
-        prefs.setInt("TokenGetTime", DateTime.now().millisecondsSinceEpoch);
-        prefs.setString("Token", tokenRes.token!);
-        return tokenRes.token;
-      }
-    } else
-      return prefs.getString("Token");
+  //   if (DateTime.fromMillisecondsSinceEpoch(lastTime).add(Duration(days: 10)).millisecondsSinceEpoch <
+  //       DateTime.now().millisecondsSinceEpoch) {
+  //     var res = (await (post(
+  //         certFile!.serverUrl, "/session", UserLoginArgs(certFile!.username, certFile!.email, certFile!.pw))));
+  //     if (res?.statusCode == 200) {
+  //       UserLoginResult tokenRes = jsonDecode(res?.body ?? "{}");
+  //       prefs.setInt("TokenGetTime", DateTime.now().millisecondsSinceEpoch);
+  //       prefs.setString("Token", tokenRes.token!);
+  //       return tokenRes.token;
+  //     }
+  //   } else
+  //     return prefs.getString("Token");
 
-    return "";
-  }
+  //   return "";
+  // }
 
   // Future<String> getAccessTokenNewFile(SharedPreferences prefs) async {
   //   var file =
@@ -554,10 +527,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   //   return CertFile(lines[0], lines[1], lines[2], lines[3]);
   // }
 
-  static Future<http.Response?> post(String url, String path, [Object? body]) async {
-    var g = http.post(Uri(path: "$url/$path"), body: jsonEncode(body), headers: {"Content-Type": "application/json"});
-    http.Response? res;
-    await g.then((x) => res = x);
-    return res;
+  // static Future<http.Response?> post(String url, String path, [Object? body]) async {
+  //   var g = http.post(Uri(path: "$url/$path"), body: jsonEncode(body), headers: {"Content-Type": "application/json"});
+  //   http.Response? res;
+  //   await g.then((x) => res = x);
+  //   return res;
+  // }
+
+  void refresh() {
+    newHubConnection();
+    setState(() {});
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';
@@ -20,25 +22,6 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
   XiaomiTempSensor(int? id, TempSensorModel model, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
-  Function? func;
-
-  @override
-  State<StatefulWidget> createState() => _XiaomiTempSensorState();
-
-  @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String>? parameters]) async {
-    await super.sendToServer(messageType, command, parameters);
-    var message = new sm.Message(id, messageType, command, parameters);
-    var s = message.toJson();
-    await connection.invoke("Update", args: <Object>[message.toJson()]);
-  }
-
-  @override
-  void updateFromServer(Map<String, dynamic> message) {
-    baseModel = TempSensorModel.fromJson(message);
-    if (func != null) func!(() {});
-  }
-
   @override
   void navigateToDevice(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => XiaomiTempSensorScreen(this)));
@@ -59,9 +42,15 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
                                 : (baseModel.battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))))),
                 baseModel.available) +
             (<Widget>[
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text((baseModel.temperature.toStringAsFixed(2)), style: TextStyle()), Text(" °C")]),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text((baseModel.humidity.toStringAsFixed(2)), style: TextStyle()), Text(" %")]),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text((baseModel.pressure.toStringAsFixed(1)), style: TextStyle()), Text(" kPA")]),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [Text((baseModel.temperature.toStringAsFixed(2)), style: TextStyle()), Text(" °C")]),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [Text((baseModel.humidity.toStringAsFixed(2)), style: TextStyle()), Text(" %")]),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [Text((baseModel.pressure.toStringAsFixed(1)), style: TextStyle()), Text(" kPA")]),
                 ] +
                 (DeviceManager.showDebugInformation
                     ? <Widget>[
@@ -77,10 +66,10 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
   }
 }
 
-class _XiaomiTempSensorState extends State<XiaomiTempSensor> {
-  @override
-  Widget build(BuildContext context) => XiaomiTempSensorScreen(this.widget);
-}
+// class _XiaomiTempSensorState extends State<XiaomiTempSensorWidget> {
+//   @override
+//   Widget build(BuildContext context) => XiaomiTempSensorScreen(this.widget);
+// }
 
 class XiaomiTempSensorScreen extends DeviceScreen {
   final XiaomiTempSensor? tempSensor;
@@ -94,12 +83,12 @@ class XiaomiTempSensorScreen extends DeviceScreen {
 class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with SingleTickerProviderStateMixin {
   late List<IoBrokerHistoryModel> histories;
   late DateTime currentShownTime;
+  late StreamSubscription sub;
 
   @override
   void initState() {
     super.initState();
     currentShownTime = DateTime.now();
-    this.widget.tempSensor!.func = setState;
     histories = <IoBrokerHistoryModel>[];
     this
         .widget
@@ -110,12 +99,15 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
       }
       setState(() {});
     });
+    sub = this.widget.tempSensor!.listenOnUpdateFromServer((p0) {
+      setState(() {});
+    });
   }
 
   @override
   void deactivate() {
     super.deactivate();
-    this.widget.tempSensor!.func = null;
+    sub.cancel();
   }
 
   void changeColor() {}

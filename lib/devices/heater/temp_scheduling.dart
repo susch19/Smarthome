@@ -12,7 +12,7 @@ enum DismissDialogAction {
 }
 
 class TempScheduling extends StatefulWidget {
-  List<HeaterConfig> heaterConfigs = <HeaterConfig>[];
+  final List<HeaterConfig> heaterConfigs;
 
   TempScheduling(this.heaterConfigs);
 
@@ -324,8 +324,8 @@ class TempSchedulingState extends State<TempScheduling> {
 }
 
 class Tuple<T1, T2> extends Equatable {
-  T1 item1;
-  T2 item2;
+  final T1 item1;
+  final T2 item2;
 
   Tuple(this.item1, this.item2);
 

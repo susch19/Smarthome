@@ -11,30 +11,9 @@ import 'package:smarthome/models/message.dart' as sm;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LedStrip extends Device<LedStripModel> {
-  Function? func;
   LedStrip(int? id, BaseModel name, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, name as LedStripModel, connection, icon, prefs);
 
-  @override
-  State<StatefulWidget> createState() => _LedStripState();
-
-  @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String>? parameters) async {
-    super.sendToServer(messageType, command, parameters);
-    var message = new sm.Message(id, messageType, command, parameters);
-    await connection.invoke("Update", args: <Object>[message.toJson()]);
-  }
-
-  @override
-  void updateFromServer(Map<String, dynamic> message) {
-    super.updateFromServer(message);
-    baseModel = LedStripModel.fromJson(message);
-    if (func != null) func!(() {});
-  }
-
-  // StreamSubscription<Map<String, dynamic>> listen(void Function(Map<String, dynamic> event) onData){
-  //   return null;
-  // }
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -44,54 +23,59 @@ class LedStrip extends Device<LedStripModel> {
   @override
   Widget dashboardView() {
     return Column(
-      children: getDefaultHeader(Container(
-            margin: EdgeInsets.only(right: 32.0),
-          ), baseModel.isConnected)
-          +(<Widget>[
-        
-        MaterialButton(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Essen fertig",
-                style: baseModel.colorMode == "Mode" ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
+      children: getDefaultHeader(
+              Container(
+                margin: EdgeInsets.only(right: 32.0),
               ),
-            ],
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
+              baseModel.isConnected) +
+          (<Widget>[
             MaterialButton(
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "An",
-                    style: baseModel.colorMode != "Off" && baseModel.colorMode != "Mode"
+                    "Essen fertig",
+                    style: baseModel.colorMode == "Mode"
                         ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
                         : TextStyle(),
                   ),
                 ],
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]),
+              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
             ),
-            MaterialButton(
-              child: Row(
-                children: [
-                  Text(
-                    "Aus",
-                    style: baseModel.colorMode == "Off" ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                MaterialButton(
+                  child: Row(
+                    children: [
+                      Text(
+                        "An",
+                        style: baseModel.colorMode != "Off" && baseModel.colorMode != "Mode"
+                            ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                            : TextStyle(),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+                  onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]),
+                ),
+                MaterialButton(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Aus",
+                        style: baseModel.colorMode == "Off"
+                            ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                            : TextStyle(),
+                      ),
+                    ],
+                  ),
+                  onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+                ),
+              ],
             ),
-          ],
-        ),
-        (DeviceManager.showDebugInformation ? Text(baseModel.id.toString()) : Container())
-      ]),
+            (DeviceManager.showDebugInformation ? Text(baseModel.id.toString()) : Container())
+          ]),
     ); // + printableInformation.map((f) => Text(f)).toList()));
   }
 
@@ -99,11 +83,6 @@ class LedStrip extends Device<LedStripModel> {
   DeviceTypes getDeviceType() {
     return DeviceTypes.LedStrip;
   }
-}
-
-class _LedStripState extends State<LedStrip> {
-  @override
-  Widget build(BuildContext context) => LedStripScreen(this.widget);
 }
 
 class LedStripScreen extends DeviceScreen {
@@ -121,6 +100,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
   double brightness = 255.0;
   double delay = 30.0;
   double numLeds = 94.0;
+  late StreamSubscription sub;
 
   int get idelay => delay.toInt();
   int get ibrightness => brightness.toInt();
@@ -128,7 +108,9 @@ class _LedStripScreenState extends State<LedStripScreen> {
   @override
   void initState() {
     super.initState();
-    this.widget.strip.func = setState;
+    sub = this.widget.strip.listenOnUpdateFromServer((p0) {
+      setState(() {});
+    });
     this.rgbw.r = (this.widget.strip.baseModel.colorNumber & 0xFF) >> 0;
     this.rgbw.g = (this.widget.strip.baseModel.colorNumber & 0xFF00) >> 8;
     this.rgbw.b = (this.widget.strip.baseModel.colorNumber & 0xFF0000) >> 16;
@@ -136,6 +118,12 @@ class _LedStripScreenState extends State<LedStripScreen> {
     brightness = this.widget.strip.baseModel.brightness.toDouble();
     delay = this.widget.strip.baseModel.delay.toDouble();
     numLeds = this.widget.strip.baseModel.numberOfLeds.toDouble();
+  }
+
+  @override
+  void deactivate(){
+    super.deactivate();
+    sub.cancel();
   }
 
   void sliderChange(Function f, int dateTimeMilliseconds, [int? val]) {

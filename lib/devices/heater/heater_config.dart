@@ -58,10 +58,10 @@ const DayOfWeekToLongStringMap = <DayOfWeek, String>{
 
 @JsonSerializable()
 class HeaterConfig extends Equatable implements Comparable {
-  DayOfWeek dayOfWeek;
+  final DayOfWeek dayOfWeek;
   @JsonKey(toJson: timeOfDayToJson, fromJson: timeOfDayFromJson)
-  TimeOfDay timeOfDay;
-  double temperature;
+  final TimeOfDay timeOfDay;
+  final double temperature;
 
   HeaterConfig.easyInit()
       : dayOfWeek = DayOfWeek.Mon,

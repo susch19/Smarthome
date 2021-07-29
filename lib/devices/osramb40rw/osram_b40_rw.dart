@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
@@ -13,24 +15,6 @@ class OsramB40RW extends Device<OsramB40RWModel> {
   OsramB40RW(int? id, OsramB40RWModel model, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, model, connection, icon, prefs);
 
-  Function? func;
-
-  @override
-  State<StatefulWidget> createState() => _OsramB40RWState();
-
-  @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String>? parameters]) async {
-    await super.sendToServer(messageType, command, parameters);
-    var message = new sm.Message(id, messageType, command, parameters);
-    await connection.invoke("Update", args: <Object>[message.toJson()]);
-  }
-
-  @override
-  void updateFromServer(Map<String, dynamic> message) {
-     baseModel = OsramB40RWModel.fromJson(message);
-    if (func != null) func!(() {});
-  }
-
   @override
   void navigateToDevice(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => OsramB40RWScreen(this)));
@@ -39,27 +23,47 @@ class OsramB40RW extends Device<OsramB40RWModel> {
   @override
   Widget dashboardView() {
     return Column(
-        children: getDefaultHeader(Container(
-            margin: EdgeInsets.only(right: 32.0),
-          ), baseModel.available)
-          +(<Widget>[
-    
-      MaterialButton(
-        child: Text("An/Aus"),
-        onPressed: () async => await sendToServer(sm.MessageType.Update, sm.Command.Off),
-      )
-    ]));
+      children: getDefaultHeader(
+              Container(
+                margin: EdgeInsets.only(right: 32.0),
+              ),
+              baseModel.available) +
+          (<Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                MaterialButton(
+                  child: Row(
+                    children: [
+                      Text(
+                        "An",
+                        style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
+                      ),
+                    ],
+                  ),
+                  onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
+                ),
+                MaterialButton(
+                  child: Row(
+                    children: [
+                      Text(
+                        "Aus",
+                        style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
+                      ),
+                    ],
+                  ),
+                  onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+                ),
+              ],
+            ),
+          ]),
+    );
   }
 
   @override
   DeviceTypes getDeviceType() {
     return DeviceTypes.OsramB40RW;
   }
-}
-
-class _OsramB40RWState extends State<OsramB40RW> {
-  @override
-  Widget build(BuildContext context) => OsramB40RWScreen(this.widget);
 }
 
 class OsramB40RWScreen extends DeviceScreen {
@@ -72,6 +76,7 @@ class OsramB40RWScreen extends DeviceScreen {
 
 class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
   DateTime dateTime = DateTime.now();
+  late StreamSubscription sub;
 
   void sliderChange(Function f, int dateTimeMilliseconds, [double? val]) {
     if (DateTime.now().isAfter(dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
@@ -83,13 +88,15 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
   @override
   void initState() {
     super.initState();
-    this.widget.osramB40RW.func = setState;
+    sub = this.widget.osramB40RW.listenOnUpdateFromServer((p0) {
+      setState(() {});
+    });
   }
 
   @override
   void deactivate() {
     super.deactivate();
-    this.widget.osramB40RW.func = null;
+    sub.cancel();
   }
 
   void changeDelay(double? delay) {
@@ -112,9 +119,7 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
       ),
       body: buildBody(this.widget.osramB40RW.baseModel),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(
-          Icons.power_settings_new
-        ),
+        child: const Icon(Icons.power_settings_new),
         onPressed: () => this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
@@ -153,7 +158,7 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
           title: Text("Farbtemparatur aktuell " + (model.colorTemp - 153).toStringAsFixed(0)),
           subtitle: GestureDetector(
             child: Slider(
-              value: ((model.colorTemp- 153).clamp(0, 217)).toDouble(),
+              value: ((model.colorTemp - 153).clamp(0, 217)).toDouble(),
               onChanged: (d) {
                 setState(() => model.colorTemp = d.round() + 153);
                 sliderChange(changeColorTemp, 500, d + 153.0);
@@ -161,7 +166,7 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
               min: 0.0,
               max: 217.0,
               divisions: 217,
-              label: '${(model.colorTemp- 153).clamp(0, 217)}',
+              label: '${(model.colorTemp - 153).clamp(0, 217)}',
             ),
             onTapCancel: () => changeColorTemp(model.colorTemp.toDouble()),
           ),

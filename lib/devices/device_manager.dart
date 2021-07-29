@@ -85,13 +85,22 @@ class DeviceManager {
     'FloaltPanel': (i, s, h, sp) => FloaltPanel(i, s as FloaltPanelModel, h, Icons.crop_square, sp),
     'OsramB40RW': (i, s, h, sp) => OsramB40RW(i, s as OsramB40RWModel, h, Icons.lightbulb_outline, sp),
   };
-  static final jsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
+  static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-    'Heater': (m) => HeaterModel.fromJson(m),
+    'Heater' : (m) => HeaterModel.fromJson(m),
     'XiaomiTempSensor': (m) => TempSensorModel.fromJson(m),
     'LedStrip': (m) => LedStripModel.fromJson(m),
     'FloaltPanel': (m) => FloaltPanelModel.fromJson(m),
     'OsramB40RW': (m) => OsramB40RWModel.fromJson(m),
+  };
+
+  static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
+    // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
+    HeaterModel : (m) => HeaterModel.fromJson(m),
+    TempSensorModel: (m) => TempSensorModel.fromJson(m),
+    LedStripModel: (m) => LedStripModel.fromJson(m),
+    FloaltPanelModel: (m) => FloaltPanelModel.fromJson(m),
+    OsramB40RWModel: (m) => OsramB40RWModel.fromJson(m),
   };
 
   static void stopSubbing() {

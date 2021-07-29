@@ -7,8 +7,8 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'heater_config.dart';
 
 class HeaterTempSettings extends StatefulWidget {
-  List<HeaterConfig> configs;
-  Tuple<TimeOfDay?, double?> timeTemp;
+  final List<HeaterConfig> configs;
+  final Tuple<TimeOfDay?, double?> timeTemp;
   HeaterTempSettings(this.timeTemp, this.configs);
 
   @override

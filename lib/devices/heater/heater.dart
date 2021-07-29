@@ -17,30 +17,17 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'temp_scheduling.dart';
 
 class Heater extends Device<HeaterModel> {
-  Function? func;
   Heater(int? id, HeaterModel baseModel, HubConnection connection, IconData icon, SharedPreferences? prefs)
       : super(id, baseModel, connection, icon, prefs);
-
-  @override
-  _HeaterState createState() => _HeaterState();
 
   @override
   void navigateToDevice(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => HeaterScreen(this)));
   }
 
-  @override
   void updateFromServer(Map<String, dynamic> message) {
-    baseModel = HeaterModel.fromJson(message);
+    super.updateFromServer(message);
     prefs?.setString("Json" + id.toString(), jsonEncode(message));
-    if (func != null) func!(() {});
-  }
-
-  @override
-  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String>? parameters) async {
-    super.sendToServer(messageType, command, parameters);
-    var message = new sm.Message(id, messageType, command, parameters);
-    await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
 
   @override
@@ -58,7 +45,7 @@ class Heater extends Device<HeaterModel> {
             Row(children: [
               Text(
                 (baseModel.temperature?.temperature.toStringAsFixed(1) ?? ""),
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.normal),
               ),
               Text(" °C / "),
               Text(
@@ -80,27 +67,8 @@ class Heater extends Device<HeaterModel> {
   }
 }
 
-class _HeaterState extends State<Heater> {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialButton(
-      child: Column(
-        children: <Widget>[
-          Icon(this.widget.icon),
-          Column(
-              // children: this.widget.printableInformation.map((s) => Text(s)).toList(),
-              ),
-        ],
-      ),
-      onPressed: () {
-        this.widget.navigateToDevice(context);
-      },
-    );
-  }
-}
-
 class HeaterScreen extends DeviceScreen {
-  Heater heater;
+  final Heater heater;
 
   HeaterScreen(this.heater);
 
@@ -112,22 +80,28 @@ class _HeaterScreenState extends State<HeaterScreen> {
   double? temp = 11;
   String tempString() => temp!.toStringAsFixed(1) + "°C";
   TextEditingController? textEditingController;
-  double _value = 9.0;
   String _annotationValue = '9.0';
+  double _value = 9.0;
+  late Heater heater;
+  late StreamSubscription sub;
 
   @override
   void initState() {
-    super.initState();
-
+    heater = this.widget.heater;
+    sub = heater.listenOnUpdateFromServer((heaterModel) {
+      handlePointerValueChanged(heaterModel.currentConfig!.temperature);
+      setState(() {});
+    });
+    handlePointerValueChanged(this.widget.heater.baseModel.temperature!.temperature);
     textEditingController = TextEditingController(text: tempString());
-    _setPointerValue(this.widget.heater.baseModel.currentConfig?.temperature ?? 21.0);
-    this.widget.heater.func = setState;
+    // _setPointerValue(this.widget.heater.baseModel.currentConfig?.temperature ?? 21.0);
+    super.initState();
   }
 
   @override
   void deactivate() {
     super.deactivate();
-    this.widget.heater.func = null;
+    sub.cancel();
   }
 
   @override
@@ -582,8 +556,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
   void handlePointerValueChanging(ValueChangingArgs args) {
     // if ((args.value.toInt() - _value).abs() > 2.4) {
     // args.cancel = true;
-    _value = _value.clamp(5, 35);
-    _setPointerValue(_value);
+    _setPointerValue(heater.baseModel.currentConfig!.temperature);
     // }
   }
 
@@ -591,6 +564,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
   void _setPointerValue(double value) {
     setState(() {
       _value = (value.clamp(5, 35) * 10).roundToDouble() / 10;
+
       _annotationValue = '${_value.toStringAsFixed(1)}';
     });
   }
