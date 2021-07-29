@@ -1,19 +1,5 @@
 import 'package:flutter/material.dart';
 
-class _SystemPadding extends StatelessWidget {
-  final Widget? child;
-
-  _SystemPadding({Key? key, this.child}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    var mediaQuery = MediaQuery.of(context);
-    return new AnimatedContainer(
-        padding: mediaQuery.viewInsets,
-        duration: const Duration(milliseconds: 0),
-        child: child);
-  }
-}
 class SimpleDialogSingleInput {
 
   static AlertDialog create(
@@ -46,10 +32,10 @@ class SimpleDialogSingleInput {
           ),
         ),
         actions: <Widget>[
-          new FlatButton(
+          new TextButton(
               child: new Text("Cancel"),
               onPressed: () => Navigator.pop(context!, "")),
-          new FlatButton(
+          new TextButton(
               child: new Text("Accept"),
               onPressed: () {
                 Navigator.pop(context!, "");

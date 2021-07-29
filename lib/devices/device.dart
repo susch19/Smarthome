@@ -13,7 +13,7 @@ abstract class Device<T extends BaseModel> extends StatefulWidget {
   final IconData icon;
   final int? id;
   T baseModel;
-  late HubConnection connection;
+  HubConnection connection;
   final SharedPreferences? prefs;
 
   bool? hasServerResponded;
@@ -42,7 +42,7 @@ abstract class Device<T extends BaseModel> extends StatefulWidget {
          
         ],
       ),
-      Text(baseModel.friendlyName.toString(), style: TextStyle())
+      Text(baseModel.friendlyName.toString(), style: TextStyle(), softWrap: true,textAlign: TextAlign.center, )
     ];
   }
 

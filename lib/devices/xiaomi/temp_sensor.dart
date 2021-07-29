@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';

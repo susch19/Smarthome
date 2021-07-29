@@ -7,7 +7,6 @@ import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
-import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -128,6 +127,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
 
   @override
   void initState() {
+    super.initState();
     this.widget.strip.func = setState;
     this.rgbw.r = (this.widget.strip.baseModel.colorNumber & 0xFF) >> 0;
     this.rgbw.g = (this.widget.strip.baseModel.colorNumber & 0xFF00) >> 8;
@@ -438,7 +438,7 @@ class RGBW {
     return ret;
   }
 
-  RGBW() {}
+  RGBW();
 
   RGBW.rgb(int red, int green, int blue) {
     r = red;

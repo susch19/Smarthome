@@ -21,14 +21,14 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 void main() async {
-  SyncFusionLicense.RegisterLicense();
+  SyncFusionLicense.registerLicense();
   WidgetsFlutterBinding.ensureInitialized();
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
   runApp(MyApp(savedThemeMode));
 }
 
 class MyApp extends StatelessWidget {
-  MyApp(this.savedThemeMode) {}
+  MyApp(this.savedThemeMode);
 
   final AdaptiveThemeMode? savedThemeMode;
 
@@ -70,7 +70,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   ForInput urlAddressInput = new ForInput();
   IconData? infoIcon;
   late HubConnection hubConnection;
-  AppLifecycleState? _notification;
   CertFile? certFile;
 
   @override
@@ -168,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         var type = prefs.getString("Type" + id.toString());
         BaseModel model = DeviceManager.jsonFactory[type!]!(jsonDecode(prefs.getString("Json" + id.toString())!));
         model.isConnected = false;
-        if (model.friendlyName == null) model.friendlyName = "";
+
         model.friendlyName += "(old)";
         if (sub != null) {
           model = DeviceManager.jsonFactory[type]!(sub);
@@ -193,10 +192,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     setState(() {
       infoIcon = Icons.refresh;
     });
-    if (hubConnection != null) {
-      hubConnection.off("Update");
-      hubConnection.stop();
-    }
+    hubConnection.off("Update");
+    hubConnection.stop();
     hubConnection = createHubConnection();
 
     hubConnection.on("Update", updateMethod);
@@ -390,7 +387,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
         break;
       case "RemoveAll":
-        for (int i = DeviceManager.devices.length-1; i >= 0; i--) {
+        for (int i = DeviceManager.devices.length - 1; i >= 0; i--) {
           var d = DeviceManager.devices.removeAt(i);
           prefs.remove("SHD" + d.id!.toString());
           prefs.remove("Json" + d.id!.toString());

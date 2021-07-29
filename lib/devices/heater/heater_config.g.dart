@@ -6,13 +6,12 @@ part of 'heater_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-HeaterConfig _$HeaterConfigFromJson(Map<String, dynamic> json) => HeaterConfig()
-  ..dayOfWeek = _$enumDecodeNullable(_$DayOfWeekEnumMap, json['dayOfWeek'])
-  ..timeOfDay = HeaterConfig.timeOfDayFromJson(json['timeOfDay'] as String)
-  ..temperature = (json['temperature'] as num?)?.toDouble();
+HeaterConfig _$HeaterConfigFromJson(Map<String, dynamic> json) => HeaterConfig(
+    _$enumDecodeNullable(_$DayOfWeekEnumMap, json['dayOfWeek'])!,
+    HeaterConfig.timeOfDayFromJson(json['timeOfDay'] as String)!,
+    (json['temperature'] as num).toDouble());
 
-Map<String, dynamic> _$HeaterConfigToJson(HeaterConfig instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$HeaterConfigToJson(HeaterConfig instance) => <String, dynamic>{
       'dayOfWeek': _$DayOfWeekEnumMap[instance.dayOfWeek],
       'timeOfDay': HeaterConfig.timeOfDayToJson(instance.timeOfDay),
       'temperature': instance.temperature,

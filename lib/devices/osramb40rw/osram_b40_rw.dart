@@ -22,7 +22,6 @@ class OsramB40RW extends Device<OsramB40RWModel> {
   Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String>? parameters]) async {
     await super.sendToServer(messageType, command, parameters);
     var message = new sm.Message(id, messageType, command, parameters);
-    var s = message.toJson();
     await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
 

@@ -1,7 +1,9 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-
+import 'package:smarthome/helper/iterable_extensions.dart';
 
 import 'heater_config.dart';
+import 'heater_temp_settings.dart';
 
 enum DismissDialogAction {
   cancel,
@@ -10,12 +12,12 @@ enum DismissDialogAction {
 }
 
 class TempScheduling extends StatefulWidget {
-  List<HeaterConfig>? heaterConf = <HeaterConfig>[];
+  List<HeaterConfig> heaterConfigs = <HeaterConfig>[];
 
-  TempScheduling({this.heaterConf});
+  TempScheduling(this.heaterConfigs);
 
   @override
-  TempSchedulingState createState() => new TempSchedulingState();
+  TempSchedulingState createState() => new TempSchedulingState(heaterConfigs);
 }
 
 enum Action { Add, Delete, TempChanged, TimeChanged, WeekdayChanged }
@@ -28,22 +30,26 @@ class HistoryAction<T> {
 }
 
 class TempSchedulingState extends State<TempScheduling> {
-  TempSchedulingState();
+  TempSchedulingState(this.heaterConfigs);
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
 
-  bool _autovalidate = false;
   bool _saveNeeded = false;
-  List<HeaterConfig>? heaterConfigs;
-  late List<HistoryAction> actions;
+  late Map<Tuple<TimeOfDay?, double?>, List<HeaterConfig>> hConfig;
+  List<HeaterConfig> heaterConfigs;
+  // late List<HistoryAction> actions;
   @override
   void initState() {
     super.initState();
-    if (widget.heaterConf != null)
-      heaterConfigs = widget.heaterConf;
-    else
-      heaterConfigs = <HeaterConfig>[];
-    actions = <HistoryAction>[];
+    heaterConfigs = widget.heaterConfigs;
+    // actions = <HistoryAction>[];
+
+    sortAndGroupHeaterConfigs();
+  }
+
+  void sortAndGroupHeaterConfigs() {
+    heaterConfigs.sort((x, y) => x.compareTo(y));
+    hConfig = heaterConfigs.groupBy((x) => new Tuple(x.timeOfDay, x.temperature));
   }
 
   Future<bool> _onWillPop() async {
@@ -77,192 +83,215 @@ class TempSchedulingState extends State<TempScheduling> {
   Future<bool> _handleSubmitted() async {
     final FormState form = _formKey.currentState!;
     if (!form.validate()) {
-      _autovalidate = true;
       return false;
     } else {
       form.save();
+      if (!_saveNeeded) {
+        Navigator.of(context).pop(Tuple(false, heaterConfigs));
+        return true;
+      }
+
       //double realWeight = recursiveParsing(weight);
-      Navigator.of(context).pop(heaterConfigs);
+      Navigator.of(context).pop(Tuple(true, heaterConfigs));
     }
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
     return new Scaffold(
       key: _scaffoldKey,
-      appBar: new AppBar(title: new Text("Temperatur Einstellungen"), actions: <Widget>[
-        new IconButton(
-          icon: Icon(Icons.undo),
-          onPressed: () => undoAction(),
-        ),
-        new IconButton(
-          icon: Icon(Icons.sort),
-          onPressed: () {
-            heaterConfigs!.sort((x, y) => x.compareTo(y));
-            setState(() {});
-          },
-        ),
-        new IconButton(icon: Icon(Icons.save), onPressed: () => _handleSubmitted())
-      ]),
+      appBar: new AppBar(
+          title: new Text("Temperatur Einstellungen"),
+          actions: <Widget>[new IconButton(icon: Icon(Icons.save), onPressed: () => _handleSubmitted())]),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: () {
-          setState(() {
-            var hc = HeaterConfig();
-            addHeaterConfig(hc);
-          });
+        onPressed: () async {
+          var res = await Navigator.push(
+              context,
+              new MaterialPageRoute<Tuple<bool, List<HeaterConfig>>>(
+                  builder: (BuildContext context) => HeaterTempSettings(Tuple(TimeOfDay.now(), 21.0), []),
+                  fullscreenDialog: true));
+          storeNewTempConfigs(res, []);
         },
       ),
       body: new Form(
           key: _formKey,
           onWillPop: _onWillPop,
-          autovalidate: _autovalidate,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: new ListView(
               padding: const EdgeInsets.all(16.0),
-              children: heaterConfigs!.map((x) => heaterConfigToWidget(x)).toList())),
+              children: hConfig.entries.map((x) => newHeaterConfigToWidget(x.key, x.value)).toList())),
     );
   }
 
-  undoAction() {
-    if (actions.length == 0) return;
-    var action = actions.last;
-    actions.remove(action);
-    switch (action.action) {
-      case Action.Add:
-        heaterConfigs!.remove(action.heaterConfig);
-        break;
-      case Action.Delete:
-        // heaterConfigs.insert(action.prevValue, action.heaterConfig);
-        break;
-      case Action.TimeChanged:
-        action.heaterConfig.timeOfDay = action.prevValue;
-        break;
-      case Action.WeekdayChanged:
-        action.heaterConfig.dayOfWeek = action.prevValue;
-        break;
-      case Action.TempChanged:
-        action.heaterConfig.temperature = action.prevValue;
-        break;
-      default:
-    }
-    setState(() {});
-  }
-
-  final List<String> weekdayListText = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-  final List<DropdownMenuItem> itemsForDropdown = buildItems();
-  Widget heaterConfigToWidget(HeaterConfig conf) {
-    // double width = MediaQuery.of(context).size.width;
-    // var val = null;
-    return Dismissible(
-      key: ValueKey(conf),
-      child: ListTile(
-        title: Row(
-          children: <Widget>[
-            DropdownButton(
-              value: conf.dayOfWeek!.index,
-              onChanged: (dynamic newValue) {
-                setState(() {
-                  actions.add(HistoryAction<DayOfWeek?>(Action.WeekdayChanged, conf, conf.dayOfWeek));
-                  conf.dayOfWeek = DayOfWeek.values[newValue];
-                });
-              },
-              items: DayOfWeek.values.map((val) {
-                return DropdownMenuItem(
-                  child: new Text(weekdayListText[val.index]),
-                  value: val.index,
-                );
-              }).toList(),
-            ),
-            TextButton(
-              child: Text(
-                "${conf.timeOfDay!.hour}:${conf.timeOfDay!.minute}",
+  Widget newHeaterConfigToWidget(Tuple<TimeOfDay?, double?> x, List<HeaterConfig> value) {
+    return Card(
+      child: GestureDetector(
+        child: MaterialButton(
+          onPressed: () async {
+            var res = await Navigator.push(
+                context,
+                new MaterialPageRoute<Tuple<bool, List<HeaterConfig>>>(
+                    builder: (BuildContext context) => HeaterTempSettings(x, value), fullscreenDialog: true));
+            storeNewTempConfigs(res, value);
+          },
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      children: value.map((x) => dayOfWeekChip(x.dayOfWeek)).toList(growable: false),
+                    ),
+                  ),
+                  Container(
+                    child: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        heaterConfigs.removeElements(value);
+                        _saveNeeded = true;
+                        sortAndGroupHeaterConfigs();
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () async {
-                var tod = await showTimePicker(context: context, initialTime: conf.timeOfDay!);
-                if (tod == null) return;
-                actions.add(HistoryAction<TimeOfDay?>(Action.TimeChanged, conf, conf.timeOfDay));
-                conf.timeOfDay = tod;
-                setState(() {});
-              },
-            ),
-            // WheelChooser.double(
-            //   onValueChanged: (s) {
-            //     // if (actions.last.heaterConfig != conf || actions.last.action != Action.TempChanged)
-            //     //   actions.add(HistoryAction<double>(Action.TempChanged, conf, conf.temperature));
-            //     conf.temperature = s + 0.005;
-            //   },
-            //   horizontal: false,
-            //   listWidth: 40.0,
-            //   listHeight: width / 2.55,
-            //   minValue: 5.0,
-            //   maxValue: 35.1,
-            //   step: 0.1,
-            //   initValue: conf.temperature + 0.005,
-            //   diameter: 2,
-            //   itemSize: 48,
-            //   selectTextStyle: TextStyle(color: Colors.black, fontSize: 14),
-            //   unSelectTextStyle: TextStyle(color: Colors.black45, fontSize: 11),
-            // ),
-            DropdownButton(
-                items: itemsForDropdown,
-                onChanged: (dynamic s) => setState(() {
-                      conf.temperature = (s/10.0);
-                    }),
-                value: (conf.temperature! * 10).round()), // ,)
-
-            IconButton(
-              icon: Icon(Icons.content_copy),
-              onPressed: () {
-                var hc = new HeaterConfig();
-                hc.dayOfWeek = conf.dayOfWeek;
-                hc.temperature = conf.temperature;
-                hc.timeOfDay = conf.timeOfDay;
-                addHeaterConfig(hc);
-              },
-            )
-            //  WheelChooser.integer(onValueChanged: (d){}, minValue: 5, maxValue: 35, step: 1, horizontal: true,)
-            //  WheelChooser.double(onValueChanged: (d){}, minValue: 5.0, maxValue: 35.0, step: 0.1, horizontal: true,)
-          ],
-        ),
-      ),
-      confirmDismiss: (dir) async {
-        var index = heaterConfigs!.indexOf(conf);
-        var ha = HistoryAction<Future<bool> Function(int, HistoryAction)>(Action.Delete, conf, (i, ha) async {
-          HistoryAction? before;
-          if (actions.length > 1) before = actions.elementAt(actions.length - 2);
-          while (true) {
-            if (actions.last == ha && actions.last.action == Action.Delete) {
-              await Future.delayed(Duration(milliseconds: 16));
-            } else if (before != null && actions.last == before) {
-              return false;
-            } else if (before == null && actions.length > 1) {
-              actions.remove(ha);
-              return true;
-            } else if (before == null && actions.length < 1) {
-              return false;
-            } else {
-              return true;
-            }
-          }
-        });
-        actions.add(ha);
-        return await ha.prevValue(index, ha);
-      },
-      onDismissed: (DismissDirection d) {
-        heaterConfigs!.remove(conf);
-      },
-      direction: DismissDirection.horizontal,
-      background: Container(
-        decoration: BoxDecoration(color: Theme.of(context).primaryColor),
-        child: ListTile(
-          leading: Icon(Icons.delete, color: Theme.of(context).accentIconTheme.color, size: 36.0),
+              Container(
+                margin: EdgeInsetsDirectional.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      x.item1!.format(context),
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 8.0),
+                    ),
+                    Text(
+                      x.item2!.toStringAsFixed(1) + "°C",
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            // crossAxisAlignment: CrossAxisAlignment.start,
+          ),
         ),
       ),
     );
   }
+
+  Widget dayOfWeekChip(DayOfWeek dOW) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+      child: Chip(
+        padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+        label: Text(DayOfWeekToStringMap[dOW]!),
+      ),
+    );
+  }
+
+  // final List<String> weekdayListText = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  // final List<DropdownMenuItem> itemsForDropdown = buildItems();
+  // Widget heaterConfigToWidget(HeaterConfig conf) {
+  //   // double width = MediaQuery.of(context).size.width;
+  //   // var val = null;
+  //   return Dismissible(
+  //     key: ValueKey(conf),
+  //     child: ListTile(
+  //       title: Row(
+  //         children: <Widget>[
+  //           DropdownButton(
+  //             value: conf.dayOfWeek!.index,
+  //             onChanged: (dynamic newValue) {
+  //               setState(() {
+  //                 actions.add(HistoryAction<DayOfWeek?>(Action.WeekdayChanged, conf, conf.dayOfWeek));
+  //                 conf.dayOfWeek = DayOfWeek.values[newValue];
+  //               });
+  //             },
+  //             items: DayOfWeek.values.map((val) {
+  //               return DropdownMenuItem(
+  //                 child: new Text(weekdayListText[val.index]),
+  //                 value: val.index,
+  //               );
+  //             }).toList(),
+  //           ),
+  //           TextButton(
+  //             child: Text(
+  //               "${conf.timeOfDay!.hour}:${conf.timeOfDay!.minute}",
+  //             ),
+  //             onPressed: () async {
+  //               var tod = await showTimePicker(context: context, initialTime: conf.timeOfDay!);
+  //               if (tod == null) return;
+  //               actions.add(HistoryAction<TimeOfDay?>(Action.TimeChanged, conf, conf.timeOfDay));
+  //               conf.timeOfDay = tod;
+  //               setState(() {});
+  //             },
+  //           ),
+
+  //           DropdownButton(
+  //               items: itemsForDropdown,
+  //               onChanged: (dynamic s) => setState(() {
+  //                     conf.temperature = (s / 10.0);
+  //                   }),
+  //               value: (conf.temperature! * 10).round()), // ,)
+
+  //           IconButton(
+  //             icon: Icon(Icons.content_copy),
+  //             onPressed: () {
+  //               var hc = new HeaterConfig();
+  //               hc.dayOfWeek = conf.dayOfWeek;
+  //               hc.temperature = conf.temperature;
+  //               hc.timeOfDay = conf.timeOfDay;
+  //               addHeaterConfig(hc);
+  //             },
+  //           )
+  //           //  WheelChooser.integer(onValueChanged: (d){}, minValue: 5, maxValue: 35, step: 1, horizontal: true,)
+  //           //  WheelChooser.double(onValueChanged: (d){}, minValue: 5.0, maxValue: 35.0, step: 0.1, horizontal: true,)
+  //         ],
+  //       ),
+  //     ),
+  //     confirmDismiss: (dir) async {
+  //       var index = heaterConfigs!.indexOf(conf);
+  //       var ha = HistoryAction<Future<bool> Function(int, HistoryAction)>(Action.Delete, conf, (i, ha) async {
+  //         HistoryAction? before;
+  //         if (actions.length > 1) before = actions.elementAt(actions.length - 2);
+  //         while (true) {
+  //           if (actions.last == ha && actions.last.action == Action.Delete) {
+  //             await Future.delayed(Duration(milliseconds: 16));
+  //           } else if (before != null && actions.last == before) {
+  //             return false;
+  //           } else if (before == null && actions.length > 1) {
+  //             actions.remove(ha);
+  //             return true;
+  //           } else if (before == null && actions.length < 1) {
+  //             return false;
+  //           } else {
+  //             return true;
+  //           }
+  //         }
+  //       });
+  //       actions.add(ha);
+  //       return await ha.prevValue(index, ha);
+  //     },
+  //     onDismissed: (DismissDirection d) {
+  //       heaterConfigs!.remove(conf);
+  //     },
+  //     direction: DismissDirection.horizontal,
+  //     background: Container(
+  //       decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+  //       child: ListTile(
+  //         leading: Icon(Icons.delete, color: Theme.of(context).accentIconTheme.color, size: 36.0),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   static List<DropdownMenuItem> buildItems() {
     var menuItems = <DropdownMenuItem>[];
@@ -272,9 +301,34 @@ class TempSchedulingState extends State<TempScheduling> {
     return menuItems;
   }
 
-  void addHeaterConfig(HeaterConfig hc) {
-    heaterConfigs!.add(hc);
-    actions.add(HistoryAction<bool>(Action.Add, hc, false));
+  void storeNewTempConfigs(Tuple<bool, List<HeaterConfig>>? res, List<HeaterConfig> value) {
+    if (res == null || res.item1 == false) return;
+    heaterConfigs.removeElements(value);
+
+    res.item2.forEach((element) {
+      var hc = heaterConfigs
+          .firstOrNull((x) => x.dayOfWeek.index == element.dayOfWeek.index && x.timeOfDay == element.timeOfDay);
+      if (hc != null) heaterConfigs.remove(hc);
+      heaterConfigs.add(element);
+    });
+    _saveNeeded = true;
+    sortAndGroupHeaterConfigs();
     setState(() {});
   }
+
+  // void addHeaterConfig(HeaterConfig hc) {
+  //   heaterConfigs!.add(hc);
+  //   actions.add(HistoryAction<bool>(Action.Add, hc, false));
+  //   setState(() {});
+  // }
+}
+
+class Tuple<T1, T2> extends Equatable {
+  T1 item1;
+  T2 item2;
+
+  Tuple(this.item1, this.item2);
+
+  @override
+  List<Object?> get props => [item1, item2];
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_null_comparison
+
 import 'package:flutter/material.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
@@ -22,8 +24,7 @@ class FloaltPanel extends Device<FloaltPanelModel> {
   Future sendToServer(sm.MessageType messageType, sm.Command command, [List<String>? parameters]) async {
     await super.sendToServer(messageType, command, parameters);
     var message = new sm.Message(id, messageType, command, parameters);
-    var s = message.toJson();
-    // await connection.invoke("Update", args: <Object>[message.toJson()]);
+    await connection.invoke("Update", args: <Object>[message.toJson()]);
   }
 
   @override
@@ -216,7 +217,6 @@ class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSlid
     bool isEnabled = false,
     double additionalActiveTrackHeight = 2,
   }) {
-    assert(context != null);
     assert(offset != null);
     assert(parentBox != null);
     assert(sliderTheme != null);

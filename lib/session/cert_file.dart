@@ -4,6 +4,6 @@ class CertFile{
     String email; 
     String pw; 
     
-    CertFile(this.serverUrl, this.username, this.email, this.pw){}
+    CertFile(this.serverUrl, this.username, this.email, this.pw);
 
 }
