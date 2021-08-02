@@ -66,6 +66,7 @@ const _$CommandEnumMap = {
   Command.Mesh: 'Mesh',
   Command.Delay: 'Delay',
   Command.Off: 'Off',
+  Command.On: 'On',
   Command.RGB: 'RGB',
   Command.Strobo: 'Strobo',
   Command.RGBCycle: 'RGBCycle',

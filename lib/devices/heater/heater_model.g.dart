@@ -22,7 +22,9 @@ HeaterModel _$HeaterModelFromJson(Map<String, dynamic> json) => HeaterModel(
           ? null
           : HeaterConfig.fromJson(
               json['currentCalibration'] as Map<String, dynamic>)
-      ..firmwareVersion = json['firmwareVersion'] as String?;
+      ..firmwareVersion = json['firmwareVersion'] as String?
+      ..disableLed = json['disableLed'] as bool?
+      ..disableHeating = json['disableHeating'] as bool?;
 
 Map<String, dynamic> _$HeaterModelToJson(HeaterModel instance) =>
     <String, dynamic>{
@@ -34,4 +36,6 @@ Map<String, dynamic> _$HeaterModelToJson(HeaterModel instance) =>
       'currentConfig': instance.currentConfig,
       'currentCalibration': instance.currentCalibration,
       'firmwareVersion': instance.firmwareVersion,
+      'disableLed': instance.disableLed,
+      'disableHeating': instance.disableHeating,
     };

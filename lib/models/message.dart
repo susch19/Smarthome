@@ -4,6 +4,8 @@ import 'package:json_annotation/json_annotation.dart';
 enum MessageType { Get, Update, Options }
 
 enum Command {
+  Off,
+  On,
   WhoIAm,
   IP,
   Time,
@@ -16,7 +18,6 @@ enum Command {
   OnNewConnection,
   Mesh,
   Delay,
-  Off,
   RGB,
   Strobo,
   RGBCycle,

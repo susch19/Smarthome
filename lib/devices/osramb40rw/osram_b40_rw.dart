@@ -3,17 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
+import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../device_manager.dart';
 import 'osram_b40_rw_model.dart';
 
 class OsramB40RW extends Device<OsramB40RWModel> {
-  OsramB40RW(int? id, OsramB40RWModel model, HubConnection connection, IconData icon, SharedPreferences? prefs)
-      : super(id, model, connection, icon, prefs);
+  OsramB40RW(int? id, OsramB40RWModel model, HubConnection connection, IconData icon)
+      : super(id, model, connection, icon);
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -21,42 +21,26 @@ class OsramB40RW extends Device<OsramB40RWModel> {
   }
 
   @override
-  Widget dashboardView() {
-    return Column(
-      children: getDefaultHeader(
-              Container(
-                margin: EdgeInsets.only(right: 32.0),
-              ),
-              baseModel.available) +
-          (<Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                MaterialButton(
-                  child: Row(
-                    children: [
-                      Text(
-                        "An",
-                        style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
-                      ),
-                    ],
-                  ),
-                  onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
-                ),
-                MaterialButton(
-                  child: Row(
-                    children: [
-                      Text(
-                        "Aus",
-                        style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 16) : TextStyle(),
-                      ),
-                    ],
-                  ),
-                  onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
-                ),
-              ],
-            ),
-          ]),
+  Widget dashboardCardBody() {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      runAlignment: WrapAlignment.spaceEvenly,
+      children: [
+        MaterialButton(
+          child: Text(
+            "An",
+            style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+          ),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
+        ),
+        MaterialButton(
+          child: Text(
+            "Aus",
+            style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+          ),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        ),
+      ],
     );
   }
 
@@ -114,14 +98,15 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: AppBar(
-        title: new Text(this.widget.osramB40RW.baseModel.friendlyName),
-      ),
-      body: buildBody(this.widget.osramB40RW.baseModel),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.power_settings_new),
-        onPressed: () => this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
-      ),
+        appBar: AppBar(
+          title: new Text(this.widget.osramB40RW.baseModel.friendlyName),
+        ),
+        body: buildBody(this.widget.osramB40RW.baseModel),
+        floatingActionButton: FloatingActionButton(
+          child: const Icon(Icons.power_settings_new),
+          onPressed: () => this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        ),
+      
     );
   }
 
@@ -140,16 +125,21 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
         ListTile(
           title: Text("Helligkeit aktuell " + model.brightness.toStringAsFixed(0)),
           subtitle: GestureDetector(
-            child: Slider(
-              value: model.brightness.toDouble(), // 153 - 370
-              onChanged: (d) {
-                setState(() => model.brightness = d.round());
-                sliderChange(changeBrightness, 500, d);
-              },
-              min: 0.0,
-              max: 100.0,
-              divisions: 100,
-              label: '${model.brightness}',
+            child: SliderTheme(
+              child: Slider(
+                value: model.brightness.toDouble(),
+                onChanged: (d) {
+                  setState(() => model.brightness = d.round());
+                  sliderChange(changeBrightness, 500, d);
+                },
+                min: 0.0,
+                max: 100.0,
+                divisions: 100,
+                label: '${model.brightness}',
+              ),
+              data: SliderTheme.of(context).copyWith(
+                  trackShape: GradientRoundedRectSliderTrackShape(
+                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
             ),
             onTapCancel: () => changeBrightness(model.brightness.toDouble()),
           ),
@@ -157,16 +147,21 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
         ListTile(
           title: Text("Farbtemparatur aktuell " + (model.colorTemp - 153).toStringAsFixed(0)),
           subtitle: GestureDetector(
-            child: Slider(
-              value: ((model.colorTemp - 153).clamp(0, 217)).toDouble(),
-              onChanged: (d) {
-                setState(() => model.colorTemp = d.round() + 153);
-                sliderChange(changeColorTemp, 500, d + 153.0);
-              },
-              min: 0.0,
-              max: 217.0,
-              divisions: 217,
-              label: '${(model.colorTemp - 153).clamp(0, 217)}',
+            child: SliderTheme(
+              child: Slider(
+                value: ((model.colorTemp - 153).clamp(0, 217)).toDouble(),
+                onChanged: (d) {
+                  setState(() => model.colorTemp = d.round() + 153);
+                  sliderChange(changeColorTemp, 500, d + 153.0);
+                },
+                min: 0.0,
+                max: 217.0,
+                divisions: 217,
+                label: '${(model.colorTemp - 153).clamp(0, 217)}',
+              ),
+              data: SliderTheme.of(context).copyWith(
+                  trackShape: GradientRoundedRectSliderTrackShape(
+                      LinearGradient(colors: [Color.fromARGB(255, 255, 209, 163), Color.fromARGB(255, 255, 147, 44)]))),
             ),
             onTapCancel: () => changeColorTemp(model.colorTemp.toDouble()),
           ),

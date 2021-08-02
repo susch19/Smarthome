@@ -3,13 +3,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
+import 'package:smarthome/helper/preference_manager.dart';
+import 'package:smarthome/icons/smarthome_icons.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:smarthome/icons/icons.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
@@ -17,8 +18,8 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'temp_scheduling.dart';
 
 class Heater extends Device<HeaterModel> {
-  Heater(int? id, HeaterModel baseModel, HubConnection connection, IconData icon, SharedPreferences? prefs)
-      : super(id, baseModel, connection, icon, prefs);
+  Heater(int? id, HeaterModel baseModel, HubConnection connection, IconData icon)
+      : super(id, baseModel, connection, icon);
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -27,37 +28,45 @@ class Heater extends Device<HeaterModel> {
 
   void updateFromServer(Map<String, dynamic> message) {
     super.updateFromServer(message);
-    prefs?.setString("Json" + id.toString(), jsonEncode(message));
+    PreferencesManager.instance.setString("Json" + id.toString(), jsonEncode(message));
   }
 
   @override
-  Widget dashboardView() {
-    XiaomiTempSensor xs = DeviceManager.devices.firstWhere((x) => x.id == baseModel.xiaomiTempSensor, orElse: () {
-      return XiaomiTempSensor(0, TempSensorModel(0, "", false), connection, icon, prefs);
-    }) as XiaomiTempSensor;
+  Widget dashboardCardBody() {
+    // XiaomiTempSensor xs = DeviceManager.devices.firstWhere((x) => x.id == baseModel.xiaomiTempSensor, orElse: () {
+    //   return XiaomiTempSensor(0, TempSensorModel(0, "", false), connection, icon);
+    // }) as XiaomiTempSensor;
     return Column(
-      children: (getDefaultHeader(
-              Container(
-                margin: EdgeInsets.only(right: 32.0),
-              ),
-              baseModel.isConnected) +
-          <Widget>[
+      children: <Widget>[
             Row(children: [
               Text(
                 (baseModel.temperature?.temperature.toStringAsFixed(1) ?? ""),
-                style: TextStyle(fontWeight: FontWeight.normal),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
               ),
-              Text(" °C / "),
+              Text(
+                " °C",
+                style: TextStyle(fontSize: 18),
+              ),
+            ], mainAxisAlignment: MainAxisAlignment.center),
+            Container(
+              height: 2,
+            ),
+            Row(children: [
               Text(
                 baseModel.currentConfig == null
                     ? ""
                     : ((baseModel.currentConfig?.temperature.toStringAsFixed(1) ?? "")),
+                style: TextStyle(fontWeight: FontWeight.normal),
               ),
-              Text("°C")
+              Text(
+                "°C",
+                style: TextStyle(fontWeight: FontWeight.normal),
+              )
             ], mainAxisAlignment: MainAxisAlignment.center),
-            (xs.id == 0 ? Text(baseModel.xiaomiTempSensor.toString()) : Text(xs.baseModel.friendlyName)),
+
+            // (xs.id == 0 ? Text(baseModel.xiaomiTempSensor.toString()) : Text(xs.baseModel.friendlyName)),
           ] +
-          (DeviceManager.showDebugInformation ? [Text(baseModel.id.toString())] : <Widget>[])),
+          (DeviceManager.showDebugInformation ? [Text(baseModel.id.toString())] : <Widget>[]),
     );
   }
 
@@ -92,7 +101,8 @@ class _HeaterScreenState extends State<HeaterScreen> {
       handlePointerValueChanged(heaterModel.currentConfig!.temperature);
       setState(() {});
     });
-    handlePointerValueChanged(this.widget.heater.baseModel.temperature!.temperature);
+
+    handlePointerValueChanged(this.widget.heater.baseModel.currentConfig?.temperature ?? 21);
     textEditingController = TextEditingController(text: tempString());
     // _setPointerValue(this.widget.heater.baseModel.currentConfig?.temperature ?? 21.0);
     super.initState();
@@ -113,18 +123,20 @@ class _HeaterScreenState extends State<HeaterScreen> {
           -1,
           TempSensorModel(-1, "", false)..temperature = this.widget.heater.baseModel.temperature?.temperature ?? 21,
           this.widget.heater.connection,
-          this.widget.heater.icon,
-          this.widget.heater.prefs);
+          this.widget.heater.icon);
     }) as XiaomiTempSensor;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: TabBar(
             tabs: [
               Tab(
-                icon: Text("Heater " + this.widget.heater.baseModel.friendlyName),
+                icon: Icon(this.widget.heater.icon),
+              ),
+              Tab(
+                icon: Icon(Icons.settings),
               ),
               Tab(icon: Icon(SmarthomeIcons.temperature)),
             ],
@@ -134,6 +146,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
             TabBarView(
           children: [
             buildColumnView(width, xs),
+            buildSettingsView(width, xs),
             ((xs.id ?? -1) > 0)
                 ? XiaomiTempSensorScreen(xs, showAppBar: false)
                 : Text("Kein Xiaomi Temperatursensor vorhanden")
@@ -167,6 +180,15 @@ class _HeaterScreenState extends State<HeaterScreen> {
           margin: EdgeInsets.only(left: 8, right: 8, top: 8.0),
           child: Row(
             children: [
+              Container(margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: Icon(Icons.person)),
+              Text(widget.heater.baseModel.friendlyName),
+            ],
+          ),
+        ),
+        Card(
+          margin: EdgeInsets.only(left: 8, right: 8, top: 8.0),
+          child: Row(
+            children: [
               Container(margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: Icon(Icons.timer)),
               Text("Zuletzt Empfangen: "),
               Text(widget.heater.baseModel.temperature == null
@@ -195,60 +217,12 @@ class _HeaterScreenState extends State<HeaterScreen> {
             ],
           ),
         ),
-        Card(
-          margin: EdgeInsets.only(left: 8, right: 8, top: 8),
-          child: Row(
-            children: [
-              Container(
-                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                  child: Icon(SmarthomeIcons.temperature)),
-              Text("Sensor: "),
-              DropdownButton(
-                items: (DeviceManager.getDevicesOfType<XiaomiTempSensor>()
-                    .map((f) => DropdownMenuItem(
-                          child: Text("${f.baseModel.friendlyName} ${f.baseModel.temperature}°C"),
-                          value: f,
-                        ))
-                    .toList()),
-                onChanged: (dynamic a) {
-                  this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping, [
-                    a.id.toString(),
-                    this.widget.heater.baseModel.xiaomiTempSensor == null
-                        ? "0"
-                        : this.widget.heater.baseModel.xiaomiTempSensor.toString()
-                  ]);
-                  this.widget.heater.baseModel.xiaomiTempSensor = a.id;
-                  setState(() {});
-                },
-                value: ((xs.id ?? -1) < 0 ? null : xs),
-              ),
-            ],
-          ),
-        ),
-        Card(
-          margin: EdgeInsets.only(left: 8, right: 8, top: 8),
-          child: MaterialButton(
-            onPressed: () => _pushTempSettings(context),
-            child: Row(
-              children: [
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4.0),
-                  child: Icon(Icons.settings),
-                ),
-                TextButton(
-                  onPressed: () => _pushTempSettings(context),
-                  child: Text("Temperatur Einstellungen"),
-                ),
-              ],
-            ),
-          ),
-        ),
         Container(
           margin: EdgeInsets.only(top: 16.0, bottom: 8.0),
-          child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+          child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
             Text(
               _annotationValue,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
             ),
             Text(
               ' °C',
@@ -314,16 +288,6 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
                 majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                 pointers: <GaugePointer>[
-                  // RangePointer(
-                  //     color: Colors.transparent,
-                  //     value: _markerValue,
-                  //     gradient: SweepGradient(
-                  //       colors: [Colors.blue.shade700, Colors.blue.shade100],
-                  //       stops: <double>[0.5, 1],
-                  //     ),
-                  //     cornerStyle: CornerStyle.endCurve,
-                  //     width: 0.055,
-                  //     sizeUnit: GaugeSizeUnit.factor),
                   MarkerPointer(
                     value: _value,
                     elevation: 1,
@@ -419,129 +383,6 @@ class _HeaterScreenState extends State<HeaterScreen> {
         ),
       ],
     );
-
-    // return Column(
-    //   children: (DeviceManager.showDebugInformation
-    //           ? <Widget>[
-    //               Row(
-    //                 children: <Widget>[Text("Id: " + widget.heater.baseModel.id.toString())],
-    //               ),
-    //               Row(
-    //                 children: <Widget>[Text("" + widget.heater.baseModel.firmwareVersion.toString())],
-    //               )
-    //             ]
-    //           : <Widget>[]) +
-    //       ([
-    //         Row(
-    //           children: <Widget>[
-    //             Text("Erreichbar: " + ((widget.heater.baseModel.isConnected) ? "Ja" : "Nein"))
-    //           ],
-    //         ),
-    //         //Text(this.widget.heater.printableInformation.length > 0 ? this.widget.heater.printableInformation.first : ""),
-    //         Row(
-    //           children: <Widget>[
-    //             Text("Ausgelesene Temperatur: "),
-    //             Text(widget.heater.baseModel.temperature?.temperature?.toStringAsFixed(1) ?? "Keine Daten"),
-    //             Text(widget.heater.baseModel.temperature?.temperature != null ? "°C" : ""),
-    //           ],
-    //         ),
-    //         Row(
-    //           children: <Widget>[
-    //             Text("Zuletzt Empfangen: "),
-    //             Text(widget.heater.baseModel.temperature == null
-    //                 ? "Keine Daten vorliegend"
-    //                 : DayOfWeekToStringMap[widget.heater.baseModel.temperature!.dayOfWeek!] +
-    //                     " " +
-    //                     widget.heater.baseModel.temperature!.timeOfDay!.format(context)),
-    //           ],
-    //         ),
-    //         Row(
-    //           children: <Widget>[
-    //             Text("Aktuelles Ziel: "),
-    //             Text(widget.heater.baseModel.currentConfig?.temperature == null
-    //                 ? "Kein Ziel"
-    //                 : widget.heater.baseModel.currentConfig!.temperature!.toStringAsFixed(1) +
-    //                     "°C " +
-    //                     "(" +
-    //                     DayOfWeekToStringMap[widget.heater.baseModel.currentConfig!.dayOfWeek!] +
-    //                     " " +
-    //                     widget.heater.baseModel.currentConfig!.timeOfDay!.format(context) +
-    //                     ")"),
-    //           ],
-    //         ),
-    //         Row(
-    //           children: <Widget>[
-    //             Text("Kalibrierung: "),
-    //             Text(widget.heater.baseModel.currentCalibration?.temperature == null
-    //                 ? "Kein Ziel"
-    //                 : widget.heater.baseModel.currentCalibration!.temperature!.toStringAsFixed(1) +
-    //                     "°C " +
-    //                     "(" +
-    //                     DayOfWeekToStringMap[widget.heater.baseModel.currentCalibration!.dayOfWeek!] +
-    //                     " " +
-    //                     widget.heater.baseModel.currentCalibration!.timeOfDay!.format(context) +
-    //                     ")"),
-    //           ],
-    //         ),
-    //         Row(
-    //           children: <Widget>[
-    //             Text("Wunschtemperatur: "),
-    //             WheelChooser.double(
-    //               onValueChanged: (s) => temp = s,
-    //               horizontal: true,
-    //               listWidth: 40.0,
-    //               listHeight: width / 2.5,
-    //               minValue: 5.0,
-    //               maxValue: 35.1,
-    //               step: 0.1,
-    //               initValue: temp = (((widget.heater.baseModel).temperature?.temperature ?? 0) < 5)
-    //                   ? 21.0
-    //                   : (widget.heater.baseModel).temperature!.temperature,
-    //               diameter: 2,
-    //               itemSize: 48,
-    //               selectTextStyle: TextStyle( fontSize: 14, fontWeight: FontWeight.bold),
-    //               unSelectTextStyle: TextStyle( fontSize: 11),
-    //             ),
-    //             MaterialButton(
-    //               onPressed: () =>
-    //                   this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.Temp, <String>[temp.toString()]),
-    //               child: Text("SENDEN"),
-    //             )
-    //           ],
-    //         ),
-    //         Row(
-    //           children: <Widget>[
-    //             Text("Xiaomi Sensor:"),
-    //             DropdownButton(
-    //               items: (DeviceManager.getDevicesOfType<XiaomiTempSensor>()
-    //                   .map((f) => DropdownMenuItem(
-    //                         child: Text("${f.baseModel.friendlyName} ${f.baseModel.temperature}°C"),
-    //                         value: f,
-    //                       ))
-    //                   .toList()),
-    //               onChanged: (dynamic a) {
-    //                 this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping, [
-    //                   a.id.toString(),
-    //                   this.widget.heater.baseModel.xiaomiTempSensor == null
-    //                       ? "0"
-    //                       : this.widget.heater.baseModel.xiaomiTempSensor.toString()
-    //                 ]);
-    //                 this.widget.heater.baseModel.xiaomiTempSensor = a.id;
-    //               },
-    //               value: xs,
-    //             ),
-    //           ],
-    //         ),
-    //         TextButton(
-    //           onPressed: () => this.widget.heater.sendToServer(sm.MessageType.Options, sm.Command.Mode, []),
-    //           child: Text("HeizLED an/ausschalten"),
-    //         ),
-    //         TextButton(
-    //           onPressed: () => _pushTempSettings(context),
-    //           child: Text("Temperatur Einstellungen"),
-    //         ),
-    //       ]),
-    // );
   }
 
   void handlePointerValueChanged(double value) {
@@ -567,5 +408,106 @@ class _HeaterScreenState extends State<HeaterScreen> {
 
       _annotationValue = '${_value.toStringAsFixed(1)}';
     });
+  }
+
+  buildSettingsView(double width, XiaomiTempSensor xs) {
+    return Column(
+      children: [
+        Card(
+          margin: EdgeInsets.only(left: 8, right: 8, top: 8),
+          child: Row(
+            children: [
+              Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  child: Icon(SmarthomeIcons.temperature)),
+              Text("Sensor: "),
+              DropdownButton(
+                items: (DeviceManager.getDevicesOfType<XiaomiTempSensor>()
+                    .map((f) => DropdownMenuItem(
+                          child: Text("${f.baseModel.friendlyName} ${f.baseModel.temperature}°C"),
+                          value: f,
+                        ))
+                    .toList()),
+                onChanged: (dynamic a) {
+                  this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping, [
+                    a.id.toString(),
+                    this.widget.heater.baseModel.xiaomiTempSensor == null
+                        ? "0"
+                        : this.widget.heater.baseModel.xiaomiTempSensor.toString()
+                  ]);
+                  this.widget.heater.baseModel.xiaomiTempSensor = a.id;
+                  setState(() {});
+                },
+                value: ((xs.id ?? -1) < 0 ? null : xs),
+              ),
+            ],
+          ),
+        ),
+        Card(
+          margin: EdgeInsets.only(left: 8, right: 8, top: 8),
+          child: Row(
+            children: [
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                child: Icon(this.widget.heater.icon),
+              ),
+              Text("Heizung: "),
+              Switch(
+                value: !this.widget.heater.baseModel.disableHeating!,
+                onChanged: (val) {
+                  sm.Command command;
+                  if (val)
+                    command = sm.Command.On;
+                  else
+                    command = sm.Command.Off;
+                  this.widget.heater.sendToServer(sm.MessageType.Update, command, []);
+                },
+              ),
+            ],
+          ),
+        ),
+        Card(
+          margin: EdgeInsets.only(left: 8, right: 8, top: 8),
+          child: Row(
+            children: [
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                child: Icon(SmarthomeIcons.lamp),
+              ),
+              Text("Blaue Led: "),
+              Switch(
+                value: !this.widget.heater.baseModel.disableLed!,
+                onChanged: (val) {
+                  sm.Command command;
+                  if (val)
+                    command = sm.Command.On;
+                  else
+                    command = sm.Command.Off;
+                  this.widget.heater.sendToServer(sm.MessageType.Options, command, []);
+                },
+              ),
+            ],
+          ),
+        ),
+        Card(
+          margin: EdgeInsets.only(left: 8, right: 8, top: 8),
+          child: MaterialButton(
+            onPressed: () => _pushTempSettings(context),
+            child: Row(
+              children: [
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0),
+                  child: Icon(Icons.settings),
+                ),
+                TextButton(
+                  onPressed: () => _pushTempSettings(context),
+                  child: Text("Temperatur Einstellungen"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

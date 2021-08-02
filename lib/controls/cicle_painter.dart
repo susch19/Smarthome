@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class CirclePainter extends CustomPainter {
@@ -17,6 +16,6 @@ class CirclePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+    return true;
   }
 }

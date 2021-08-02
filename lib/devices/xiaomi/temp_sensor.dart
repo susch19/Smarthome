@@ -8,7 +8,6 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/xiaomi/temp_sensor_model.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/models/message.dart' as sm;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
@@ -19,8 +18,8 @@ import 'package:smarthome/icons/icons.dart';
 import '../device_manager.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
-  XiaomiTempSensor(int? id, TempSensorModel model, HubConnection connection, IconData icon, SharedPreferences? prefs)
-      : super(id, model, connection, icon, prefs);
+  XiaomiTempSensor(int? id, TempSensorModel model, HubConnection connection, IconData icon)
+      : super(id, model, connection, icon);
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -28,36 +27,49 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
   }
 
   @override
-  Widget dashboardView() {
+  Widget? lowerLeftWidget() {
+    return Icon(
+      (baseModel.battery > 80
+          ? SmarthomeIcons.bat4
+          : (baseModel.battery > 60
+              ? SmarthomeIcons.bat3
+              : (baseModel.battery > 40
+                  ? SmarthomeIcons.bat2
+                  : (baseModel.battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))),
+      size: 20,
+    );
+  }
+
+  @override
+  Widget dashboardCardBody() {
     return Column(
-        children: getDefaultHeader(
-                Container(
-                    margin: EdgeInsets.only(right: 8.0),
-                    child: Icon((baseModel.battery > 80
-                        ? SmarthomeIcons.bat4
-                        : (baseModel.battery > 60
-                            ? SmarthomeIcons.bat3
-                            : (baseModel.battery > 40
-                                ? SmarthomeIcons.bat2
-                                : (baseModel.battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))))),
-                baseModel.available) +
-            (<Widget>[
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [Text((baseModel.temperature.toStringAsFixed(2)), style: TextStyle()), Text(" °C")]),
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [Text((baseModel.humidity.toStringAsFixed(2)), style: TextStyle()), Text(" %")]),
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [Text((baseModel.pressure.toStringAsFixed(1)), style: TextStyle()), Text(" kPA")]),
-                ] +
-                (DeviceManager.showDebugInformation
-                    ? <Widget>[
-                        Text(baseModel.lastReceived.add(Duration(hours: 1)).toString()),
-                        Text(baseModel.id.toRadixString(16))
-                      ]
-                    : <Widget>[])));
+        children: (<Widget>[
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text((baseModel.temperature.toStringAsFixed(2)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                Text(" °C", style: TextStyle(fontSize: 18))
+              ]),
+              Container(
+                height: 2,
+              ),
+              Wrap(
+                alignment: WrapAlignment.center,
+                runAlignment: WrapAlignment.spaceEvenly,
+                children: [
+                  Text((baseModel.humidity.toStringAsFixed(2) + " %"), style: TextStyle()),
+                  Container(
+                    width: 8,
+                  ),
+                  Text((baseModel.pressure.toStringAsFixed(1) + " kPA"), style: TextStyle()),
+                ],
+              ),
+            ] +
+            (DeviceManager.showDebugInformation
+                ? <Widget>[
+                    Text(baseModel.lastReceived.add(Duration(hours: 1)).toString()),
+                    Text(baseModel.id.toRadixString(16))
+                  ]
+                : <Widget>[])));
   }
 
   @override
@@ -119,35 +131,35 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: this.widget.showAppBar,
+        length: 4,
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: this.widget.showAppBar,
 
-          // flexibleSpace: Text("Xiaomi Sensor " + this.widget.tempSensor.baseModel.friendlyName),
-          title: TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.home)),
-              Tab(icon: Icon(SmarthomeIcons.temperature)),
-              Tab(icon: Icon(Icons.cloud)),
-              Tab(
-                icon: Icon(
-                  SmarthomeIcons.wi_barometer,
-                  size: 38.0,
-                ),
-              )
+            // flexibleSpace: Text("Xiaomi Sensor " + this.widget.tempSensor.baseModel.friendlyName),
+            title: TabBar(
+              tabs: [
+                Tab(icon: Icon(Icons.home)),
+                Tab(icon: Icon(SmarthomeIcons.temperature)),
+                Tab(icon: Icon(Icons.cloud)),
+                Tab(
+                  icon: Icon(
+                    SmarthomeIcons.wi_barometer,
+                    size: 38.0,
+                  ),
+                )
+              ],
+            ),
+          ),
+          body: TabBarView(
+            children: [
+              buildListView(this.widget.tempSensor!.baseModel),
+              buildGraphViewTemp(),
+              buildGraphViewHumidity(),
+              buildGraphViewPressure(),
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            buildListView(this.widget.tempSensor!.baseModel),
-            buildGraphViewTemp(),
-            buildGraphViewHumidity(),
-            buildGraphViewPressure(),
-          ],
-        ),
-      ),
     );
   }
 

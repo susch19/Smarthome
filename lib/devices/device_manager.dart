@@ -1,8 +1,11 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
+import 'package:smarthome/helper/preference_manager.dart';
 
 import '../icons/smarthome_icons.dart';
 import 'device_exporter.dart';
@@ -51,7 +54,7 @@ class DeviceManager {
     }
   }
 
-  static void sortDevices(SharedPreferences? prefs) {
+  static void sortDevices() {
     //currentSort .sort(sortDevices)
     switch (DeviceManager.currentSort) {
       case SortTypes.NameAsc:
@@ -73,17 +76,17 @@ class DeviceManager {
         devices.sort((x, b) => b.baseModel.id.compareTo(x.baseModel.id));
         break;
     }
-    prefs?.setInt("SortOrder", DeviceManager.currentSort.index);
+    PreferencesManager.instance.setInt("SortOrder", DeviceManager.currentSort.index);
   }
 
   static final ctorFactory =
-      <String, Object Function(int? id, BaseModel model, HubConnection con, SharedPreferences? sp)>{
+      <String, Object Function(int? id, BaseModel model, HubConnection con)>{
     //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
-    'Heater': (i, s, h, sp) => Heater(i, s as HeaterModel, h, Icons.whatshot, sp),
-    'XiaomiTempSensor': (i, s, h, sp) => XiaomiTempSensor(i, s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor, sp),
-    'LedStrip': (i, s, h, sp) => LedStrip(i, s as LedStripModel, h, Icons.lightbulb_outline, sp),
-    'FloaltPanel': (i, s, h, sp) => FloaltPanel(i, s as FloaltPanelModel, h, Icons.crop_square, sp),
-    'OsramB40RW': (i, s, h, sp) => OsramB40RW(i, s as OsramB40RWModel, h, Icons.lightbulb_outline, sp),
+    'Heater': (i, s, h) => Heater(i, s as HeaterModel, h, Icons.whatshot),
+    'XiaomiTempSensor': (i, s, h) => XiaomiTempSensor(i, s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor),
+    'LedStrip': (i, s, h) => LedStrip(i, s as LedStripModel, h, Icons.lightbulb_outline),
+    'FloaltPanel': (i, s, h) => FloaltPanel(i, s as FloaltPanelModel, h, Icons.crop_square),
+    'OsramB40RW': (i, s, h) => OsramB40RW(i, s as OsramB40RWModel, h, Icons.lightbulb_outline),
   };
   static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),

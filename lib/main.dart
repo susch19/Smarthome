@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/session/cert_file.dart';
@@ -17,9 +19,14 @@ import 'package:smarthome/syncfusion.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
+import 'session/permanent_retry_policy.dart';
+
 void main() async {
   SyncFusionLicense.registerLicense();
   WidgetsFlutterBinding.ensureInitialized();
+  var prefs = await SharedPreferences.getInstance();
+  PreferencesManager.instance = PreferencesManager(prefs);
+
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
   runApp(MyApp(savedThemeMode));
 }
@@ -27,6 +34,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   MyApp(this.savedThemeMode);
 
+  static late PreferencesManager prefManager;
   final AdaptiveThemeMode? savedThemeMode;
 
   @override
@@ -60,10 +68,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  final widgets = <Widget>[];
-  // var devices = List<Device>();
   var serverUrl = "http://192.168.49.56:5055/smarthome";
-  late SharedPreferences prefs;
   ForInput urlAddressInput = new ForInput();
   IconData? infoIcon;
   late HubConnection hubConnection;
@@ -107,8 +112,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     setState(() {
       infoIcon = Icons.refresh;
     });
-    prefs = await SharedPreferences.getInstance();
-    // certFile = await loadCertFile(prefs);
+    // certFile = await loadCertFile(PreferencesManager.instance);
     certFile = null;
     if (certFile != null) serverUrl = certFile!.serverUrl + "/smarthome";
     urlAddressInput.textEditingController.text = serverUrl;
@@ -153,35 +157,35 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         infoIcon = Icons.check;
       });
       var ids = <int?>[];
-      for (var key in prefs.getKeys().where((x) => x.startsWith("SHD"))) {
-        var id = prefs.getInt(key);
+      for (var key in PreferencesManager.instance.getKeys().where((x) => x.startsWith("SHD"))) {
+        var id = PreferencesManager.instance.getInt(key);
         ids.add(id);
       }
       var subs = await subscribeToDevive(ids);
 
       for (var id in ids) {
         var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
-        var type = prefs.getString("Type" + id.toString());
-        BaseModel model =
-            DeviceManager.stringNameJsonFactory[type!]!(jsonDecode(prefs.getString("Json" + id.toString())!));
+        var type = PreferencesManager.instance.getString("Type" + id.toString());
+        BaseModel model = DeviceManager
+            .stringNameJsonFactory[type!]!(jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!));
         model.isConnected = false;
 
         model.friendlyName += "(old)";
         if (sub != null) {
           model = DeviceManager.stringNameJsonFactory[type]!(sub);
           try {
-            var dev = DeviceManager.ctorFactory[type]!(id, model, hubConnection, prefs);
+            var dev = DeviceManager.ctorFactory[type]!(id, model, hubConnection);
             DeviceManager.devices.add(dev as Device<BaseModel>);
           } catch (e) {}
         } else {
-          var dev = DeviceManager.ctorFactory[type]!(id, model, hubConnection, prefs);
+          var dev = DeviceManager.ctorFactory[type]!(id, model, hubConnection);
           DeviceManager.devices.add(dev as Device<BaseModel>);
           DeviceManager.notSubscribedDevices.add(dev);
           DeviceManager.subToNonSubscribed(hubConnection);
         }
       }
-      DeviceManager.currentSort = SortTypes.values[prefs.getInt("SortOrder") ?? 0];
-      DeviceManager.sortDevices(prefs);
+      DeviceManager.currentSort = SortTypes.values[PreferencesManager.instance.getInt("SortOrder") ?? 0];
+      DeviceManager.sortDevices();
     }
     setState(() {});
   }
@@ -219,49 +223,25 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     setState(() {});
   }
 
-  renameDevice(Device x) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) => SimpleDialogSingleInput.create(
-            context: context,
-            title: "Gerät benennen",
-            hintText: "Name für das Gerät",
-            labelText: "Name",
-            defaultText: x.baseModel.friendlyName,
-            maxLines: 2,
-            onSubmitted: (s) async {
-              x.baseModel.friendlyName = s;
-              x.updateDeviceOnServer();
-              setState(() {});
-            })).then((x) => Navigator.of(context).pop());
-  }
-
   Widget buildBody() {
     return RefreshIndicator(
       child: ConstrainedBox(
         child: OrientationBuilder(
           builder: (context, orientation) {
             return StaggeredGridView.extentBuilder(
-                maxCrossAxisExtent: 260,
-                mainAxisSpacing: 1.0,
-                crossAxisSpacing: 1.0,
+                maxCrossAxisExtent: !kIsWeb && Platform.isAndroid ? 370 : 300,
+                mainAxisSpacing: 0.6,
+                crossAxisSpacing: 0.6,
                 itemCount: DeviceManager.devices.length,
-                itemBuilder: (context, i) => Card(
-                      child: GestureDetector(
-                        child: MaterialButton(
-                          child: Container(
-                            margin: EdgeInsets.all(4.0),
-                            child: DeviceManager.devices[i].dashboardView(),
-                          ),
-                          onPressed: () => DeviceManager.devices[i].navigateToDevice(context),
-                        ),
-                        onLongPress: () {
-                          deviceAction(DeviceManager.devices[i]);
-                          setState(() {});
-                        },
-                        // onTapDown: (q) => print(i),
-                      ),
-                    ),
+                itemBuilder: (context, i) {
+                  var device = DeviceManager.devices[i];
+                  return device.dashboardView(
+                    () {
+                      deviceAction(device);
+                      setState(() {});
+                    },
+                  );
+                },
                 staggeredTileBuilder: (int index) => new StaggeredTile.fit(1));
           },
         ),
@@ -274,23 +254,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Future addDevice(int? id, dynamic device) async {
     DeviceManager.devices.add(DeviceManager.ctorFactory[device["typeName"]]!(
-            device["id"], DeviceManager.stringNameJsonFactory[device["typeName"]]!(device), hubConnection, prefs)
+            device["id"], DeviceManager.stringNameJsonFactory[device["typeName"]]!(device), hubConnection)
         as Device<BaseModel>);
-    prefs.setInt("SHD" + device["id"].toString(), device["id"]);
-    prefs.setString("Json" + device["id"].toString(), jsonEncode(device));
-    prefs.setString("Type" + device["id"].toString(), device["typeName"]);
+    PreferencesManager.instance.setInt("SHD" + device["id"].toString(), device["id"]);
+    PreferencesManager.instance.setString("Json" + device["id"].toString(), jsonEncode(device));
+    PreferencesManager.instance.setString("Type" + device["id"].toString(), device["typeName"]);
 
     await subscribeToDevive([device["id"]]);
-    DeviceManager.sortDevices(prefs);
-    setState(() {});
-  }
-
-  void removeDevice(Device d) {
-    DeviceManager.devices.remove(d);
-    prefs.remove("SHD" + d.id.toString());
-    prefs.remove("Json" + d.id.toString());
-    prefs.remove("Type" + d.id.toString());
-    Navigator.pop(context);
+    DeviceManager.sortDevices();
     setState(() {});
   }
 
@@ -339,7 +310,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             defaultText: serverUrl,
             onSubmitted: (s) {
               serverUrl = s;
-              prefs.setString("mainserverurl", s);
+              PreferencesManager.instance.setString("mainserverurl", s);
               newHubConnection();
             },
             title: "Change URL",
@@ -362,31 +333,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       case "RemoveAll":
         for (int i = DeviceManager.devices.length - 1; i >= 0; i--) {
           var d = DeviceManager.devices.removeAt(i);
-          prefs.remove("SHD" + d.id!.toString());
-          prefs.remove("Json" + d.id!.toString());
-          prefs.remove("Type" + d.id!.toString());
+          PreferencesManager.instance.remove("SHD" + d.id!.toString());
+          PreferencesManager.instance.remove("Json" + d.id!.toString());
+          PreferencesManager.instance.remove("Type" + d.id!.toString());
         }
         setState(() {});
         break;
     }
-  }
-
-  void selectedSort(String value) {
-    switch (value) {
-      case "Name":
-        DeviceManager.currentSort =
-            DeviceManager.currentSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
-        break;
-      case "Typ":
-        DeviceManager.currentSort =
-            DeviceManager.currentSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
-        break;
-      case "Id":
-        DeviceManager.currentSort = DeviceManager.currentSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
-        break;
-    }
-
-    setState(() => DeviceManager.sortDevices(prefs));
   }
 
   void deviceAction(Device d) {
@@ -412,8 +365,51 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     showDialog(context: context, builder: (b) => dialog);
   }
 
+  void removeDevice(Device d) {
+    DeviceManager.devices.remove(d);
+    PreferencesManager.instance.remove("SHD" + d.id.toString());
+    PreferencesManager.instance.remove("Json" + d.id.toString());
+    PreferencesManager.instance.remove("Type" + d.id.toString());
+    Navigator.pop(context);
+    setState(() {});
+  }
+
+  renameDevice(Device x) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) => SimpleDialogSingleInput.create(
+            context: context,
+            title: "Gerät benennen",
+            hintText: "Name für das Gerät",
+            labelText: "Name",
+            defaultText: x.baseModel.friendlyName,
+            maxLines: 2,
+            onSubmitted: (s) async {
+              x.baseModel.friendlyName = s;
+              x.updateDeviceOnServer();
+              setState(() {});
+            })).then((x) => Navigator.of(context).pop());
+  }
+
+  void selectedSort(String value) {
+    switch (value) {
+      case "Name":
+        DeviceManager.currentSort =
+            DeviceManager.currentSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
+        break;
+      case "Typ":
+        DeviceManager.currentSort =
+            DeviceManager.currentSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
+        break;
+      case "Id":
+        DeviceManager.currentSort = DeviceManager.currentSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
+        break;
+    }
+
+    setState(() => DeviceManager.sortDevices());
+  }
+
   Future addNewDevice() async {
-    Device? choosen;
     if (hubConnection.state != HubConnectionState.connected) {
       await hubConnection.start();
     }
@@ -455,85 +451,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       children: devicesToSelect,
       title: Text((devicesToSelect.length == 0 ? "No new Devices found" : "Add new Smarthome Device")),
     );
-    showDialog(context: context, builder: (b) => dialog).then((x) {
-      if (choosen != null)
-        setState(
-          () => widgets.add(
-            MaterialButton(
-              child: Column(
-                children: <Widget>[
-                  choosen.dashboardView(),
-                ],
-              ),
-              onPressed: () {},
-            ),
-          ),
-        );
-    });
+    showDialog(context: context, builder: (b) => dialog);
     setState(() {});
   }
 
   HubConnection createHubConnection() {
-    var mainUrl = prefs.getString("mainserverurl") ?? "";
+    var mainUrl = PreferencesManager.instance.getString("mainserverurl") ?? "";
     serverUrl = mainUrl == "" ? "http://192.168.49.56:5055/SmartHome" : mainUrl;
     return HubConnectionBuilder()
         .withUrl(
             serverUrl,
             HttpConnectionOptions(
-                //accessTokenFactory: () async => await getAccessToken(prefs),
+                //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
                 logging: (level, message) => print('$level: $message')))
+        .withAutomaticReconnect(PermanentRetryPolicy())
         .build();
   }
 
-  // Future<String?> getAccessToken(SharedPreferences prefs) async {
-  //   var lastTime = prefs.getInt("TokenGetTime")!;
-
-  //   if (DateTime.fromMillisecondsSinceEpoch(lastTime).add(Duration(days: 10)).millisecondsSinceEpoch <
-  //       DateTime.now().millisecondsSinceEpoch) {
-  //     var res = (await (post(
-  //         certFile!.serverUrl, "/session", UserLoginArgs(certFile!.username, certFile!.email, certFile!.pw))));
-  //     if (res?.statusCode == 200) {
-  //       UserLoginResult tokenRes = jsonDecode(res?.body ?? "{}");
-  //       prefs.setInt("TokenGetTime", DateTime.now().millisecondsSinceEpoch);
-  //       prefs.setString("Token", tokenRes.token!);
-  //       return tokenRes.token;
-  //     }
-  //   } else
-  //     return prefs.getString("Token");
-
-  //   return "";
-  // }
-
-  // Future<String> getAccessTokenNewFile(SharedPreferences prefs) async {
-  //   var file =
-  //       (await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ["smarthome"])).files.first;
-  //   prefs.setString("ServerTokenFileLocation", file.path);
-  //   return getAccessToken(prefs);
-  // }
-
-  // Future<CertFile> loadCertFile(SharedPreferences prefs) async {
-  //   var location = prefs.getString("ServerTokenFileLocation");
-  //   if (location?.isEmpty ?? false) {
-  //     var file =
-  //         (await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ["smarthome"])).files.first;
-  //     location = file.path;
-  //     prefs.setString("ServerTokenFileLocation", location);
-  //   }
-  //   if (location == null) {
-  //     return null;
-  //   }
-  //   var cert = File(location);
-  //   var lines = await cert.readAsLines();
-  //   return CertFile(lines[0], lines[1], lines[2], lines[3]);
-  // }
-
-  // static Future<http.Response?> post(String url, String path, [Object? body]) async {
-  //   var g = http.post(Uri(path: "$url/$path"), body: jsonEncode(body), headers: {"Content-Type": "application/json"});
-  //   http.Response? res;
-  //   await g.then((x) => res = x);
-  //   return res;
-  // }
-
+ 
   void refresh() {
     newHubConnection();
     setState(() {});

@@ -11,6 +11,8 @@ class HeaterModel extends BaseModel {
   HeaterConfig? currentConfig;
   HeaterConfig? currentCalibration;
   String? firmwareVersion;
+  bool? disableLed;
+  bool? disableHeating;
 
 
   HeaterModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
