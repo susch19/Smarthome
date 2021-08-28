@@ -31,7 +31,7 @@ class OsramPlug extends Device<OsramPlugModel> {
             "An",
             style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
           child: Text(
