@@ -1,10 +1,13 @@
 // ignore_for_file: unused_import
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
+import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 
 import '../icons/smarthome_icons.dart';
@@ -17,6 +20,35 @@ class DeviceManager {
 
   static final notSubscribedDevices = <Device>[];
   static bool sub = false;
+  static Map<String, String> groupNames = Map<String, String>();
+
+  static void init() {
+    var names = PreferencesManager.instance.getStringList("customGroupNames");
+
+    if (names != null) {
+      for (var name in names) {
+        var values = name.split('\u0001');
+        groupNames[values[0]] = values[1];
+      }
+    }
+  }
+
+  static void saveDeviceGroups() {
+    var deviceGroups = devices.map((e) => e.id.toString() + "\u0002" + e.groups.join("\u0003")).join("\u0001");
+    PreferencesManager.instance.setString("deviceGroups", deviceGroups);
+  }
+
+  static String getGroupName(String key) {
+    var name = groupNames[key];
+    return name ?? key;
+  }
+
+  static void changeGroupName(String key, String newName) {
+    groupNames[key] = newName;
+
+    var strs = groupNames.select((key, value) => key + "\u0001" + value);
+    PreferencesManager.instance.setStringList("customGroupNames", strs);
+  }
 
   static List<T> getDevicesOfType<T extends Device>() {
     return devices.whereType<T>().toList(); // where((x) => x.getDeviceType() == type).toList();
@@ -79,18 +111,18 @@ class DeviceManager {
     PreferencesManager.instance.setInt("SortOrder", DeviceManager.currentSort.index);
   }
 
-  static final ctorFactory =
-      <String, Object Function(int? id, BaseModel model, HubConnection con)>{
+  static final ctorFactory = <String, Object Function(int? id, BaseModel model, HubConnection con)>{
     //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
-    'Heater': (i, s, h) => Heater(i, s as HeaterModel, h, Icons.whatshot),
-    'XiaomiTempSensor': (i, s, h) => XiaomiTempSensor(i, s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor),
-    'LedStrip': (i, s, h) => LedStrip(i, s as LedStripModel, h, Icons.lightbulb_outline),
-    'FloaltPanel': (i, s, h) => FloaltPanel(i, s as FloaltPanelModel, h, Icons.crop_square),
-    'OsramB40RW': (i, s, h) => OsramB40RW(i, s as OsramB40RWModel, h, Icons.lightbulb_outline),
+    'Heater': (i, s, h) => Heater(i, "Heizung", s as HeaterModel, h, Icons.whatshot),
+    'XiaomiTempSensor': (i, s, h) =>
+        XiaomiTempSensor(i, "Temperatursensor", s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor),
+    'LedStrip': (i, s, h) => LedStrip(i, "Ledstrip", s as LedStripModel, h, Icons.lightbulb_outline),
+    'FloaltPanel': (i, s, h) => FloaltPanel(i, "Floalt Panel", s as FloaltPanelModel, h, Icons.crop_square),
+    'OsramB40RW': (i, s, h) => OsramB40RW(i, "Osram B40", s as OsramB40RWModel, h, Icons.lightbulb_outline),
   };
   static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-    'Heater' : (m) => HeaterModel.fromJson(m),
+    'Heater': (m) => HeaterModel.fromJson(m),
     'XiaomiTempSensor': (m) => TempSensorModel.fromJson(m),
     'LedStrip': (m) => LedStripModel.fromJson(m),
     'FloaltPanel': (m) => FloaltPanelModel.fromJson(m),
@@ -99,7 +131,7 @@ class DeviceManager {
 
   static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-    HeaterModel : (m) => HeaterModel.fromJson(m),
+    HeaterModel: (m) => HeaterModel.fromJson(m),
     TempSensorModel: (m) => TempSensorModel.fromJson(m),
     LedStripModel: (m) => LedStripModel.fromJson(m),
     FloaltPanelModel: (m) => FloaltPanelModel.fromJson(m),
@@ -109,6 +141,47 @@ class DeviceManager {
   static void stopSubbing() {
     sub = false;
   }
+
+  static void loadDevices(subs, List<int> ids, HubConnection hubConnection) {
+    for (var id in ids) {
+      var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
+      var type = PreferencesManager.instance.getString("Type" + id.toString());
+      BaseModel model =
+          stringNameJsonFactory[type!]!(jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!));
+      model.isConnected = false;
+
+      model.friendlyName += "(old)";
+      if (sub != null) {
+        model = stringNameJsonFactory[type]!(sub);
+        try {
+          var dev = ctorFactory[type]!(id, model, hubConnection);
+          devices.add(dev as Device<BaseModel>);
+        } catch (e) {}
+      } else {
+        var dev = ctorFactory[type]!(id, model, hubConnection);
+        devices.add(dev as Device<BaseModel>);
+        notSubscribedDevices.add(dev);
+        subToNonSubscribed(hubConnection);
+      }
+    }
+    var deviceGroups = PreferencesManager.instance.getString("deviceGroups");
+
+    if (deviceGroups == null) return;
+    var devicesGroups = deviceGroups.split("\u0001");
+
+    for (var item in devicesGroups) {
+      var deviceGroup = item.split("\u0002");
+      var deviceId = deviceGroup.first;
+      var groups = deviceGroup.last.split("\u0003");
+      var dev = devices.firstOrNull((element) => element.id.toString() == deviceId);
+      if (dev != null) {
+        dev.groups.clear();
+        dev.groups.addAll(groups);
+      }
+    }
+  }
+
+
 }
 
 enum DeviceTypes { Heater, XiaomiTempSensor, LedStrip, FloaltPanel, OsramB40RW }

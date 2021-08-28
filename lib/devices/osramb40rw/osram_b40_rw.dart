@@ -6,14 +6,15 @@ import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 
 import '../device_manager.dart';
 import 'osram_b40_rw_model.dart';
 
 class OsramB40RW extends Device<OsramB40RWModel> {
-  OsramB40RW(int? id, OsramB40RWModel model, HubConnection connection, IconData icon)
-      : super(id, model, connection, icon);
+  OsramB40RW(int? id, String typeName, OsramB40RWModel model, HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, icon);
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -98,15 +99,17 @@ class _OsramB40RWScreenState extends State<OsramB40RWScreen> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: AppBar(
-          title: new Text(this.widget.osramB40RW.baseModel.friendlyName),
-        ),
-        body: buildBody(this.widget.osramB40RW.baseModel),
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.power_settings_new),
-          onPressed: () => this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
-        ),
-      
+      appBar: AppBar(
+        title: new Text(this.widget.osramB40RW.baseModel.friendlyName),
+      ),
+      body: Container(
+        decoration: ThemeManager.getBackgroundDecoration(context),
+        child: buildBody(this.widget.osramB40RW.baseModel),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.power_settings_new),
+        onPressed: () => this.widget.osramB40RW.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+      ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:smarthome/devices/heater/temp_scheduling.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
+import 'package:smarthome/helper/theme_manager.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 import 'heater_config.dart';
@@ -49,12 +50,12 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                     content: Text("Neue Temperatureinstellung verwerfen?", style: dialogTextStyle),
                     actions: <Widget>[
                       TextButton(
-                          child: Text("Nein"),
+                          child: Text("Abbrechen"),
                           onPressed: () {
                             Navigator.of(context).pop(false);
                           }),
                       TextButton(
-                          child: Text("Ja"),
+                          child: Text("Verwerfen"),
                           onPressed: () {
                             Navigator.of(context).pop(true);
                           })
@@ -131,170 +132,173 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
         child: Icon(Icons.save),
         onPressed: () => _handleSubmitted(),
       ),
-      body: new Form(
-        key: _formKey,
-        onWillPop: _onWillPop,
-        // autovalidate: _autovalidate,
-        child: new ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: //heaterConfigs!.map((x) => heaterConfigToWidget(x)).toList()
-              <Widget>[
-            Wrap(
-              children: weekdayChips(),
-            ),
-            DateTimePicker(
-              initialValue: initialDate,
-              type: DateTimePickerType.time,
-              textAlign: TextAlign.center,
-              onChanged: (val) {
-                initialDate = val;
-                _saveNeeded = true;
-              },
-              style: TextStyle(fontSize: 24),
-            ),
-            Container(
-              margin: EdgeInsets.only(top: 16.0),
-              child: Stack(
-                children: [
-                  SfRadialGauge(
-                    axes: <RadialAxis>[
-                      RadialAxis(
-                        showFirstLabel: true,
-                        startAngle: 150,
-                        endAngle: 30,
-                        radiusFactor: 0.9,
-                        minimum: 5,
-                        maximum: 35,
-                        interval: 1,
-                        canScaleToFit: false,
-                        axisLineStyle: const AxisLineStyle(
-                            gradient:
-                                SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
-                            color: Colors.red,
-                            thickness: 0.04,
-                            thicknessUnit: GaugeSizeUnit.factor,
-                            cornerStyle: CornerStyle.bothFlat),
-                        tickOffset: 0.02,
-                        showTicks: true,
-                        ticksPosition: ElementsPosition.outside,
-                        labelOffset: 0.05,
-                        offsetUnit: GaugeSizeUnit.factor,
-                        showAxisLine: false,
-                        showLabels: false,
-                        labelsPosition: ElementsPosition.outside,
-                        minorTicksPerInterval: 10,
-                        minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
-                        majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
-                      ),
-                      RadialAxis(
-                        showFirstLabel: true,
-                        startAngle: 150,
-                        endAngle: 30,
-                        radiusFactor: 1,
-                        minimum: 5,
-                        maximum: 35,
-                        interval: 5,
-                        canScaleToFit: false,
-                        axisLineStyle: const AxisLineStyle(
-                            gradient:
-                                SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
-                            color: Colors.red,
-                            thickness: 0.04,
-                            thicknessUnit: GaugeSizeUnit.factor,
-                            cornerStyle: CornerStyle.bothFlat),
-                        tickOffset: 0.02,
-                        showTicks: true,
-                        ticksPosition: ElementsPosition.outside,
-                        labelOffset: 0.05,
-                        offsetUnit: GaugeSizeUnit.factor,
-                        onAxisTapped: handlePointerValueChangedEnd,
-                        showAxisLine: true,
-                        labelsPosition: ElementsPosition.outside,
-                        minorTicksPerInterval: 0,
-                        minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
-                        majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
-                        pointers: <GaugePointer>[
-                          // RangePointer(
-                          //     color: Colors.transparent,
-                          //     value: _markerValue,
-                          //     gradient: SweepGradient(
-                          //       colors: [Colors.blue.shade700, Colors.blue.shade100],
-                          //       stops: <double>[0.5, 1],
-                          //     ),
-                          //     cornerStyle: CornerStyle.endCurve,
-                          //     width: 0.055,
-                          //     sizeUnit: GaugeSizeUnit.factor),
-                          MarkerPointer(
-                            value: _value,
-                            elevation: 1,
-                            markerOffset: -20,
-                            markerType: MarkerType.invertedTriangle,
-                            markerHeight: 25,
-                            markerWidth: 20,
-                            enableDragging: true,
-                            onValueChanged: handlePointerValueChanged,
-                            onValueChangeEnd: handlePointerValueChangedEnd,
-                            onValueChanging: handlePointerValueChanging,
-                            borderColor: Colors.black,
-                            borderWidth: 1,
-                            color: Colors.white,
-                          )
-                        ],
-                        annotations: [
-                          GaugeAnnotation(
-                            widget: Container(
-                              child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-                                Text(
-                                  _annotationValue,
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 56),
-                                ),
-                                Text(
-                                  ' °C',
-                                  style: TextStyle(fontSize: 56),
-                                ),
-                              ]),
-                            ),
-                            verticalAlignment: GaugeAlignment.far,
-                            horizontalAlignment: GaugeAlignment.center,
-                            angle: 90,
-                            positionFactor: 0.1,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(top: 200),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        MaterialButton(
-                          onPressed: () => handlePointerValueChanged(_value - 0.1),
-                          child: Text(
-                            "−",
-                            style: TextStyle(
-                              fontSize: 42,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+      body: Container(
+        decoration: ThemeManager.getBackgroundDecoration(context),
+        child: new Form(
+          key: _formKey,
+          onWillPop: _onWillPop,
+          // autovalidate: _autovalidate,
+          child: new ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: //heaterConfigs!.map((x) => heaterConfigToWidget(x)).toList()
+                <Widget>[
+              Wrap(
+                children: weekdayChips(),
+              ),
+              DateTimePicker(
+                initialValue: initialDate,
+                type: DateTimePickerType.time,
+                textAlign: TextAlign.center,
+                onChanged: (val) {
+                  initialDate = val;
+                  _saveNeeded = true;
+                },
+                style: TextStyle(fontSize: 24),
+              ),
+              Container(
+                margin: EdgeInsets.only(top: 16.0),
+                child: Stack(
+                  children: [
+                    SfRadialGauge(
+                      axes: <RadialAxis>[
+                        RadialAxis(
+                          showFirstLabel: true,
+                          startAngle: 150,
+                          endAngle: 30,
+                          radiusFactor: 0.9,
+                          minimum: 5,
+                          maximum: 35,
+                          interval: 1,
+                          canScaleToFit: false,
+                          axisLineStyle: const AxisLineStyle(
+                              gradient:
+                                  SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                              color: Colors.red,
+                              thickness: 0.04,
+                              thicknessUnit: GaugeSizeUnit.factor,
+                              cornerStyle: CornerStyle.bothFlat),
+                          tickOffset: 0.02,
+                          showTicks: true,
+                          ticksPosition: ElementsPosition.outside,
+                          labelOffset: 0.05,
+                          offsetUnit: GaugeSizeUnit.factor,
+                          showAxisLine: false,
+                          showLabels: false,
+                          labelsPosition: ElementsPosition.outside,
+                          minorTicksPerInterval: 10,
+                          minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
+                          majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                         ),
-                        MaterialButton(
-                          onPressed: () => handlePointerValueChanged(_value + 0.1),
-                          child: Text(
-                            "+",
-                            style: TextStyle(
-                              fontSize: 42,
-                              fontWeight: FontWeight.bold,
+                        RadialAxis(
+                          showFirstLabel: true,
+                          startAngle: 150,
+                          endAngle: 30,
+                          radiusFactor: 1,
+                          minimum: 5,
+                          maximum: 35,
+                          interval: 5,
+                          canScaleToFit: false,
+                          axisLineStyle: const AxisLineStyle(
+                              gradient:
+                                  SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                              color: Colors.red,
+                              thickness: 0.04,
+                              thicknessUnit: GaugeSizeUnit.factor,
+                              cornerStyle: CornerStyle.bothFlat),
+                          tickOffset: 0.02,
+                          showTicks: true,
+                          ticksPosition: ElementsPosition.outside,
+                          labelOffset: 0.05,
+                          offsetUnit: GaugeSizeUnit.factor,
+                          onAxisTapped: handlePointerValueChangedEnd,
+                          showAxisLine: true,
+                          labelsPosition: ElementsPosition.outside,
+                          minorTicksPerInterval: 0,
+                          minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
+                          majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                          pointers: <GaugePointer>[
+                            // RangePointer(
+                            //     color: Colors.transparent,
+                            //     value: _markerValue,
+                            //     gradient: SweepGradient(
+                            //       colors: [Colors.blue.shade700, Colors.blue.shade100],
+                            //       stops: <double>[0.5, 1],
+                            //     ),
+                            //     cornerStyle: CornerStyle.endCurve,
+                            //     width: 0.055,
+                            //     sizeUnit: GaugeSizeUnit.factor),
+                            MarkerPointer(
+                              value: _value,
+                              elevation: 1,
+                              markerOffset: -20,
+                              markerType: MarkerType.invertedTriangle,
+                              markerHeight: 25,
+                              markerWidth: 20,
+                              enableDragging: true,
+                              onValueChanged: handlePointerValueChanged,
+                              onValueChangeEnd: handlePointerValueChangedEnd,
+                              onValueChanging: handlePointerValueChanging,
+                              borderColor: Colors.black,
+                              borderWidth: 1,
+                              color: Colors.white,
+                            )
+                          ],
+                          annotations: [
+                            GaugeAnnotation(
+                              widget: Container(
+                                child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+                                  Text(
+                                    _annotationValue,
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 56),
+                                  ),
+                                  Text(
+                                    ' °C',
+                                    style: TextStyle(fontSize: 56),
+                                  ),
+                                ]),
+                              ),
+                              verticalAlignment: GaugeAlignment.far,
+                              horizontalAlignment: GaugeAlignment.center,
+                              angle: 90,
+                              positionFactor: 0.1,
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    Container(
+                      margin: EdgeInsets.only(top: 200),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          MaterialButton(
+                            onPressed: () => handlePointerValueChanged(_value - 0.1),
+                            child: Text(
+                              "−",
+                              style: TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          MaterialButton(
+                            onPressed: () => handlePointerValueChanged(_value + 0.1),
+                            child: Text(
+                              "+",
+                              style: TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

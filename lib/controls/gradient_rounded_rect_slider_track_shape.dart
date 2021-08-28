@@ -20,17 +20,11 @@ class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSlid
     bool isEnabled = false,
     double additionalActiveTrackHeight = 2,
   }) {
-    assert(offset != null);
-    assert(parentBox != null);
-    assert(sliderTheme != null);
     assert(sliderTheme.disabledActiveTrackColor != null);
     assert(sliderTheme.disabledInactiveTrackColor != null);
     assert(sliderTheme.activeTrackColor != null);
     assert(sliderTheme.inactiveTrackColor != null);
     assert(sliderTheme.thumbShape != null);
-    assert(enableAnimation != null);
-    assert(textDirection != null);
-    assert(thumbCenter != null);
     // If the slider [SliderThemeData.trackHeight] is less than or equal to 0,
     // then it makes no difference whether the track is painted or not,
     // therefore the painting  can be a no-op.

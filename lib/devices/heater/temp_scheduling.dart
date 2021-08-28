@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:smarthome/controls/controls_exporter.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
+import 'package:smarthome/helper/theme_manager.dart';
 
 import 'heater_config.dart';
 import 'heater_temp_settings.dart';
@@ -60,19 +62,22 @@ class TempSchedulingState extends State<TempScheduling> {
 
     return await (showDialog<bool>(
             context: context,
-            builder: (BuildContext context) =>
-                new AlertDialog(content: Text("Einstellung abbrechen?", style: dialogTextStyle), actions: <Widget>[
-                  TextButton(
-                      child: Text("Nein"),
-                      onPressed: () {
-                        Navigator.of(context).pop(false);
-                      }),
-                  TextButton(
-                      child: Text("Ja"),
-                      onPressed: () {
-                        Navigator.of(context).pop(true);
-                      })
-                ]))) ??
+            builder: (BuildContext context) => new AlertDialog(
+                    content: Text(
+                        "Es wurden Änderungen an den Temperatur-Einstellungen vorgenommen.\r\nSollen diese verworfen werde?",
+                        style: dialogTextStyle),
+                    actions: <Widget>[
+                      TextButton(
+                          child: Text("Abbrechen"),
+                          onPressed: () {
+                            Navigator.of(context).pop(false);
+                          }),
+                      TextButton(
+                          child: Text("Verwerfen"),
+                          onPressed: () {
+                            Navigator.of(context).pop(true);
+                          })
+                    ]))) ??
         false;
   }
 
@@ -115,72 +120,78 @@ class TempSchedulingState extends State<TempScheduling> {
           storeNewTempConfigs(res, []);
         },
       ),
-      body: new Form(
-          key: _formKey,
-          onWillPop: _onWillPop,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: new ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: hConfig.entries.map((x) => newHeaterConfigToWidget(x.key, x.value)).toList())),
+      body: Container(
+        decoration: ThemeManager.getBackgroundDecoration(context),
+        child: new Form(
+            key: _formKey,
+            onWillPop: _onWillPop,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: new ListView(
+                padding: const EdgeInsets.all(16.0),
+                children: hConfig.entries.map((x) => newHeaterConfigToWidget(x.key, x.value)).toList())),
+      ),
     );
   }
 
   Widget newHeaterConfigToWidget(Tuple<TimeOfDay?, double?> x, List<HeaterConfig> value) {
-    return Card(
-      child: GestureDetector(
-        child: MaterialButton(
-          onPressed: () async {
-            var res = await Navigator.push(
-                context,
-                new MaterialPageRoute<Tuple<bool, List<HeaterConfig>>>(
-                    builder: (BuildContext context) => HeaterTempSettings(x, value), fullscreenDialog: true));
-            storeNewTempConfigs(res, value);
-          },
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Wrap(
-                      children: value.map((x) => dayOfWeekChip(x.dayOfWeek)).toList(growable: false),
-                    ),
-                  ),
-                  Container(
-                    child: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        heaterConfigs.removeElements(value);
-                        _saveNeeded = true;
-                        sortAndGroupHeaterConfigs();
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                margin: EdgeInsetsDirectional.only(bottom: 8.0),
-                child: Row(
+    return Container(
+      padding: EdgeInsets.only(top: 8.0),
+      child: BlurryCard(
+        child: GestureDetector(
+          child: MaterialButton(
+            onPressed: () async {
+              var res = await Navigator.push(
+                  context,
+                  new MaterialPageRoute<Tuple<bool, List<HeaterConfig>>>(
+                      builder: (BuildContext context) => HeaterTempSettings(x, value), fullscreenDialog: true));
+              storeNewTempConfigs(res, value);
+            },
+            child: Column(
+              children: [
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      x.item1!.format(context),
-                      style: TextStyle(fontSize: 18),
+                    Expanded(
+                      child: Wrap(
+                        children: value.map((x) => dayOfWeekChip(x.dayOfWeek)).toList(growable: false),
+                      ),
                     ),
                     Container(
-                      margin: EdgeInsets.symmetric(horizontal: 8.0),
-                    ),
-                    Text(
-                      x.item2!.toStringAsFixed(1) + "°C",
-                      style: TextStyle(fontSize: 18),
+                      child: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          heaterConfigs.removeElements(value);
+                          _saveNeeded = true;
+                          sortAndGroupHeaterConfigs();
+                          setState(() {});
+                        },
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-            // crossAxisAlignment: CrossAxisAlignment.start,
+                Container(
+                  margin: EdgeInsetsDirectional.only(bottom: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        x.item1!.format(context),
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: 8.0),
+                      ),
+                      Text(
+                        x.item2!.toStringAsFixed(1) + "°C",
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              // crossAxisAlignment: CrossAxisAlignment.start,
+            ),
           ),
         ),
       ),

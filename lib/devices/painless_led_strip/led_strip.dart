@@ -10,9 +10,11 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
 import 'package:smarthome/models/message.dart' as sm;
 
+import 'package:smarthome/helper/theme_manager.dart';
+
 class LedStrip extends Device<LedStripModel> {
-  LedStrip(int? id, BaseModel name, HubConnection connection, IconData icon)
-      : super(id, name as LedStripModel, connection, icon);
+  LedStrip(int? id, String typeName, BaseModel name, HubConnection connection, IconData icon)
+      : super(id, typeName, name as LedStripModel, connection, icon);
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -138,10 +140,12 @@ class _LedStripScreenState extends State<LedStripScreen> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: AppBar(
-          title: new Text("LED Strip "),
-        ),
-        body: ListView(
+      appBar: AppBar(
+        title: new Text("LED Strip "),
+      ),
+      body: Container(
+        decoration: ThemeManager.getBackgroundDecoration(context),
+        child: ListView(
           children: <Widget>[
             new ListTile(
               // leading: this.widget.strip.baseModel.colorMode == "Off" ? Icon(Icons.check) : Text(""),
@@ -390,6 +394,7 @@ class _LedStripScreenState extends State<LedStripScreen> {
             // ),
           ],
         ),
+      ),
     );
   }
 }

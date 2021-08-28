@@ -8,14 +8,15 @@ import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 
 import '../device_manager.dart';
 import 'floalt_panel_model.dart';
 
 class FloaltPanel extends Device<FloaltPanelModel> {
-  FloaltPanel(int? id, FloaltPanelModel model, HubConnection connection, IconData icon)
-      : super(id, model, connection, icon);
+  FloaltPanel(int? id, String typeName, FloaltPanelModel model, HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, icon);
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -100,15 +101,17 @@ class _FloaltPanelScreenState extends State<FloaltPanelScreen> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: AppBar(
-          title: new Text(this.widget.floaltPanel.baseModel.friendlyName),
-        ),
-        body: buildBody(this.widget.floaltPanel.baseModel),
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.power_settings_new),
-          onPressed: () => this.widget.floaltPanel.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
-        ),
-      
+      appBar: AppBar(
+        title: new Text(this.widget.floaltPanel.baseModel.friendlyName),
+      ),
+      body: Container(
+        decoration: ThemeManager.getBackgroundDecoration(context),
+        child: buildBody(this.widget.floaltPanel.baseModel),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.power_settings_new),
+        onPressed: () => this.widget.floaltPanel.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+      ),
     );
   }
 

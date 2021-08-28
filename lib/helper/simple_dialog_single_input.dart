@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 
 class SimpleDialogSingleInput {
-
   static AlertDialog create(
       {String? hintText,
       String? labelText,
+      String cancelButtonText = "Cancel",
+      String acceptButtonText = "Accept",
       required String title,
       String defaultText = "",
       int maxLines = 1,
       ValueChanged<String>? onSubmitted,
       BuildContext? context}) {
-    var tec = new TextEditingController();
+    var tec = TextEditingController();
     tec.text = defaultText;
 
-    return  new AlertDialog(
-        title: new Text(title),
-        content: new SingleChildScrollView(
-          child: new ListBody(
+    return AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(
+          child: ListBody(
             children: <Widget>[
-              new TextField(
-                  decoration:
-                  new InputDecoration(hintText: hintText, labelText: labelText),
+              TextField(
+                  decoration: InputDecoration(hintText: hintText, labelText: labelText),
                   controller: tec,
                   maxLines: maxLines,
                   autofocus: true,
@@ -32,11 +32,9 @@ class SimpleDialogSingleInput {
           ),
         ),
         actions: <Widget>[
-          new TextButton(
-              child: new Text("Cancel"),
-              onPressed: () => Navigator.pop(context!, "")),
-          new TextButton(
-              child: new Text("Accept"),
+          TextButton(child: Text(cancelButtonText), onPressed: () => Navigator.pop(context!, "")),
+          TextButton(
+              child: Text(acceptButtonText),
               onPressed: () {
                 Navigator.pop(context!, "");
                 onSubmitted!(tec.text);

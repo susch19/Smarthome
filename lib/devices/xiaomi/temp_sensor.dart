@@ -15,11 +15,12 @@ import 'dart:math';
 // import 'package:charts_flutter/flutter.dart' as charts;
 
 import 'package:smarthome/icons/icons.dart';
+import 'package:smarthome/helper/theme_manager.dart';
 import '../device_manager.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
-  XiaomiTempSensor(int? id, TempSensorModel model, HubConnection connection, IconData icon)
-      : super(id, model, connection, icon);
+  XiaomiTempSensor(int? id, String typeName, TempSensorModel model, HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, icon);
 
   @override
   void navigateToDevice(BuildContext context) {
@@ -45,7 +46,7 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
     return Column(
         children: (<Widget>[
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text((baseModel.temperature.toStringAsFixed(2)),
+                Text((baseModel.temperature.toStringAsFixed(1)),
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
                 Text(" °C", style: TextStyle(fontSize: 18))
               ]),
@@ -56,18 +57,20 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
                 alignment: WrapAlignment.center,
                 runAlignment: WrapAlignment.spaceEvenly,
                 children: [
-                  Text((baseModel.humidity.toStringAsFixed(2) + " %"), style: TextStyle()),
+                  Text((baseModel.humidity.toStringAsFixed(0) + " %"), style: TextStyle()),
                   Container(
                     width: 8,
                   ),
-                  Text((baseModel.pressure.toStringAsFixed(1) + " kPA"), style: TextStyle()),
+                  Text((baseModel.pressure.toStringAsFixed(0) + " kPA"), style: TextStyle()),
                 ],
               ),
             ] +
             (DeviceManager.showDebugInformation
                 ? <Widget>[
-                    Text(baseModel.lastReceived.add(Duration(hours: 1)).toString()),
-                    Text(baseModel.id.toRadixString(16))
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text(DateFormat('y.MM.dd HH:mm:ss').format(baseModel.lastReceived.add(Duration(hours: 1)))),
+                    ]),
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text(baseModel.id.toRadixString(16))]),
                   ]
                 : <Widget>[])));
   }
@@ -131,27 +134,29 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 4,
-        child: Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: this.widget.showAppBar,
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: this.widget.showAppBar,
 
-            // flexibleSpace: Text("Xiaomi Sensor " + this.widget.tempSensor.baseModel.friendlyName),
-            title: TabBar(
-              tabs: [
-                Tab(icon: Icon(Icons.home)),
-                Tab(icon: Icon(SmarthomeIcons.temperature)),
-                Tab(icon: Icon(Icons.cloud)),
-                Tab(
-                  icon: Icon(
-                    SmarthomeIcons.wi_barometer,
-                    size: 38.0,
-                  ),
-                )
-              ],
-            ),
+          // flexibleSpace: Text("Xiaomi Sensor " + this.widget.tempSensor.baseModel.friendlyName),
+          title: TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.home)),
+              Tab(icon: Icon(SmarthomeIcons.temperature)),
+              Tab(icon: Icon(Icons.cloud)),
+              Tab(
+                icon: Icon(
+                  SmarthomeIcons.wi_barometer,
+                  size: 38.0,
+                ),
+              )
+            ],
           ),
-          body: TabBarView(
+        ),
+        body: Container(
+          decoration: ThemeManager.getBackgroundDecoration(context),
+          child: TabBarView(
             children: [
               buildListView(this.widget.tempSensor!.baseModel),
               buildGraphViewTemp(),
@@ -160,6 +165,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
             ],
           ),
         ),
+      ),
     );
   }
 
@@ -222,19 +228,20 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
 
   Widget buildGraphViewHumidity() {
     var h = histories.firstWhereOrNull((x) => x.propertyName == "humidity");
-    if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " %", "rel. Luftfeuchtigkeit", Colors.blueAccent);
+    if (h != null)
+      return buildTimeSeriesRangeAnnotationChart(h, " %", "rel. Luftfeuchtigkeit", ThemeManager.isLightTheme ? Colors.blueAccent.shade700 :Colors.blueAccent.shade100);
     return buildDataMissing();
   }
 
   Widget buildGraphViewTemp() {
     var h = histories.firstWhereOrNull((x) => x.propertyName == "temperature");
-    if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " °C", "Temperatur", Colors.redAccent);
+    if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " °C", "Temperatur", ThemeManager.isLightTheme ? Colors.redAccent.shade700 :Colors.redAccent);
     return buildDataMissing();
   }
 
   Widget buildGraphViewPressure() {
     var h = histories.firstWhereOrNull((x) => x.propertyName == "pressure");
-    if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " hPA", "Luftdruck", Colors.greenAccent);
+    if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " hPA", "Luftdruck", ThemeManager.isLightTheme ? Colors.greenAccent.shade700 :Colors.greenAccent.shade400);
     return buildDataMissing();
   }
 
@@ -283,7 +290,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
                 enableTooltip: true,
                 animationDuration: 500,
                 // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
-                markerSettings: const MarkerSettings(isVisible: true, shape: DataMarkerType.circle),
+                markerSettings: const MarkerSettings(isVisible: true, shape: DataMarkerType.circle,),
                 dataSource: h.historyRecords
                     .map((x) =>
                         TimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
@@ -297,7 +304,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
               h.historyRecords.where((x) => x.value != null).map((x) => x.value!).fold(0, max),
               unit,
               valueName,
-              currentShownTime),
+              currentShownTime,),
         ),
         Row(
           children: <Widget>[

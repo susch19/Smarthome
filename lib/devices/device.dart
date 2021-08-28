@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 // import 'package:signalr_client/signalr_client.dart';
@@ -10,14 +11,24 @@ import 'package:smarthome/models/message.dart' as sm;
 
 abstract class Device<T extends BaseModel> {
   final IconData icon;
+  final String typeName;
   final int? id;
   T baseModel;
   HubConnection connection;
+  final List<String> groups = [];
 
   @protected
   StreamController<T> controller = StreamController<T>.broadcast();
 
-  Device(this.id, this.baseModel, this.connection, this.icon);
+  final Random r = Random();
+
+  @mustCallSuper
+  Device(this.id, this.typeName, this.baseModel, this.connection, this.icon) {
+    // groups.add("All");
+    groups.add(baseModel.friendlyName.split(' ').first);
+    // var rand = r.nextInt(6);
+    // groups.add("Random" + rand.toString());
+  }
 
   bool get isConnected => baseModel.isConnected;
 
@@ -32,7 +43,7 @@ abstract class Device<T extends BaseModel> {
   Widget dashboardCardBody() => const Text("");
 
   Widget dashboardView(void Function() onLongPress) {
-    return StatelessDashboardCard(device: this, onLongPress: onLongPress,tag: this.id!);
+    return StatelessDashboardCard(device: this, onLongPress: onLongPress, tag: this.id!);
   }
 
   @mustCallSuper
