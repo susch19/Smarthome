@@ -119,6 +119,7 @@ class DeviceManager {
     'LedStrip': (i, s, h) => LedStrip(i, "Ledstrip", s as LedStripModel, h, Icons.lightbulb_outline),
     'FloaltPanel': (i, s, h) => FloaltPanel(i, "Floalt Panel", s as FloaltPanelModel, h, Icons.crop_square),
     'OsramB40RW': (i, s, h) => OsramB40RW(i, "Osram B40", s as OsramB40RWModel, h, Icons.lightbulb_outline),
+    'OsramPlug': (i, s, h) => OsramPlug(i, "Osram Plug", s as OsramPlugModel, h, Icons.radio_button_checked),
   };
   static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
@@ -127,6 +128,7 @@ class DeviceManager {
     'LedStrip': (m) => LedStripModel.fromJson(m),
     'FloaltPanel': (m) => FloaltPanelModel.fromJson(m),
     'OsramB40RW': (m) => OsramB40RWModel.fromJson(m),
+    'OsramPlug': (m)=> OsramPlugModel.fromJson(m)
   };
 
   static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
@@ -136,6 +138,7 @@ class DeviceManager {
     LedStripModel: (m) => LedStripModel.fromJson(m),
     FloaltPanelModel: (m) => FloaltPanelModel.fromJson(m),
     OsramB40RWModel: (m) => OsramB40RWModel.fromJson(m),
+    OsramPlugModel: (m) => OsramPlugModel.fromJson(m)
   };
 
   static void stopSubbing() {
@@ -184,6 +187,6 @@ class DeviceManager {
 
 }
 
-enum DeviceTypes { Heater, XiaomiTempSensor, LedStrip, FloaltPanel, OsramB40RW }
+enum DeviceTypes { Heater, XiaomiTempSensor, LedStrip, FloaltPanel, OsramB40RW, OsramPlug }
 
 enum SortTypes { NameAsc, NameDesc, TypeAsc, TypeDesc, IdAsd, IdDesc }

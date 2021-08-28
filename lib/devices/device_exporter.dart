@@ -11,3 +11,5 @@ export 'floaltpanel/floalt_panel_model.dart';
 export 'zigbee/zigbee_model.dart';
 export 'osramb40rw/osram_b40_rw.dart';
 export 'osramb40rw/osram_b40_rw_model.dart';
+export 'osramplug/osram_plug.dart';
+export 'osramplug/osram_plug_model.dart';
