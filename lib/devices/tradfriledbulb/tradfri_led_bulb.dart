@@ -1,14 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-// import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/cicle_painter.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/main.dart';
 import 'package:smarthome/models/message.dart' as sm;
 
 import '../device_manager.dart';
@@ -101,10 +99,6 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
     sub.cancel();
   }
 
-  void changeDelay(double? delay) {
-    this.widget.tradfriLedBulb.sendToServer(sm.MessageType.Update, sm.Command.Delay, [delay.toString()]);
-  }
-
   void changeBrightness(double brightness) {
     this
         .widget
@@ -112,16 +106,8 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
         .sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
   }
 
-  void changeColorTemp(double colorTemp) {
-    this.widget.tradfriLedBulb.sendToServer(sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()]);
-  }
-
-  static const int colordelay = 50;
   double brightness = 255.0;
-  double delay = 30.0;
-  double numLeds = 94.0;
 
-  int get idelay => delay.toInt();
   int get ibrightness => brightness.toInt();
 
   void changeColor() {
