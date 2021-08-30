@@ -1,13 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'floalt_panel_model.dart';
+part of 'tradfri_led_bulb_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-FloaltPanelModel _$FloaltPanelModelFromJson(Map<String, dynamic> json) =>
-    FloaltPanelModel(
+TradfriLedBulbModel _$TradfriLedBulbModelFromJson(Map<String, dynamic> json) =>
+    TradfriLedBulbModel(
       json['id'] as int,
       json['friendlyName'] as String,
       json['isConnected'] as bool,
@@ -16,20 +16,19 @@ FloaltPanelModel _$FloaltPanelModelFromJson(Map<String, dynamic> json) =>
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
       ..linkQuality = json['link_Quality'] as int
       ..brightness = json['brightness'] as int
-      ..state = json['state'] as bool
-      ..colorTemp = json['colorTemp'] as int
-      ..transitionTime = (json['transition_Time'] as num).toDouble();
+      ..color = json['color'] as String?
+      ..state = json['state'] as bool;
 
-Map<String, dynamic> _$FloaltPanelModelToJson(FloaltPanelModel instance) =>
+Map<String, dynamic> _$TradfriLedBulbModelToJson(
+        TradfriLedBulbModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'friendlyName': instance.friendlyName,
       'available': instance.available,
       'lastReceived': instance.lastReceived.toIso8601String(),
       'link_Quality': instance.linkQuality,
-      'isConnected': instance.isConnected,
       'brightness': instance.brightness,
+      'color': instance.color,
       'state': instance.state,
-      'colorTemp': instance.colorTemp,
-      'transition_Time': instance.transitionTime,
+      'isConnected': instance.isConnected,
     };

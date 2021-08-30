@@ -24,10 +24,10 @@ Map<String, dynamic> _$TempSensorModelToJson(TempSensorModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'friendlyName': instance.friendlyName,
-      'isConnected': instance.isConnected,
       'available': instance.available,
       'lastReceived': instance.lastReceived.toIso8601String(),
       'link_Quality': instance.linkQuality,
+      'isConnected': instance.isConnected,
       'temperature': instance.temperature,
       'humidity': instance.humidity,
       'pressure': instance.pressure,

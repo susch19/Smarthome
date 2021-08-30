@@ -36,15 +36,7 @@ const FlagToDayOfWeekMap = <int, DayOfWeek>{
   1 << 7: DayOfWeek.Sun
 };
 
-const DayOfWeekStringToFlagMap = <String, int>{
-  'Mo': 1 << 1,
-  'Di': 1 << 2,
-  'Mi': 1 << 3,
-  'Do': 1 << 4,
-  'Fr': 1 << 5,
-  'Sa': 1 << 6,
-  'So': 1 << 7
-};
+const DayOfWeekStringToFlagMap = <String, int>{'Mo': 1 << 1, 'Di': 1 << 2, 'Mi': 1 << 3, 'Do': 1 << 4, 'Fr': 1 << 5, 'Sa': 1 << 6, 'So': 1 << 7};
 
 const DayOfWeekToLongStringMap = <DayOfWeek, String>{
   DayOfWeek.Mon: 'Montag',
@@ -76,7 +68,7 @@ class HeaterConfig extends Equatable implements Comparable {
     return (new DateTime(now.year, now.month, now.day, val.hour, val.minute)).toIso8601String();
   }
 
-  static TimeOfDay? timeOfDayFromJson(String val) {
+  static TimeOfDay timeOfDayFromJson(String val) {
     final dt = DateTime.tryParse(val)!.toLocal();
     new TimeOfDay(hour: 0, minute: 0);
     return TimeOfDay.fromDateTime(dt);

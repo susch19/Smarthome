@@ -19,8 +19,8 @@ Map<String, dynamic> _$ZigbeeModelToJson(ZigbeeModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'friendlyName': instance.friendlyName,
-      'isConnected': instance.isConnected,
       'available': instance.available,
       'lastReceived': instance.lastReceived.toIso8601String(),
       'link_Quality': instance.linkQuality,
+      'isConnected': instance.isConnected,
     };

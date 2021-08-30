@@ -19,7 +19,6 @@ import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/session/cert_file.dart';
-import 'package:smarthome/syncfusion.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -36,7 +35,6 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 }
 
 void main() async {
-  SyncFusionLicense.registerLicense();
   WidgetsFlutterBinding.ensureInitialized();
   var prefs = await SharedPreferences.getInstance();
   PreferencesManager.instance = PreferencesManager(prefs);
@@ -128,8 +126,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
-  Future<dynamic> subscribeToDevive(List<int?> deviceIds) async =>
-      await hubConnection.invoke("Subscribe", args: [deviceIds]);
+  Future<dynamic> subscribeToDevive(List<int?> deviceIds) async => await hubConnection.invoke("Subscribe", args: [deviceIds]);
 
   Future doStuff() async {
     setState(() {
@@ -218,9 +215,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     arguments!.forEach((a) {
       var asd = a as Map;
       if (asd["id"] == 0)
-        DeviceManager.devices
-            .where((x) => x.id == asd["id"])
-            .forEach((x) => x.updateFromServer(asd as Map<String, dynamic>));
+        DeviceManager.devices.where((x) => x.id == asd["id"]).forEach((x) => x.updateFromServer(asd as Map<String, dynamic>));
       else
         DeviceManager.getDeviceWithId(asd["id"]).updateFromServer(asd as Map<String, dynamic>);
     });
@@ -436,9 +431,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future addDevice(int? id, dynamic device) async {
-    DeviceManager.devices.add(DeviceManager.ctorFactory[device["typeName"]]!(
-            device["id"], DeviceManager.stringNameJsonFactory[device["typeName"]]!(device), hubConnection)
-        as Device<BaseModel>);
+    DeviceManager.devices.add(
+        DeviceManager.ctorFactory[device["typeName"]]!(device["id"], DeviceManager.stringNameJsonFactory[device["typeName"]]!(device), hubConnection)
+            as Device<BaseModel>);
     PreferencesManager.instance.setInt("SHD" + device["id"].toString(), device["id"]);
     PreferencesManager.instance.setString("Json" + device["id"].toString(), jsonEncode(device));
     PreferencesManager.instance.setString("Type" + device["id"].toString(), device["typeName"]);
@@ -608,12 +603,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void selectedSort(String value) {
     switch (value) {
       case "Name":
-        DeviceManager.currentSort =
-            DeviceManager.currentSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
+        DeviceManager.currentSort = DeviceManager.currentSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
         break;
       case "Typ":
-        DeviceManager.currentSort =
-            DeviceManager.currentSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
+        DeviceManager.currentSort = DeviceManager.currentSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
         break;
       case "Id":
         DeviceManager.currentSort = DeviceManager.currentSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
