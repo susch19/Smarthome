@@ -36,7 +36,15 @@ const FlagToDayOfWeekMap = <int, DayOfWeek>{
   1 << 7: DayOfWeek.Sun
 };
 
-const DayOfWeekStringToFlagMap = <String, int>{'Mo': 1 << 1, 'Di': 1 << 2, 'Mi': 1 << 3, 'Do': 1 << 4, 'Fr': 1 << 5, 'Sa': 1 << 6, 'So': 1 << 7};
+const DayOfWeekStringToFlagMap = <String, int>{
+  'Mo': 1 << 1,
+  'Di': 1 << 2,
+  'Mi': 1 << 3,
+  'Do': 1 << 4,
+  'Fr': 1 << 5,
+  'Sa': 1 << 6,
+  'So': 1 << 7
+};
 
 const DayOfWeekToLongStringMap = <DayOfWeek, String>{
   DayOfWeek.Mon: 'Montag',
