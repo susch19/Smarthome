@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';
-import 'package:smarthome/controls/cicle_painter.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
@@ -28,9 +27,7 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
       var r = (colorNum & 0xFF0000) >> 16;
       var g = (colorNum & 0xFF00) >> 8;
       var b = (colorNum & 0xFF) >> 0;
-      return CustomPaint(
-        painter: CirclePainter(10, Color.fromRGBO(r, g, b, 1), Offset(0, 10)),
-      );
+      return Icon(Icons.bubble_chart, color: Color.fromRGBO(r, g, b, 1), size: 24.0);
     }
   }
 
