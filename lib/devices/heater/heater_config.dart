@@ -76,7 +76,7 @@ class HeaterConfig extends Equatable implements Comparable {
     return (new DateTime(now.year, now.month, now.day, val.hour, val.minute)).toIso8601String();
   }
 
-  static TimeOfDay? timeOfDayFromJson(String val) {
+  static TimeOfDay timeOfDayFromJson(String val) {
     final dt = DateTime.tryParse(val)!.toLocal();
     new TimeOfDay(hour: 0, minute: 0);
     return TimeOfDay.fromDateTime(dt);

@@ -53,6 +53,8 @@ const _$MessageTypeEnumMap = {
 };
 
 const _$CommandEnumMap = {
+  Command.Off: 'Off',
+  Command.On: 'On',
   Command.WhoIAm: 'WhoIAm',
   Command.IP: 'IP',
   Command.Time: 'Time',
@@ -65,8 +67,6 @@ const _$CommandEnumMap = {
   Command.OnNewConnection: 'OnNewConnection',
   Command.Mesh: 'Mesh',
   Command.Delay: 'Delay',
-  Command.Off: 'Off',
-  Command.On: 'On',
   Command.RGB: 'RGB',
   Command.Strobo: 'Strobo',
   Command.RGBCycle: 'RGBCycle',

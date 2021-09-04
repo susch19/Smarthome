@@ -13,3 +13,5 @@ export 'osramb40rw/osram_b40_rw.dart';
 export 'osramb40rw/osram_b40_rw_model.dart';
 export 'osramplug/osram_plug.dart';
 export 'osramplug/osram_plug_model.dart';
+export 'tradfriledbulb/tradfri_led_bulb.dart';
+export 'tradfriledbulb/tradfri_led_bulb_model.dart';

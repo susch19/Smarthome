@@ -7,11 +7,13 @@ part of 'heater_config.dart';
 // **************************************************************************
 
 HeaterConfig _$HeaterConfigFromJson(Map<String, dynamic> json) => HeaterConfig(
-    _$enumDecodeNullable(_$DayOfWeekEnumMap, json['dayOfWeek'])!,
-    HeaterConfig.timeOfDayFromJson(json['timeOfDay'] as String)!,
-    (json['temperature'] as num).toDouble());
+      _$enumDecode(_$DayOfWeekEnumMap, json['dayOfWeek']),
+      HeaterConfig.timeOfDayFromJson(json['timeOfDay'] as String),
+      (json['temperature'] as num).toDouble(),
+    );
 
-Map<String, dynamic> _$HeaterConfigToJson(HeaterConfig instance) => <String, dynamic>{
+Map<String, dynamic> _$HeaterConfigToJson(HeaterConfig instance) =>
+    <String, dynamic>{
       'dayOfWeek': _$DayOfWeekEnumMap[instance.dayOfWeek],
       'timeOfDay': HeaterConfig.timeOfDayToJson(instance.timeOfDay),
       'temperature': instance.temperature,
@@ -41,17 +43,6 @@ K _$enumDecode<K, V>(
       return MapEntry(unknownValue, enumValues.values.first);
     },
   ).key;
-}
-
-K? _$enumDecodeNullable<K, V>(
-  Map<K, V> enumValues,
-  dynamic source, {
-  K? unknownValue,
-}) {
-  if (source == null) {
-    return null;
-  }
-  return _$enumDecode<K, V>(enumValues, source, unknownValue: unknownValue);
 }
 
 const _$DayOfWeekEnumMap = {
