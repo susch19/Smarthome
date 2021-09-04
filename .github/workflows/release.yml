@@ -111,7 +111,7 @@ jobs:
     # Checkout smarthome code, recreate missing files, and get packages.
     - name: Checkout smarthome code
       uses: actions/checkout@v2
-    - run: flutter create .
+    - run: flutter create . --project-name smarthome
     - run: flutter pub get
 
     - name: Configure Keystore for Android
