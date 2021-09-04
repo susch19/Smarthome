@@ -19,7 +19,6 @@ import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/session/cert_file.dart';
-import 'package:smarthome/syncfusion.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -36,7 +35,6 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 }
 
 void main() async {
-  SyncFusionLicense.registerLicense();
   WidgetsFlutterBinding.ensureInitialized();
   var prefs = await SharedPreferences.getInstance();
   PreferencesManager.instance = PreferencesManager(prefs);
