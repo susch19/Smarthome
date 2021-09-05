@@ -161,7 +161,7 @@ jobs:
       working-directory: ${{ matrix.build_path }}
     - name: Compress build for Web
       if: matrix.target == 'Web'
-      run: zip -r ${env:GITHUB_WORKSPACE}\smarthome_${{ matrix.target }}.zip *
+      run: zip -r ${env:GITHUB_WORKSPACE}/smarthome_${{ matrix.target }}.zip *
       working-directory: ${{ matrix.build_path }}
     - name: Compress build for Windows
       if: matrix.target == 'Windows'
