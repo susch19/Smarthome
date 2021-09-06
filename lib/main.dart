@@ -18,6 +18,7 @@ import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/session/cert_file.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -41,7 +42,7 @@ void main() async {
   var prefs = await SharedPreferences.getInstance();
   // prefs.clear();
   PreferencesManager.instance = PreferencesManager(prefs);
-
+              PreferencesManager.instance.remove("mainserverurl");
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
   ThemeManager.initThemeManager(savedThemeMode);
   DeviceManager.init();
@@ -484,6 +485,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               PopupMenuItem<String>(value: 'Groups', child: Text("Gruppierungen ein/-ausblenden")),
               PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
               PopupMenuItem<String>(value: 'RemoveAll', child: Text("Entferne alle Geräte")),
+              PopupMenuItem<String>(value: 'Info', child: Text("Information")),
             ],
           ),
         ],
@@ -554,6 +556,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         }
         DeviceManager.saveDeviceGroups();
         setState(() {});
+        break;
+        case "Info":
+          Navigator.push(context, MaterialPageRoute(builder: (c) => AboutScreen()));
         break;
     }
   }
