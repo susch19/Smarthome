@@ -7,8 +7,8 @@ part 'zigbee_model.g.dart';
 class ZigbeeModel extends BaseModel {
   late bool available;
   late DateTime lastReceived;
-  @JsonKey(name: 'link_Quality')
-  late int linkQuality;
+  @JsonKey(name: 'link_quality')
+  late int? linkQuality;
 
   @override
   bool get isConnected => available;

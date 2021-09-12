@@ -17,3 +17,5 @@ export 'tradfriledbulb/tradfri_led_bulb.dart';
 export 'tradfriledbulb/tradfri_led_bulb_model.dart';
 export 'tradfricontroloutlet/tradfri_control_outlet.dart';
 export 'tradfricontroloutlet/tradfri_control_outlet_model.dart';
+export 'tradfrimotionsensor/tradfri_motion_sensor.dart';
+export 'tradfrimotionsensor/tradfri_motion_sensor_model.dart';

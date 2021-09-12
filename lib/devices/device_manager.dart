@@ -122,8 +122,10 @@ class DeviceManager {
     'OsramPlug': (i, s, h) => OsramPlug(i, "Osram Plug", s as OsramPlugModel, h, Icons.radio_button_checked),
     'TradfriLedBulb': (i, s, h) =>
         TradfriLedBulb(i, "Tradfi RGB Bulb", s as TradfriLedBulbModel, h, Icons.lightbulb_outline),
-    'TradfriControlOutlet': (i, s, h) =>
-        TradfriControlOutlet(i, "Tradfri Control Outlet", s as TradfriControlOutletModel, h, Icons.radio_button_checked)
+    'TradfriControlOutlet': (i, s, h) => TradfriControlOutlet(
+        i, "Tradfri Control Outlet", s as TradfriControlOutletModel, h, Icons.radio_button_checked),
+    'TradfriMotionSensor': (i, s, h) =>
+        TradfriMotionSensor(i, "Tradfri Motion Sensor", s as TradfriMotionSensorModel, h, Icons.sensors)
   };
   static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
@@ -135,6 +137,7 @@ class DeviceManager {
     'OsramPlug': (m) => OsramPlugModel.fromJson(m),
     'TradfriLedBulb': (m) => TradfriLedBulbModel.fromJson(m),
     'TradfriControlOutlet': (m) => TradfriControlOutletModel.fromJson(m),
+    'TradfriMotionSensor': (m) => TradfriMotionSensorModel.fromJson(m)
   };
 
   static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
@@ -146,7 +149,8 @@ class DeviceManager {
     OsramB40RWModel: (m) => OsramB40RWModel.fromJson(m),
     OsramPlugModel: (m) => OsramPlugModel.fromJson(m),
     TradfriLedBulbModel: (m) => TradfriLedBulbModel.fromJson(m),
-    TradfriControlOutletModel: (m) => TradfriControlOutletModel.fromJson(m)
+    TradfriControlOutletModel: (m) => TradfriControlOutletModel.fromJson(m),
+    TradfriMotionSensorModel: (m) => TradfriMotionSensorModel.fromJson(m)
   };
 
   static void stopSubbing() {
@@ -201,7 +205,8 @@ enum DeviceTypes {
   OsramB40RW,
   OsramPlug,
   TradfriLedBulb,
-  TradfriControlOutlet
+  TradfriControlOutlet,
+  TradfriMotionSensor
 }
 
 enum SortTypes { NameAsc, NameDesc, TypeAsc, TypeDesc, IdAsd, IdDesc }
