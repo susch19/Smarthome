@@ -114,12 +114,16 @@ class DeviceManager {
   static final ctorFactory = <String, Object Function(int? id, BaseModel model, HubConnection con)>{
     //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
     'Heater': (i, s, h) => Heater(i, "Heizung", s as HeaterModel, h, Icons.whatshot),
-    'XiaomiTempSensor': (i, s, h) => XiaomiTempSensor(i, "Temperatursensor", s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor),
+    'XiaomiTempSensor': (i, s, h) =>
+        XiaomiTempSensor(i, "Temperatursensor", s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor),
     'LedStrip': (i, s, h) => LedStrip(i, "Ledstrip", s as LedStripModel, h, Icons.lightbulb_outline),
     'FloaltPanel': (i, s, h) => FloaltPanel(i, "Floalt Panel", s as FloaltPanelModel, h, Icons.crop_square),
     'OsramB40RW': (i, s, h) => OsramB40RW(i, "Osram B40", s as OsramB40RWModel, h, Icons.lightbulb_outline),
     'OsramPlug': (i, s, h) => OsramPlug(i, "Osram Plug", s as OsramPlugModel, h, Icons.radio_button_checked),
-    'TradfriLedBulb': (i, s, h) => TradfriLedBulb(i, "Tradfi RGB Bulb", s as TradfriLedBulbModel, h, Icons.lightbulb_outline)
+    'TradfriLedBulb': (i, s, h) =>
+        TradfriLedBulb(i, "Tradfi RGB Bulb", s as TradfriLedBulbModel, h, Icons.lightbulb_outline),
+    'TradfriControlOutlet': (i, s, h) =>
+        TradfriControlOutlet(i, "Tradfri Control Outlet", s as TradfriControlOutletModel, h, Icons.radio_button_checked)
   };
   static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
@@ -130,6 +134,7 @@ class DeviceManager {
     'OsramB40RW': (m) => OsramB40RWModel.fromJson(m),
     'OsramPlug': (m) => OsramPlugModel.fromJson(m),
     'TradfriLedBulb': (m) => TradfriLedBulbModel.fromJson(m),
+    'TradfriControlOutlet': (m) => TradfriControlOutletModel.fromJson(m),
   };
 
   static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
@@ -140,7 +145,8 @@ class DeviceManager {
     FloaltPanelModel: (m) => FloaltPanelModel.fromJson(m),
     OsramB40RWModel: (m) => OsramB40RWModel.fromJson(m),
     OsramPlugModel: (m) => OsramPlugModel.fromJson(m),
-    TradfriLedBulbModel: (m) => TradfriLedBulbModel.fromJson(m)
+    TradfriLedBulbModel: (m) => TradfriLedBulbModel.fromJson(m),
+    TradfriControlOutletModel: (m) => TradfriControlOutletModel.fromJson(m)
   };
 
   static void stopSubbing() {
@@ -151,7 +157,8 @@ class DeviceManager {
     for (var id in ids) {
       var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
       var type = PreferencesManager.instance.getString("Type" + id.toString());
-      BaseModel model = stringNameJsonFactory[type!]!(jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!));
+      BaseModel model =
+          stringNameJsonFactory[type!]!(jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!));
       model.isConnected = false;
 
       model.friendlyName += "(old)";
@@ -186,6 +193,15 @@ class DeviceManager {
   }
 }
 
-enum DeviceTypes { Heater, XiaomiTempSensor, LedStrip, FloaltPanel, OsramB40RW, OsramPlug, TradfriLedBulb }
+enum DeviceTypes {
+  Heater,
+  XiaomiTempSensor,
+  LedStrip,
+  FloaltPanel,
+  OsramB40RW,
+  OsramPlug,
+  TradfriLedBulb,
+  TradfriControlOutlet
+}
 
 enum SortTypes { NameAsc, NameDesc, TypeAsc, TypeDesc, IdAsd, IdDesc }

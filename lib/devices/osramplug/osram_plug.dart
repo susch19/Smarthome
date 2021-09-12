@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-// import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
@@ -62,13 +61,6 @@ class _OsramPlugScreenState extends State<OsramPlugScreen> {
   DateTime dateTime = DateTime.now();
   late StreamSubscription sub;
 
-  void sliderChange(Function f, int dateTimeMilliseconds, [double? val]) {
-    if (DateTime.now().isAfter(dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
-      Function.apply(f, val == null ? [] : [val]);
-      dateTime = DateTime.now();
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -81,18 +73,6 @@ class _OsramPlugScreenState extends State<OsramPlugScreen> {
   void deactivate() {
     super.deactivate();
     sub.cancel();
-  }
-
-  void changeDelay(double? delay) {
-    this.widget.osramPlug.sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()]);
-  }
-
-  void changeBrightness(double brightness) {
-    this.widget.osramPlug.sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
-  }
-
-  void changeColorTemp(double colorTemp) {
-    this.widget.osramPlug.sendToServer(sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()]);
   }
 
   @override
