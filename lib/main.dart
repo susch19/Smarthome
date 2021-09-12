@@ -21,6 +21,8 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/session/cert_file.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'controls/expandable_fab.dart';
 import 'session/permanent_retry_policy.dart';
@@ -42,7 +44,9 @@ void main() async {
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
   ThemeManager.initThemeManager(savedThemeMode);
   DeviceManager.init();
-  runApp(MyApp(savedThemeMode));
+  Intl.defaultLocale = "de-DE";
+  initializeDateFormatting("de-DE", null).then((_) => runApp(MyApp(savedThemeMode)));
+  // runApp(MyApp(savedThemeMode));
 }
 
 class MyApp extends StatelessWidget {

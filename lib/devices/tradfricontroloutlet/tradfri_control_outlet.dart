@@ -46,7 +46,7 @@ class TradfriControlOutlet extends Device<TradfriControlOutletModel> {
 
   @override
   DeviceTypes getDeviceType() {
-    return DeviceTypes.OsramPlug;
+    return DeviceTypes.TradfriControlOutlet;
   }
 }
 

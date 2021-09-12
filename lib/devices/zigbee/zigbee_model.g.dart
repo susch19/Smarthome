@@ -13,7 +13,7 @@ ZigbeeModel _$ZigbeeModelFromJson(Map<String, dynamic> json) => ZigbeeModel(
     )
       ..available = json['available'] as bool
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
-      ..linkQuality = json['link_Quality'] as int;
+      ..linkQuality = json['link_quality'] as int?;
 
 Map<String, dynamic> _$ZigbeeModelToJson(ZigbeeModel instance) =>
     <String, dynamic>{
@@ -21,6 +21,6 @@ Map<String, dynamic> _$ZigbeeModelToJson(ZigbeeModel instance) =>
       'friendlyName': instance.friendlyName,
       'available': instance.available,
       'lastReceived': instance.lastReceived.toIso8601String(),
-      'link_Quality': instance.linkQuality,
+      'link_quality': instance.linkQuality,
       'isConnected': instance.isConnected,
     };
