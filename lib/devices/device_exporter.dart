@@ -15,3 +15,5 @@ export 'osramplug/osram_plug.dart';
 export 'osramplug/osram_plug_model.dart';
 export 'tradfriledbulb/tradfri_led_bulb.dart';
 export 'tradfriledbulb/tradfri_led_bulb_model.dart';
+export 'tradfricontroloutlet/tradfri_control_outlet.dart';
+export 'tradfricontroloutlet/tradfri_control_outlet_model.dart';
