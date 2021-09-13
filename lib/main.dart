@@ -39,6 +39,7 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var prefs = await SharedPreferences.getInstance();
+  // prefs.clear();
   PreferencesManager.instance = PreferencesManager(prefs);
 
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
@@ -46,7 +47,6 @@ void main() async {
   DeviceManager.init();
   Intl.defaultLocale = "de-DE";
   initializeDateFormatting("de-DE", null).then((_) => runApp(MyApp(savedThemeMode)));
-  // runApp(MyApp(savedThemeMode));
 }
 
 class MyApp extends StatelessWidget {

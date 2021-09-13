@@ -8,7 +8,7 @@ class ZigbeeModel extends BaseModel {
   late bool available;
   late DateTime lastReceived;
   @JsonKey(name: 'link_quality')
-  late int? linkQuality;
+  late int linkQuality;
 
   @override
   bool get isConnected => available;
