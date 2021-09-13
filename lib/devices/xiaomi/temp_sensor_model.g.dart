@@ -14,7 +14,7 @@ TempSensorModel _$TempSensorModelFromJson(Map<String, dynamic> json) =>
     )
       ..available = json['available'] as bool
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
-      ..linkQuality = json['link_quality'] as int?
+      ..linkQuality = json['link_quality'] as int
       ..temperature = (json['temperature'] as num).toDouble()
       ..humidity = (json['humidity'] as num).toDouble()
       ..pressure = (json['pressure'] as num).toDouble()

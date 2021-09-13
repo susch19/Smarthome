@@ -14,7 +14,7 @@ FloaltPanelModel _$FloaltPanelModelFromJson(Map<String, dynamic> json) =>
     )
       ..available = json['available'] as bool
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
-      ..linkQuality = json['link_quality'] as int?
+      ..linkQuality = json['link_quality'] as int
       ..brightness = json['brightness'] as int
       ..state = json['state'] as bool
       ..colorTemp = json['colorTemp'] as int

@@ -15,7 +15,7 @@ TradfriMotionSensorModel _$TradfriMotionSensorModelFromJson(
     )
       ..available = json['available'] as bool
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
-      ..linkQuality = json['link_quality'] as int?
+      ..linkQuality = json['link_quality'] as int
       ..battery = json['battery'] as int
       ..noMotion = json['no_motion'] as int
       ..occupancy = json['occupancy'] as bool;
