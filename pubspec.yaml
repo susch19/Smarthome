@@ -38,6 +38,8 @@ dependencies:
   equatable: ^2.0.3
   expandable: ^5.0.1
   new_gradient_app_bar: ^0.2.0
+  flutter_svg: ^0.22.0
+  url_launcher:
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +59,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   
+  assets:
+    - assets/images/
+    - assets/vectors/
   fonts:
     - family:  Smarthome
       fonts:

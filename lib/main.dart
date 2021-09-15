@@ -39,7 +39,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var prefs = await SharedPreferences.getInstance();
   PreferencesManager.instance = PreferencesManager(prefs);
-              PreferencesManager.instance.remove("mainserverurl");
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
   ThemeManager.initThemeManager(savedThemeMode);
   DeviceManager.init();
