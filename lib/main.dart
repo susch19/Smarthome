@@ -42,7 +42,6 @@ void main() async {
   var prefs = await SharedPreferences.getInstance();
   // prefs.clear();
   PreferencesManager.instance = PreferencesManager(prefs);
-              PreferencesManager.instance.remove("mainserverurl");
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
   ThemeManager.initThemeManager(savedThemeMode);
   DeviceManager.init();
