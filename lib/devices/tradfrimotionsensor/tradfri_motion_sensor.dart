@@ -70,7 +70,7 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
 
   @override
   DeviceTypes getDeviceType() {
-    return DeviceTypes.XiaomiTempSensor;
+    return DeviceTypes.TradfriMotionSensor;
   }
 }
 
