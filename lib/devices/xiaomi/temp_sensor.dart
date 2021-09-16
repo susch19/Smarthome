@@ -17,6 +17,7 @@ import 'dart:math';
 import 'package:smarthome/icons/icons.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import '../device_manager.dart';
+import '../../helper/datetime_helper.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
   XiaomiTempSensor(int? id, String typeName, TempSensorModel model, HubConnection connection, IconData icon)
@@ -68,7 +69,7 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
             (DeviceManager.showDebugInformation
                 ? <Widget>[
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(DateFormat('y.MM.dd HH:mm:ss').format(baseModel.lastReceived.add(Duration(hours: 1)))),
+                      Text(baseModel.lastReceived.toDate()),
                     ]),
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text(baseModel.id.toRadixString(16))]),
                   ]
@@ -80,11 +81,6 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
     return DeviceTypes.XiaomiTempSensor;
   }
 }
-
-// class _XiaomiTempSensorState extends State<XiaomiTempSensorWidget> {
-//   @override
-//   Widget build(BuildContext context) => XiaomiTempSensorScreen(this.widget);
-// }
 
 class XiaomiTempSensorScreen extends DeviceScreen {
   final XiaomiTempSensor? tempSensor;
@@ -202,7 +198,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
                   title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
                 ),
                 ListTile(
-                  title: Text("Zuletzt empfangen: " + (model.lastReceived.add(Duration(hours: 1)).toString())),
+                  title: Text("Zuletzt empfangen: " + model.lastReceived.toDate()),
                 ),
               ],
         );
@@ -210,38 +206,27 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
     );
   }
 
-  // Widget buildGraphViewTempAndHumidity() {
-  //   return TimeSeriesRangeAnnotationChart(
-  //       histories
-  //           .where((x) => x.historyRecords.first.value < 800)
-  //           .map((h) => charts.LineSeries<TimeSeriesValue, DateTime>(
-  //                 id: h.propertyName,
-  //                 domainFn: (TimeSeriesValue value, _) => value.time,
-  //                 measureFn: (TimeSeriesValue value, _) => value.value,
-  //                 data: h.historyRecords
-  //                     .map((x) => TimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value))
-  //                     .toList(),
-  //               ))
-  //           .toList(),
-  //       animate: true);
-  // }
-
   Widget buildGraphViewHumidity() {
     var h = histories.firstWhereOrNull((x) => x.propertyName == "humidity");
     if (h != null)
-      return buildTimeSeriesRangeAnnotationChart(h, " %", "rel. Luftfeuchtigkeit", ThemeManager.isLightTheme ? Colors.blueAccent.shade700 :Colors.blueAccent.shade100);
+      return buildTimeSeriesRangeAnnotationChart(h, " %", "rel. Luftfeuchtigkeit",
+          ThemeManager.isLightTheme ? Colors.blueAccent.shade700 : Colors.blueAccent.shade100);
     return buildDataMissing();
   }
 
   Widget buildGraphViewTemp() {
     var h = histories.firstWhereOrNull((x) => x.propertyName == "temperature");
-    if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " °C", "Temperatur", ThemeManager.isLightTheme ? Colors.redAccent.shade700 :Colors.redAccent);
+    if (h != null)
+      return buildTimeSeriesRangeAnnotationChart(
+          h, " °C", "Temperatur", ThemeManager.isLightTheme ? Colors.redAccent.shade700 : Colors.redAccent);
     return buildDataMissing();
   }
 
   Widget buildGraphViewPressure() {
     var h = histories.firstWhereOrNull((x) => x.propertyName == "pressure");
-    if (h != null) return buildTimeSeriesRangeAnnotationChart(h, " hPA", "Luftdruck", ThemeManager.isLightTheme ? Colors.greenAccent.shade700 :Colors.greenAccent.shade400);
+    if (h != null)
+      return buildTimeSeriesRangeAnnotationChart(h, " hPA", "Luftdruck",
+          ThemeManager.isLightTheme ? Colors.greenAccent.shade700 : Colors.greenAccent.shade400);
     return buildDataMissing();
   }
 
@@ -285,26 +270,31 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
       direction: Axis.vertical,
       children: <Widget>[
         Expanded(
-          child: TimeSeriesRangeAnnotationChart([
-            LineSeries<TimeSeriesValue, DateTime>(
-                enableTooltip: true,
-                animationDuration: 500,
-                // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
-                markerSettings: const MarkerSettings(isVisible: true, shape: DataMarkerType.circle,),
-                dataSource: h.historyRecords
-                    .map((x) =>
-                        TimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
-                    .toList(),
-                xValueMapper: (TimeSeriesValue value, _) => value.time,
-                yValueMapper: (TimeSeriesValue value, _) => value.value,
-                pointColorMapper: (TimeSeriesValue value, _) => value.lineColor,
-                width: 2)
-          ],
-              h.historyRecords.where((x) => x.value != null).map((x) => x.value!).fold(10000, min),
-              h.historyRecords.where((x) => x.value != null).map((x) => x.value!).fold(0, max),
-              unit,
-              valueName,
-              currentShownTime,),
+          child: TimeSeriesRangeAnnotationChart(
+            [
+              LineSeries<TimeSeriesValue, DateTime>(
+                  enableTooltip: true,
+                  animationDuration: 500,
+                  // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
+                  markerSettings: const MarkerSettings(
+                    isVisible: true,
+                    shape: DataMarkerType.circle,
+                  ),
+                  dataSource: h.historyRecords
+                      .map((x) =>
+                          TimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
+                      .toList(),
+                  xValueMapper: (TimeSeriesValue value, _) => value.time,
+                  yValueMapper: (TimeSeriesValue value, _) => value.value,
+                  pointColorMapper: (TimeSeriesValue value, _) => value.lineColor,
+                  width: 2)
+            ],
+            h.historyRecords.where((x) => x.value != null).map((x) => x.value!).fold(10000, min),
+            h.historyRecords.where((x) => x.value != null).map((x) => x.value!).fold(0, max),
+            unit,
+            valueName,
+            currentShownTime,
+          ),
         ),
         Row(
           children: <Widget>[
@@ -345,20 +335,6 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
       setState(() {});
     });
   }
-
-  // Widget buildGraphViewPressure() {
-  //   return TimeSeriesRangeAnnotationChart(histories
-  //       .where((x) => x.historyRecords.first.value > 800)
-  //       .map((h) => charts.Series<TimeSeriesValue, DateTime>(
-  //             id: h.propertyName,
-  //             domainFn: (TimeSeriesValue value, _) => value.time,
-  //             measureFn: (TimeSeriesValue value, _) => value.value,
-  //             data: h.historyRecords
-  //                 .map((x) => TimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value))
-  //                 .toList(),
-  //           ))
-  //       .toList());
-  // }
 }
 
 class TimeSeriesRangeAnnotationChart extends StatelessWidget {
@@ -371,24 +347,6 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
 
   TimeSeriesRangeAnnotationChart(this.seriesList, this.min, this.max, this.unit, this.valueName, this.shownDate);
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return new charts.TimeSeriesChart(
-  //     seriesList,
-  //     animate: animate,
-  //     behaviors: [
-  //       new charts.RangeAnnotation([
-  //         new charts.RangeAnnotationSegment(
-  //             DateTime.now(), DateTime.now().subtract(Duration(days: 0)), charts.RangeAnnotationAxisType.domain),
-  //       ]),
-  //       charts.SeriesLegend(),
-  //     ],
-  //     defaultRenderer: charts.LineRendererConfig(includePoints: true, radiusPx: 2.2),
-  //     selectionModels: [
-  //       charts.SelectionModelConfig(changedListener: _onSelectionChanged, type: charts.SelectionModelType.info)
-  //     ],
-  //   );
-  // }
   @override
   Widget build(BuildContext context) {
     return OrientationBuilder(builder: (context, orientation) {
