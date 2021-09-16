@@ -14,7 +14,7 @@ TradfriLedBulbModel _$TradfriLedBulbModelFromJson(Map<String, dynamic> json) =>
     )
       ..available = json['available'] as bool
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
-      ..linkQuality = json['link_quality'] as int
+      ..linkQuality = json['link_Quality'] as int
       ..brightness = json['brightness'] as int
       ..color = json['color'] as String?
       ..state = json['state'] as bool;
@@ -26,7 +26,7 @@ Map<String, dynamic> _$TradfriLedBulbModelToJson(
       'friendlyName': instance.friendlyName,
       'available': instance.available,
       'lastReceived': instance.lastReceived.toIso8601String(),
-      'link_quality': instance.linkQuality,
+      'link_Quality': instance.linkQuality,
       'brightness': instance.brightness,
       'color': instance.color,
       'state': instance.state,

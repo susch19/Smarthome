@@ -9,7 +9,7 @@ class ZigbeeLampModel extends ZigbeeModel {
   late int brightness;
   late bool state;
   late int colorTemp;
-  @JsonKey(name: 'transition_time')
+  @JsonKey(name: 'transition_Time')
   late double transitionTime;
 
   ZigbeeLampModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);

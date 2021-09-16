@@ -14,7 +14,7 @@ OsramPlugModel _$OsramPlugModelFromJson(Map<String, dynamic> json) =>
     )
       ..available = json['available'] as bool
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
-      ..linkQuality = json['link_quality'] as int
+      ..linkQuality = json['link_Quality'] as int
       ..state = json['state'] as bool;
 
 Map<String, dynamic> _$OsramPlugModelToJson(OsramPlugModel instance) =>
@@ -23,7 +23,7 @@ Map<String, dynamic> _$OsramPlugModelToJson(OsramPlugModel instance) =>
       'friendlyName': instance.friendlyName,
       'available': instance.available,
       'lastReceived': instance.lastReceived.toIso8601String(),
-      'link_quality': instance.linkQuality,
+      'link_Quality': instance.linkQuality,
       'isConnected': instance.isConnected,
       'state': instance.state,
     };

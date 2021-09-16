@@ -15,7 +15,7 @@ TradfriMotionSensorModel _$TradfriMotionSensorModelFromJson(
     )
       ..available = json['available'] as bool
       ..lastReceived = DateTime.parse(json['lastReceived'] as String)
-      ..linkQuality = json['link_quality'] as int
+      ..linkQuality = json['link_Quality'] as int
       ..battery = json['battery'] as int
       ..noMotion = json['no_motion'] as int
       ..occupancy = json['occupancy'] as bool;
@@ -27,7 +27,7 @@ Map<String, dynamic> _$TradfriMotionSensorModelToJson(
       'friendlyName': instance.friendlyName,
       'available': instance.available,
       'lastReceived': instance.lastReceived.toIso8601String(),
-      'link_quality': instance.linkQuality,
+      'link_Quality': instance.linkQuality,
       'battery': instance.battery,
       'no_motion': instance.noMotion,
       'occupancy': instance.occupancy,
