@@ -5,8 +5,6 @@ import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
-import 'package:intl/intl.dart';
 import 'package:smarthome/icons/icons.dart';
 import '../device_manager.dart';
 import 'tradfri_motion_sensor_model.dart';
