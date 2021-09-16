@@ -39,7 +39,7 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var prefs = await SharedPreferences.getInstance();
-  // prefs.clear();
+  prefs.clear();
   PreferencesManager.instance = PreferencesManager(prefs);
 
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
