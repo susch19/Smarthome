@@ -63,6 +63,16 @@ extension Iterables<E> on Iterable<E> {
     return null;
   }
 
+  Iterable<E> injectForIndex(E? Function(int index) indexFunc) sync* {
+    int index = 0;
+    for (var item in [...this]) {
+      var res = indexFunc(index);
+      if (res != null) yield res;
+      yield item;
+      index++;
+    }
+  }
+
   int sum(int Function(E element) keyFunction) {
     int sum = 0;
     for (var item in [...this]) {
