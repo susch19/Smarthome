@@ -18,6 +18,7 @@ import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/session/cert_file.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -485,6 +486,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
               PopupMenuItem<String>(value: 'RemoveAll', child: Text("Entferne alle Geräte")),
               PopupMenuItem<String>(value: 'Info', child: Text("Information")),
+              PopupMenuItem<String>(value: 'ServerSearch', child: Text("Serversuche")),
             ],
           ),
         ],
@@ -514,6 +516,17 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   void selectedOption(String value) {
     switch (value) {
+      case "ServerSearch":
+        Navigator.push(context, MaterialPageRoute(builder: (c) => ServerSearchScreen())).then((value) {
+          if (value is IpPort) {
+            var uri = Uri.parse("http://" + value.ipAddress);
+            uri = Uri(host: uri.host, port: value.port, scheme: uri.scheme, path: "SmartHome");
+            serverUrl = uri.toString();
+            PreferencesManager.instance.setString("mainserverurl", serverUrl);
+            newHubConnection();
+          }
+        });
+        break;
       case "URL":
         var sd = SimpleDialogSingleInput.create(
             hintText: "URL of Smarthome Server",
@@ -556,8 +569,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         DeviceManager.saveDeviceGroups();
         setState(() {});
         break;
-        case "Info":
-          Navigator.push(context, MaterialPageRoute(builder: (c) => AboutScreen()));
+      case "Info":
+        Navigator.push(context, MaterialPageRoute(builder: (c) => AboutScreen()));
         break;
     }
   }
