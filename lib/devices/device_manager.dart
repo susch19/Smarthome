@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 
@@ -21,6 +22,7 @@ class DeviceManager {
   static final notSubscribedDevices = <Device>[];
   static bool sub = false;
   static Map<String, String> groupNames = Map<String, String>();
+  static ValueNotifier<bool> deviceStateChanged = ValueNotifier(false);
 
   static void init() {
     var names = PreferencesManager.instance.getStringList("customGroupNames");
@@ -32,6 +34,22 @@ class DeviceManager {
       }
     }
   }
+
+  static void updateMethod(List<Object?>? arguments) {
+    arguments!.forEach((a) {
+      var updateMap = a as Map;
+      if (updateMap["id"] == 0)
+        DeviceManager.devices
+            .where((x) => x.id == updateMap["id"])
+            .forEach((x) => x.updateFromServer(updateMap as Map<String, dynamic>));
+      else
+        DeviceManager.getDeviceWithId(updateMap["id"]).updateFromServer(updateMap as Map<String, dynamic>);
+    });
+    deviceStateChanged.value = !deviceStateChanged.value;
+  }
+
+  static Future<dynamic> subscribeToDevice(List<int?> deviceIds) async =>
+      await ConnectionManager.hubConnection.invoke("Subscribe", args: [deviceIds]);
 
   static void saveDeviceGroups() {
     var deviceGroups = devices.map((e) => e.id.toString() + "\u0002" + e.groups.join("\u0003")).join("\u0001");
@@ -111,21 +129,25 @@ class DeviceManager {
     PreferencesManager.instance.setInt("SortOrder", DeviceManager.currentSort.index);
   }
 
-  static final ctorFactory = <String, Object Function(int? id, BaseModel model, HubConnection con)>{
+  static final ctorFactory = <String, Object Function(int? id, BaseModel model)>{
     //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
-    'Heater': (i, s, h) => Heater(i, "Heizung", s as HeaterModel, h, Icons.whatshot),
-    'XiaomiTempSensor': (i, s, h) =>
-        XiaomiTempSensor(i, "Temperatursensor", s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor),
-    'LedStrip': (i, s, h) => LedStrip(i, "Ledstrip", s as LedStripModel, h, Icons.lightbulb_outline),
-    'FloaltPanel': (i, s, h) => FloaltPanel(i, "Floalt Panel", s as FloaltPanelModel, h, Icons.crop_square),
-    'OsramB40RW': (i, s, h) => OsramB40RW(i, "Osram B40", s as OsramB40RWModel, h, Icons.lightbulb_outline),
-    'OsramPlug': (i, s, h) => OsramPlug(i, "Osram Plug", s as OsramPlugModel, h, Icons.radio_button_checked),
-    'TradfriLedBulb': (i, s, h) =>
-        TradfriLedBulb(i, "Tradfi RGB Bulb", s as TradfriLedBulbModel, h, Icons.lightbulb_outline),
-    'TradfriControlOutlet': (i, s, h) => TradfriControlOutlet(
-        i, "Tradfri Control Outlet", s as TradfriControlOutletModel, h, Icons.radio_button_checked),
-    'TradfriMotionSensor': (i, s, h) =>
-        TradfriMotionSensor(i, "Tradfri Motion Sensor", s as TradfriMotionSensorModel, h, Icons.sensors)
+    'Heater': (i, s) => Heater(i, "Heizung", s as HeaterModel, ConnectionManager.hubConnection, Icons.whatshot),
+    'XiaomiTempSensor': (i, s) => XiaomiTempSensor(
+        i, "Temperatursensor", s as TempSensorModel, ConnectionManager.hubConnection, SmarthomeIcons.xiaomiTempSensor),
+    'LedStrip': (i, s) =>
+        LedStrip(i, "Ledstrip", s as LedStripModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
+    'FloaltPanel': (i, s) =>
+        FloaltPanel(i, "Floalt Panel", s as FloaltPanelModel, ConnectionManager.hubConnection, Icons.crop_square),
+    'OsramB40RW': (i, s) =>
+        OsramB40RW(i, "Osram B40", s as OsramB40RWModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
+    'OsramPlug': (i, s) =>
+        OsramPlug(i, "Osram Plug", s as OsramPlugModel, ConnectionManager.hubConnection, Icons.radio_button_checked),
+    'TradfriLedBulb': (i, s) => TradfriLedBulb(
+        i, "Tradfi RGB Bulb", s as TradfriLedBulbModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
+    'TradfriControlOutlet': (i, s) => TradfriControlOutlet(i, "Tradfri Control Outlet", s as TradfriControlOutletModel,
+        ConnectionManager.hubConnection, Icons.radio_button_checked),
+    'TradfriMotionSensor': (i, s) => TradfriMotionSensor(
+        i, "Tradfri Motion Sensor", s as TradfriMotionSensorModel, ConnectionManager.hubConnection, Icons.sensors)
   };
   static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
@@ -157,7 +179,8 @@ class DeviceManager {
     sub = false;
   }
 
-  static void loadDevices(subs, List<int> ids, HubConnection hubConnection) {
+  static void loadDevices(subs, List<int> ids) {
+    var hubConnection = ConnectionManager.hubConnection;
     for (var id in ids) {
       var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
       var type = PreferencesManager.instance.getString("Type" + id.toString());
@@ -169,11 +192,11 @@ class DeviceManager {
       if (sub != null) {
         model = stringNameJsonFactory[type]!(sub);
         try {
-          var dev = ctorFactory[type]!(id, model, hubConnection);
+          var dev = ctorFactory[type]!(id, model);
           devices.add(dev as Device<BaseModel>);
         } catch (e) {}
       } else {
-        var dev = ctorFactory[type]!(id, model, hubConnection);
+        var dev = ctorFactory[type]!(id, model);
         devices.add(dev as Device<BaseModel>);
         notSubscribedDevices.add(dev);
         subToNonSubscribed(hubConnection);

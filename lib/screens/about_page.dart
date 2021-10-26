@@ -48,7 +48,7 @@ class AboutScreen extends StatelessWidget {
           Divider(),
           ListTile(
             title: Text(
-              "So Kostenlos, so toll, so einmalig",
+              "So kostenlos! So toll! So einmalig!",
               style: TextStyle(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),

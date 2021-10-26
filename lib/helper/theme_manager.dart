@@ -5,12 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemeManager {
-  static AdaptiveThemeMode brightness = AdaptiveThemeMode.dark;
-  static bool get isLightTheme => brightness == AdaptiveThemeMode.light;
+  static AdaptiveThemeMode brightness = AdaptiveThemeMode.light;
+  static bool get isLightTheme => brightness ==  AdaptiveThemeMode.light || brightness == AdaptiveThemeMode.system;
 
   static void initThemeManager(AdaptiveThemeMode? savedThemeMode) {
     if (savedThemeMode == null) savedThemeMode = AdaptiveThemeMode.system;
     brightness = savedThemeMode;
+    
   }
 
   static ThemeData getDarkTheme() {
@@ -105,6 +106,13 @@ class ThemeManager {
     var adaptiveTheme = AdaptiveTheme.of(context);
     brightness = adaptiveTheme.mode == AdaptiveThemeMode.dark ? AdaptiveThemeMode.light : AdaptiveThemeMode.dark;
     adaptiveTheme.setThemeMode(brightness);
+  }
+
+  static setThemeMode(BuildContext context, AdaptiveThemeMode mode, {Function? setState}) {
+    var adaptiveTheme = AdaptiveTheme.of(context);
+    adaptiveTheme.setThemeMode(mode);
+    brightness = mode;
+    if (setState != null) setState();
   }
 
   static BoxDecoration getBackgroundDecoration(BuildContext context) {

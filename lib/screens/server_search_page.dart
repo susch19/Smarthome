@@ -19,7 +19,7 @@ class ServerSearchScreen extends StatefulWidget {
 
 class ServerSearchScreenState extends State<ServerSearchScreen> {
   late Timer timer;
-  late Version currentAppVersion;
+  late Version currentAppVersion = Version(0,0,1);
 
   Map<String, String> _chosenValue = Map();
   static List<ServerRecord> servers = [];
