@@ -137,9 +137,11 @@ class DeviceManager {
     'LedStrip': (i, s) =>
         LedStrip(i, "Ledstrip", s as LedStripModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
     'FloaltPanel': (i, s) =>
-        FloaltPanel(i, "Floalt Panel", s as FloaltPanelModel, ConnectionManager.hubConnection, Icons.crop_square),
+        FloaltPanel(i, "Floalt Panel", s as ZigbeeLampModel, ConnectionManager.hubConnection, Icons.crop_square),
     'OsramB40RW': (i, s) =>
-        OsramB40RW(i, "Osram B40", s as OsramB40RWModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
+        OsramB40RW(i, "Osram B40", s as ZigbeeLampModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
+    'ZigbeeLamp': (i, s) =>
+        ZigbeeLamp(i, "Osram B40", s as ZigbeeLampModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
     'OsramPlug': (i, s) =>
         OsramPlug(i, "Osram Plug", s as OsramPlugModel, ConnectionManager.hubConnection, Icons.radio_button_checked),
     'TradfriLedBulb': (i, s) => TradfriLedBulb(
@@ -154,8 +156,9 @@ class DeviceManager {
     'Heater': (m) => HeaterModel.fromJson(m),
     'XiaomiTempSensor': (m) => TempSensorModel.fromJson(m),
     'LedStrip': (m) => LedStripModel.fromJson(m),
-    'FloaltPanel': (m) => FloaltPanelModel.fromJson(m),
-    'OsramB40RW': (m) => OsramB40RWModel.fromJson(m),
+    'ZigbeeLamp': (m) => ZigbeeLampModel.fromJson(m),
+    'FloaltPanel': (m) => ZigbeeLampModel.fromJson(m),
+    'OsramB40RW': (m) => ZigbeeLampModel.fromJson(m),
     'OsramPlug': (m) => OsramPlugModel.fromJson(m),
     'TradfriLedBulb': (m) => TradfriLedBulbModel.fromJson(m),
     'TradfriControlOutlet': (m) => TradfriControlOutletModel.fromJson(m),
@@ -167,8 +170,7 @@ class DeviceManager {
     HeaterModel: (m) => HeaterModel.fromJson(m),
     TempSensorModel: (m) => TempSensorModel.fromJson(m),
     LedStripModel: (m) => LedStripModel.fromJson(m),
-    FloaltPanelModel: (m) => FloaltPanelModel.fromJson(m),
-    OsramB40RWModel: (m) => OsramB40RWModel.fromJson(m),
+    ZigbeeLampModel: (m) => ZigbeeLampModel.fromJson(m),
     OsramPlugModel: (m) => OsramPlugModel.fromJson(m),
     TradfriLedBulbModel: (m) => TradfriLedBulbModel.fromJson(m),
     TradfriControlOutletModel: (m) => TradfriControlOutletModel.fromJson(m),
@@ -183,10 +185,23 @@ class DeviceManager {
     var hubConnection = ConnectionManager.hubConnection;
     for (var id in ids) {
       var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
-      var type = PreferencesManager.instance.getString("Type" + id.toString());
-      BaseModel model =
-          stringNameJsonFactory[type!]!(jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!));
-      model.isConnected = false;
+      var types = PreferencesManager.instance.getStringList("Types"+ id.toString());
+      BaseModel? model;
+      var previousModel = jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!);
+      String? type;
+      if (types == null || types.length == 0) {
+        type = PreferencesManager.instance.getString("Type" + id.toString());
+        model = stringNameJsonFactory[type!]!(previousModel);
+      } else {
+        for (var item in types) {
+          if (!stringNameJsonFactory.containsKey(item)) continue;
+          model = stringNameJsonFactory[item]!(previousModel);
+          type = item;
+          break;
+        }
+      }
+
+      model!.isConnected = false;
 
       model.friendlyName += "(old)";
       if (sub != null) {
@@ -229,7 +244,8 @@ enum DeviceTypes {
   OsramPlug,
   TradfriLedBulb,
   TradfriControlOutlet,
-  TradfriMotionSensor
+  TradfriMotionSensor,
+  ZigbeeLamp
 }
 
 enum SortTypes { NameAsc, NameDesc, TypeAsc, TypeDesc, IdAsd, IdDesc }

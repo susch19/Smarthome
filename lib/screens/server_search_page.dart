@@ -1,14 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:multicast_dns/multicast_dns.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/mdns_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/models/server_record.dart';
 import 'package:version/version.dart';
 

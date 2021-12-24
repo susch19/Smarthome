@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 // import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 // // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/dashboard/group_devices.dart';
-import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
 import 'package:smarthome/devices/device_manager.dart';
@@ -19,7 +17,6 @@ import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/screens/settings_page.dart';
 import 'package:smarthome/session/cert_file.dart';
@@ -30,7 +27,6 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'controls/expandable_fab.dart';
 import 'helper/connection_manager.dart';
-import 'session/permanent_retry_policy.dart';
 
 class CustomScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -113,9 +109,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       });
     });
     SettingsManager.serverUrlChanged.addListener(ConnectionManager.newHubConnection);
-    DeviceManager.deviceStateChanged.addListener(() {setState(() {
-      
-    });});
+    DeviceManager.deviceStateChanged.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -356,15 +352,41 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future addDevice(int? id, dynamic device) async {
-    DeviceManager.devices.add(DeviceManager.ctorFactory[device["typeName"]]!(
-        device["id"], DeviceManager.stringNameJsonFactory[device["typeName"]]!(device)) as Device<BaseModel>);
+    if (!device.containsKey("typeNames")) {
+      tryCreateDevice(id, device, device["typeName"]);
+      return;
+    }
+
+    var typeNames = device["typeNames"];
+
+    for (var item in typeNames) {
+      if (await tryCreateDevice(id, device, item)) return;
+    }
+  }
+
+  Future<bool> tryCreateDevice(int? id, dynamic device, String item) async {
+    if (!DeviceManager.ctorFactory.containsKey(item) || !DeviceManager.stringNameJsonFactory.containsKey(item)) {
+      return false;
+    }
+    DeviceManager.devices.add(
+        DeviceManager.ctorFactory[item]!(device["id"], DeviceManager.stringNameJsonFactory[item]!(device))
+            as Device<BaseModel>);
     PreferencesManager.instance.setInt("SHD" + device["id"].toString(), device["id"]);
     PreferencesManager.instance.setString("Json" + device["id"].toString(), jsonEncode(device));
-    PreferencesManager.instance.setString("Type" + device["id"].toString(), device["typeName"]);
+    PreferencesManager.instance.setString("Type" + device["id"].toString(), item);
+    if (device["typeNames"] != null) {
+      List<String> typeNames = <String>[];
+      for (var item in device["typeNames"]) {
+        typeNames.add(item.toString());
+      }
+
+      PreferencesManager.instance.setStringList("Types" + device["id"].toString(), typeNames);
+    }
 
     await DeviceManager.subscribeToDevice([device["id"]]);
     DeviceManager.sortDevices();
     setState(() {});
+    return true;
   }
 
   @override
@@ -395,8 +417,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           PopupMenuButton<String>(
             onSelected: selectedOption,
             itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-              PopupMenuItem<String>(value: 'URL', child: Text("Ändere Server Url")),
-              PopupMenuItem<String>(value: 'Time', child: Text("Zeit Update")),
+              // PopupMenuItem<String>(value: 'URL', child: Text("Ändere Server Url")),
+              // PopupMenuItem<String>(value: 'Time', child: Text("Zeit Update")),
               // PopupMenuItem<String>(value: 'Theme', child: Text("Theme umstellen")),
               // PopupMenuItem<String>(value: 'Groups', child: Text("Gruppierungen ein/-ausblenden")),
               // PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
@@ -458,9 +480,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       //       context: context);
       //   showDialog(builder: (BuildContext context) => sd, context: context);
       //   break;
-      case "Time":
-        ConnectionManager.hubConnection.invoke("UpdateTime");
-        break;
       case "Debug":
         DeviceManager.showDebugInformation = !DeviceManager.showDebugInformation;
         setState(() {});

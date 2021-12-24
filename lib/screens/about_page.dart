@@ -73,7 +73,7 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
           ListTile(
-            title: Text("Version 0.25"),
+            title: Text("Version 0.1"),
           ),
           Divider(),
           ListTile(
@@ -101,17 +101,17 @@ class AboutScreen extends StatelessWidget {
               });
             },
           ),
-          Divider(),
-          ListTile(
-            leading: SvgPicture.asset("assets/vectors/google_play.svg", alignment: Alignment.center, width: 32),
-            title: Text("Play Store Eintrag"),
-            onTap: () {
-              var urlString = "https://play.google.com/store/apps/details?id=de.susch19.nssl";
-              canLaunch(urlString).then((value) {
-                if (value) launch(urlString);
-              });
-            },
-          ),
+          // Divider(),
+          // ListTile(
+          //   leading: SvgPicture.asset("assets/vectors/google_play.svg", alignment: Alignment.center, width: 32),
+          //   title: Text("Play Store Eintrag"),
+          //   onTap: () {
+          //     var urlString = "https://play.google.com/store/apps/details?id=de.susch19.nssl";
+          //     canLaunch(urlString).then((value) {
+          //       if (value) launch(urlString);
+          //     });
+          //   },
+          // ),
         ],
       ),
     );

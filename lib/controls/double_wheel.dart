@@ -2,7 +2,6 @@ library wheel_chooser;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 class WheelChooser extends StatefulWidget {
   final TextStyle? selectTextStyle;

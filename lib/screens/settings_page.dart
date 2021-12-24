@@ -1,12 +1,11 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:smarthome/devices/device_manager.dart';
-import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/ipport.dart';
 
+import '../helper/connection_manager.dart';
 import 'screen_export.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -62,7 +61,8 @@ class SettingsPageState extends State<SettingsPage> {
                         Text("Helles Design"),
                       ],
                     ),
-                    onPressed: () => ThemeManager.setThemeMode(context, AdaptiveThemeMode.light, setState: () => setState(() {})),
+                    onPressed: () =>
+                        ThemeManager.setThemeMode(context, AdaptiveThemeMode.light, setState: () => setState(() {})),
                   ),
                   MaterialButton(
                     child: Column(
@@ -72,7 +72,8 @@ class SettingsPageState extends State<SettingsPage> {
                         Text("Dunkles Design"),
                       ],
                     ),
-                    onPressed: () => ThemeManager.setThemeMode(context, AdaptiveThemeMode.dark, setState: () => setState(() {})),
+                    onPressed: () =>
+                        ThemeManager.setThemeMode(context, AdaptiveThemeMode.dark, setState: () => setState(() {})),
                   ),
                 ],
               ),
@@ -147,6 +148,16 @@ class SettingsPageState extends State<SettingsPage> {
               ),
             ),
             Divider(),
+
+            DeviceManager.showDebugInformation
+                ? ListTile(
+                    title: Text(
+                      "Painless Mesh Zeit Update",
+                    ),
+                    onTap: () => ConnectionManager.hubConnection.invoke("UpdateTime"),
+                  )
+                : Container(),
+
             ListTile(
               leading: Text("Über"),
               onTap: () => Navigator.push(
