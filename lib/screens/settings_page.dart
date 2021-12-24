@@ -100,12 +100,12 @@ class SettingsPageState extends State<SettingsPage> {
             Divider(),
             ListTile(
               title: Text(
-                "",
+                "Server",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
             ListTile(
-              title: Text("Serversuche"),
+              title: Text("Serversuche öffnen"),
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (c) => ServerSearchScreen())).then((value) {
                   if (value is IpPort) {
@@ -134,6 +134,7 @@ class SettingsPageState extends State<SettingsPage> {
                 onPressed: () {
                   serverUrl = _textEditingController.text;
                   SettingsManager.setServerUrl(serverUrl);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Neue URL wurde gespeichert")));
                 },
               ),
             ),
