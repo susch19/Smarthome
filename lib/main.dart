@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 // import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -9,15 +8,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 // // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/dashboard/group_devices.dart';
-import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
+import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:smarthome/screens/screen_export.dart';
+import 'package:smarthome/screens/settings_page.dart';
 import 'package:smarthome/session/cert_file.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -25,7 +26,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'controls/expandable_fab.dart';
-import 'session/permanent_retry_policy.dart';
+import 'helper/connection_manager.dart';
 
 class CustomScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -40,11 +41,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var prefs = await SharedPreferences.getInstance();
   // prefs.clear();
-  PreferencesManager.instance = PreferencesManager(prefs);
 
+  PreferencesManager.instance = PreferencesManager(prefs);
   final savedThemeMode = await AdaptiveTheme.getThemeMode();
   ThemeManager.initThemeManager(savedThemeMode);
   DeviceManager.init();
+  SettingsManager.initialize();
   Intl.defaultLocale = "de-DE";
   initializeDateFormatting("de-DE", null).then((_) => runApp(MyApp(savedThemeMode)));
 }
@@ -90,26 +92,25 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  var serverUrl = "http://192.168.49.56:5055/smarthome";
-  ForInput urlAddressInput = new ForInput();
   IconData? infoIcon;
-  late HubConnection hubConnection;
   CertFile? certFile;
-  bool isGrouped = true;
 
   @override
   void initState() {
-    isGrouped = PreferencesManager.instance.getBool("Groupings") ?? true;
     infoIcon = Icons.refresh;
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
     doStuff();
     Timer.periodic(Duration(milliseconds: 500), (timer) async {
       setState(() {
-        if (hubConnection.state == HubConnectionState.disconnected)
+        if (ConnectionManager.hubConnection.state == HubConnectionState.disconnected)
           infoIcon = Icons.warning;
-        else if (hubConnection.state == HubConnectionState.connected) infoIcon = Icons.check;
+        else if (ConnectionManager.hubConnection.state == HubConnectionState.connected) infoIcon = Icons.check;
       });
+    });
+    SettingsManager.serverUrlChanged.addListener(ConnectionManager.newHubConnection);
+    DeviceManager.deviceStateChanged.addListener(() {
+      setState(() {});
     });
   }
 
@@ -123,15 +124,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     //resumed: 0, inactive: 1, paused: 2
     if (state.index == 0)
-      newHubConnection();
+      ConnectionManager.newHubConnection();
     else if (state.index == 2) {
       infoIcon = Icons.error_outline;
-      if (hubConnection.state == HubConnectionState.connected) hubConnection.stop();
+      if (ConnectionManager.hubConnection.state == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
     }
   }
-
-  Future<dynamic> subscribeToDevive(List<int?> deviceIds) async =>
-      await hubConnection.invoke("Subscribe", args: [deviceIds]);
 
   Future doStuff() async {
     setState(() {
@@ -139,93 +137,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
     // certFile = await loadCertFile(PreferencesManager.instance);
     certFile = null;
-    if (certFile != null) serverUrl = certFile!.serverUrl + "/smarthome";
-    urlAddressInput.textEditingController.text = serverUrl;
 
-    hubConnection = createHubConnection();
-    hubConnection.serverTimeoutInMilliseconds = 30000;
-    hubConnection.onclose((e) async {
-      if (e == null) return;
-      while (true) {
-        if (hubConnection.state != HubConnectionState.connected) {
-          if (infoIcon != Icons.error_outline) {
-            infoIcon = Icons.error_outline;
-            setState(() {});
-          }
-          DeviceManager.stopSubbing();
-          try {
-            hubConnection.stop();
-            hubConnection = createHubConnection();
-            await hubConnection.start();
-          } catch (e) {}
-          sleep(Duration(seconds: 1));
-        } else {
-          if (infoIcon != Icons.check) {
-            setState(() {
-              infoIcon = Icons.check;
-            });
-          }
-          var dev = await subscribeToDevive(DeviceManager.devices.map((x) => x.id).toList());
-          for (var d in DeviceManager.devices) {
-            if (!dev.any((x) => x["id"] == d.id)) DeviceManager.notSubscribedDevices.add(d);
-          }
-          DeviceManager.subToNonSubscribed(hubConnection);
-          break;
-        }
-      }
-    });
-    hubConnection.on("Update", updateMethod);
-
-    if (serverUrl != "") {
-      await hubConnection.start();
-      setState(() {
-        infoIcon = Icons.check;
-      });
-      var ids = <int>[];
-      for (var key in PreferencesManager.instance.getKeys().where((x) => x.startsWith("SHD"))) {
-        var id = PreferencesManager.instance.getInt(key);
-        if (id == null) continue;
-        ids.add(id);
-      }
-      var subs = await subscribeToDevive(ids);
-
-      DeviceManager.loadDevices(subs, ids, hubConnection);
-      DeviceManager.currentSort = SortTypes.values[PreferencesManager.instance.getInt("SortOrder") ?? 0];
-      DeviceManager.sortDevices();
-    }
-    setState(() {});
-  }
-
-  void newHubConnection() async {
-    setState(() {
-      infoIcon = Icons.refresh;
-    });
-    hubConnection.off("Update");
-    hubConnection.stop();
-    hubConnection = createHubConnection();
-
-    hubConnection.on("Update", updateMethod);
-
-    await hubConnection.start();
-    setState(() {
-      infoIcon = Icons.check;
-    });
-    for (var device in DeviceManager.devices) {
-      device.connection = hubConnection;
-    }
-    await subscribeToDevive(DeviceManager.devices.map((x) => x.id).toList());
-  }
-
-  void updateMethod(List<Object?>? arguments) {
-    arguments!.forEach((a) {
-      var asd = a as Map;
-      if (asd["id"] == 0)
-        DeviceManager.devices
-            .where((x) => x.id == asd["id"])
-            .forEach((x) => x.updateFromServer(asd as Map<String, dynamic>));
-      else
-        DeviceManager.getDeviceWithId(asd["id"]).updateFromServer(asd as Map<String, dynamic>);
-    });
+    ConnectionManager.startConnection();
     setState(() {});
   }
 
@@ -432,22 +345,48 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         // showDialog(context: context, builder: (b) => dialog);
         // setState(() {});
         break;
+
       default:
         break;
     }
   }
 
   Future addDevice(int? id, dynamic device) async {
-    DeviceManager.devices.add(DeviceManager.ctorFactory[device["typeName"]]!(
-            device["id"], DeviceManager.stringNameJsonFactory[device["typeName"]]!(device), hubConnection)
-        as Device<BaseModel>);
+    if (!device.containsKey("typeNames")) {
+      tryCreateDevice(id, device, device["typeName"]);
+      return;
+    }
+
+    var typeNames = device["typeNames"];
+
+    for (var item in typeNames) {
+      if (await tryCreateDevice(id, device, item)) return;
+    }
+  }
+
+  Future<bool> tryCreateDevice(int? id, dynamic device, String item) async {
+    if (!DeviceManager.ctorFactory.containsKey(item) || !DeviceManager.stringNameJsonFactory.containsKey(item)) {
+      return false;
+    }
+    DeviceManager.devices.add(
+        DeviceManager.ctorFactory[item]!(device["id"], DeviceManager.stringNameJsonFactory[item]!(device))
+            as Device<BaseModel>);
     PreferencesManager.instance.setInt("SHD" + device["id"].toString(), device["id"]);
     PreferencesManager.instance.setString("Json" + device["id"].toString(), jsonEncode(device));
-    PreferencesManager.instance.setString("Type" + device["id"].toString(), device["typeName"]);
+    PreferencesManager.instance.setString("Type" + device["id"].toString(), item);
+    if (device["typeNames"] != null) {
+      List<String> typeNames = <String>[];
+      for (var item in device["typeNames"]) {
+        typeNames.add(item.toString());
+      }
 
-    await subscribeToDevive([device["id"]]);
+      PreferencesManager.instance.setStringList("Types" + device["id"].toString(), typeNames);
+    }
+
+    await DeviceManager.subscribeToDevice([device["id"]]);
     DeviceManager.sortDevices();
     setState(() {});
+    return true;
   }
 
   @override
@@ -478,17 +417,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           PopupMenuButton<String>(
             onSelected: selectedOption,
             itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-              PopupMenuItem<String>(value: 'URL', child: Text("Ändere Server Url")),
-              PopupMenuItem<String>(value: 'Time', child: Text("Zeit Update")),
-              PopupMenuItem<String>(value: 'Theme', child: Text("Theme umstellen")),
-              PopupMenuItem<String>(value: 'Groups', child: Text("Gruppierungen ein/-ausblenden")),
-              PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
+              // PopupMenuItem<String>(value: 'URL', child: Text("Ändere Server Url")),
+              // PopupMenuItem<String>(value: 'Time', child: Text("Zeit Update")),
+              // PopupMenuItem<String>(value: 'Theme', child: Text("Theme umstellen")),
+              // PopupMenuItem<String>(value: 'Groups', child: Text("Gruppierungen ein/-ausblenden")),
+              // PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
               PopupMenuItem<String>(value: 'RemoveAll', child: Text("Entferne alle Geräte")),
+              // PopupMenuItem<String>(value: 'Info', child: Text("Information")),
+              // PopupMenuItem<String>(value: 'ServerSearch', child: Text("Serversuche")),
+              PopupMenuItem<String>(value: 'Settings', child: Text("Einstellungen")),
             ],
           ),
         ],
       ),
-      body: isGrouped ? buildBodyGrouped() : buildBody(),
+      body: SettingsManager.groupingEnabled ? buildBodyGrouped() : buildBody(),
       floatingActionButton: ExpandableFab(
         distance: 64.0,
         children: [
@@ -513,23 +455,31 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   void selectedOption(String value) {
     switch (value) {
-      case "URL":
-        var sd = SimpleDialogSingleInput.create(
-            hintText: "URL of Smarthome Server",
-            labelText: "URL",
-            defaultText: serverUrl,
-            onSubmitted: (s) {
-              serverUrl = s;
-              PreferencesManager.instance.setString("mainserverurl", s);
-              newHubConnection();
-            },
-            title: "Change URL",
-            context: context);
-        showDialog(builder: (BuildContext context) => sd, context: context);
-        break;
-      case "Time":
-        hubConnection.invoke("UpdateTime");
-        break;
+      // case "ServerSearch":
+      //   Navigator.push(context, MaterialPageRoute(builder: (c) => ServerSearchScreen())).then((value) {
+      //     if (value is IpPort) {
+      //       var uri = Uri.parse("http://" + value.ipAddress);
+      //       uri = Uri(host: uri.host, port: value.port, scheme: uri.scheme, path: "SmartHome");
+      //       serverUrl = uri.toString();
+      //       PreferencesManager.instance.setString("mainserverurl", serverUrl);
+      //       newHubConnection();
+      //     }
+      //   });
+      //   break;
+      // case "URL":
+      //   var sd = SimpleDialogSingleInput.create(
+      //       hintText: "URL of Smarthome Server",
+      //       labelText: "URL",
+      //       defaultText: serverUrl,
+      //       onSubmitted: (s) {
+      //         serverUrl = s;
+      //         PreferencesManager.instance.setString("mainserverurl", s);
+      //         newHubConnection();
+      //       },
+      //       title: "Change URL",
+      //       context: context);
+      //   showDialog(builder: (BuildContext context) => sd, context: context);
+      //   break;
       case "Debug":
         DeviceManager.showDebugInformation = !DeviceManager.showDebugInformation;
         setState(() {});
@@ -538,13 +488,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ThemeManager.toogleThemeMode(context);
 
         break;
-      case "Groups":
-        setState(() {
-          isGrouped = !isGrouped;
-        });
-        PreferencesManager.instance.setBool("Groupings", isGrouped);
+      // case "Groups":
+      //   setState(() {
+      //     isGrouped = !isGrouped;
+      //   });
+      //   PreferencesManager.instance.setBool("Groupings", isGrouped);
 
-        break;
+      //   break;
       case "RemoveAll":
         for (int i = DeviceManager.devices.length - 1; i >= 0; i--) {
           var d = DeviceManager.devices.removeAt(i);
@@ -554,6 +504,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         }
         DeviceManager.saveDeviceGroups();
         setState(() {});
+        break;
+      case "Info":
+        Navigator.push(context, MaterialPageRoute(builder: (c) => AboutScreen()));
+        break;
+      case 'Settings':
+        Navigator.push(context, MaterialPageRoute(builder: (c) => SettingsPage()));
         break;
     }
   }
@@ -626,11 +582,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future addNewDevice() async {
-    if (hubConnection.state != HubConnectionState.connected) {
-      await hubConnection.start();
+    if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
+      await ConnectionManager.hubConnection.start();
     }
 
-    var s = hubConnection.invoke("GetAllDevices", args: []);
+    var s = ConnectionManager.hubConnection.invoke("GetAllDevices", args: []);
 
     List<dynamic> serverDevices = await s;
 
@@ -671,21 +627,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     setState(() {});
   }
 
-  HubConnection createHubConnection() {
-    var mainUrl = PreferencesManager.instance.getString("mainserverurl") ?? "";
-    serverUrl = mainUrl == "" ? "http://192.168.49.56:5055/SmartHome" : mainUrl;
-    return HubConnectionBuilder()
-        .withUrl(
-            serverUrl,
-            HttpConnectionOptions(
-                //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
-                logging: (level, message) => print('$level: $message')))
-        .withAutomaticReconnect(PermanentRetryPolicy())
-        .build();
-  }
-
   void refresh() {
-    newHubConnection();
+    ConnectionManager.newHubConnection();
     setState(() {});
   }
 

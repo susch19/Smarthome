@@ -23,6 +23,7 @@ class LedStrip extends Device<LedStripModel> {
 
   @override
   Widget dashboardCardBody() {
+
     return Column(children: <Widget>[
       Wrap(
         runAlignment: WrapAlignment.spaceEvenly,
@@ -149,114 +150,115 @@ class _LedStripScreenState extends State<LedStripScreen> {
           children: <Widget>[
             new ListTile(
               // leading: this.widget.strip.baseModel.colorMode == "Off" ? Icon(Icons.check) : Text(""),
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.colorMode == "Off"
                     ? const Text(
                         'Off',
                         style: selectedTextStyle,
                       )
                     : Text("Off"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
               trailing: Text(""),
             ),
             new ListTile(
               // leading: this.widget.strip.baseModel.colorMode == "RGB" ? Icon(Icons.check) : Text(""),
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.colorMode == "RGB"
                     ? const Text(
                         'Fast RGB',
                         style: selectedTextStyle,
                       )
                     : Text("Fast RGB"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGB, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGB, []),
               trailing: Text(""),
             ),
             new ListTile(
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.colorMode == "Mode"
                     ? const Text(
                         'Flicker',
                         style: selectedTextStyle,
                       )
                     : Text("Flicker"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
               trailing: Text(""),
             ),
             new ListTile(
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.colorMode == "Strobo"
                     ? const Text(
                         'Strobo',
                         style: selectedTextStyle,
                       )
                     : Text("Strobo"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Strobo, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Strobo, []),
               trailing: Text(""),
             ),
             new ListTile(
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.colorMode == "RGBCycle"
                     ? const Text(
                         'RGBCycle',
                         style: selectedTextStyle,
                       )
                     : Text("RGBCycle"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGBCycle, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGBCycle, []),
               trailing: Text(""),
             ),
             new ListTile(
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.colorMode == "LightWander"
                     ? const Text(
                         'Wander',
                         style: selectedTextStyle,
                       )
                     : Text("Wander"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.LightWander, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.LightWander, []),
               trailing: Text(""),
             ),
             new ListTile(
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.colorMode == "RGBWander"
                     ? const Text(
                         'Wander RGB',
                         style: selectedTextStyle,
                       )
                     : Text("Wander RGB"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGBWander, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGBWander, []),
               trailing: Text(""),
             ),
             new ListTile(
-              title: new MaterialButton(
-                  child: (this.widget.strip.baseModel.colorMode == "SingleColor" &&
-                          this.widget.strip.baseModel.colorNumber == 0xFF000000)
-                      ? const Text(
-                          'White',
-                          style: selectedTextStyle,
-                        )
-                      : Text("White"),
-                  onPressed: () {
-                    this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]);
-                  }),
+              title: Center(
+                child: (this.widget.strip.baseModel.colorMode == "SingleColor" &&
+                        this.widget.strip.baseModel.colorNumber == 0xFF000000)
+                    ? const Text(
+                        'White',
+                        style: selectedTextStyle,
+                      )
+                    : Text("White"),
+              ),
+              onTap: () {
+                this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]);
+              },
               trailing: Text(""),
             ),
             new ListTile(
-              title: new MaterialButton(
+              title: Center(
                 child: this.widget.strip.baseModel.reverse
                     ? const Text(
                         'Reverse',
                         style: selectedTextStyle,
                       )
                     : Text("Reverse"),
-                onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
               ),
+              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
               trailing: Text(""),
             ),
             new ExpansionTile(

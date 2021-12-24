@@ -6,7 +6,6 @@ part 'tradfri_motion_sensor_model.g.dart';
 @JsonSerializable()
 class TradfriMotionSensorModel extends ZigbeeModel {
   late int battery;
-  @JsonKey(name: 'no_motion')
   late int noMotion;
   late bool occupancy;
 

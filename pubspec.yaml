@@ -7,7 +7,7 @@ description: Controlling Smarthome devices with AppBroker.
 # Both the version and the builder number may be overridden in flutter
 # build by specifying --build-name and --build-number, respectively.
 # Read more about versioning at semver.org.
-version: 1.1.2+1
+version: 1.1.4+0
 
 environment:
   sdk: '>=2.12.0 <3.0.0'
@@ -38,6 +38,11 @@ dependencies:
   equatable: ^2.0.3
   expandable: ^5.0.1
   new_gradient_app_bar: ^0.2.0
+  flutter_svg: ^0.22.0
+  url_launcher:
+  multicast_dns: ^0.3.1
+  version: ^2.0.0
+  package_info_plus: ^1.0.6
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +62,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   
+  assets:
+    - assets/images/
+    - assets/vectors/
   fonts:
     - family:  Smarthome
       fonts:
