@@ -185,7 +185,7 @@ class DeviceManager {
     var hubConnection = ConnectionManager.hubConnection;
     for (var id in ids) {
       var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
-      var types = PreferencesManager.instance.getStringList("Types"+ id.toString());
+      var types = PreferencesManager.instance.getStringList("Types" + id.toString());
       BaseModel? model;
       var previousModel = jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!);
       String? type;
