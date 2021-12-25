@@ -131,7 +131,7 @@ jobs:
       working-directory: android
 
     - name: Run code generators
-      run: flutter pub run build_runner
+      run: flutter pub run build_runner build  
       
     # Build the application.
     - run: flutter build -v ${{ matrix.build_target }} --release
