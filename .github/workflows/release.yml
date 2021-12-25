@@ -113,6 +113,7 @@ jobs:
       uses: actions/checkout@v2
     - run: flutter create . --project-name smarthome
     - run: flutter pub get
+    
 
     - name: Configure Keystore for Android
       if: matrix.target == 'Android'
@@ -129,6 +130,9 @@ jobs:
         KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
       working-directory: android
 
+    - name: Run code generators
+      run: flutter pub run build_runner
+      
     # Build the application.
     - run: flutter build -v ${{ matrix.build_target }} --release
 
