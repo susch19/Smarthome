@@ -3,7 +3,7 @@ import 'package:smarthome/helper/preference_manager.dart';
 
 class SettingsManager {
   static bool _groupingEnabled = true;
-  static String _serverUrl = "192.168.49.56:5055";
+  static String _serverUrl = "http://192.168.49.56:5055/SmartHome";
   static ValueNotifier<String> serverUrlChanged = ValueNotifier(_serverUrl);
 
   static bool get groupingEnabled => _groupingEnabled;

@@ -368,6 +368,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     if (!DeviceManager.ctorFactory.containsKey(item) || !DeviceManager.stringNameJsonFactory.containsKey(item)) {
       return false;
     }
+
     DeviceManager.devices.add(
         DeviceManager.ctorFactory[item]!(device["id"], DeviceManager.stringNameJsonFactory[item]!(device))
             as Device<BaseModel>);

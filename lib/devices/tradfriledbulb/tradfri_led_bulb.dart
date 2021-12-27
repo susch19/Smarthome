@@ -29,6 +29,7 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
       var b = (colorNum & 0xFF) >> 0;
       return Icon(Icons.bubble_chart, color: Color.fromRGBO(r, g, b, 1), size: 24.0);
     }
+    return Icon(Icons.bubble_chart, size: 24.0);
   }
 
   @override
