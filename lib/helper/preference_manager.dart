@@ -25,6 +25,8 @@ class PreferencesManager {
 
   List<String>? getStringList(String key) => _prefs.getStringList(key);
 
+  DateTime? getDateTime(String key) => DateTime.tryParse(_prefs.getString(key) ?? '');
+
   Future<void> reload() => _prefs.reload();
 
   Future<bool> remove(String key) => _prefs.remove(key);
@@ -38,4 +40,6 @@ class PreferencesManager {
   Future<bool> setString(String key, String value) => _prefs.setString(key, value);
 
   Future<bool> setStringList(String key, List<String> value) => _prefs.setStringList(key, value);
+
+  Future<bool> setDateTime(String key, DateTime value) => _prefs.setString(key, value.toIso8601String());
 }
