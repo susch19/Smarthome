@@ -13,17 +13,20 @@ import 'package:smarthome/models/message.dart' as sm;
 import 'package:smarthome/helper/theme_manager.dart';
 
 class LedStrip extends Device<LedStripModel> {
-  LedStrip(int? id, String typeName, BaseModel name, HubConnection connection, IconData icon)
-      : super(id, typeName, name as LedStripModel, connection, icon);
+  LedStrip(int? id, String typeName, BaseModel name, HubConnection connection,
+      IconData icon)
+      : super(id, typeName, name as LedStripModel, connection, iconData: icon);
 
   @override
   void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => LedStripScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => LedStripScreen(this)));
   }
 
   @override
   Widget dashboardCardBody() {
-
     return Column(children: <Widget>[
       Wrap(
         runAlignment: WrapAlignment.spaceEvenly,
@@ -33,19 +36,24 @@ class LedStrip extends Device<LedStripModel> {
             child: Text(
               "An",
               textAlign: TextAlign.center,
-              style: baseModel.colorMode != "Off" && baseModel.colorMode != "Mode"
-                  ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                  : TextStyle(),
+              style:
+                  baseModel.colorMode != "Off" && baseModel.colorMode != "Mode"
+                      ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      : TextStyle(),
             ),
-            onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]),
+            onPressed: () => sendToServer(
+                sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]),
           ),
           MaterialButton(
             child: Text(
               "Aus",
               textAlign: TextAlign.center,
-              style: baseModel.colorMode == "Off" ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+              style: baseModel.colorMode == "Off"
+                  ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                  : TextStyle(),
             ),
-            onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+            onPressed: () =>
+                sendToServer(sm.MessageType.Update, sm.Command.Off, []),
           ),
         ],
       ),
@@ -55,12 +63,17 @@ class LedStrip extends Device<LedStripModel> {
           child: Text(
             "Essen fertig",
             textAlign: TextAlign.center,
-            style: baseModel.colorMode == "Mode" ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: baseModel.colorMode == "Mode"
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
         ),
-        onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
+        onPressed: () =>
+            sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
       ),
-      (DeviceManager.showDebugInformation ? Text(baseModel.id.toString()) : Container())
+      (DeviceManager.showDebugInformation
+          ? Text(baseModel.id.toString())
+          : Container())
     ]);
   }
 
@@ -87,7 +100,8 @@ class _LedStripScreenState extends State<LedStripScreen> {
   double numLeds = 94.0;
   late StreamSubscription sub;
 
-  static const TextStyle selectedTextStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
+  static const TextStyle selectedTextStyle =
+      TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
 
   int get idelay => delay.toInt();
   int get ibrightness => brightness.toInt();
@@ -114,28 +128,28 @@ class _LedStripScreenState extends State<LedStripScreen> {
   }
 
   void sliderChange(Function f, int dateTimeMilliseconds, [int? val]) {
-    if (DateTime.now().isAfter(dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
+    if (DateTime.now().isAfter(
+        dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
       Function.apply(f, val == null ? [] : [val]);
       dateTime = DateTime.now();
     }
   }
 
   void changeColor() {
-    this
-        .widget
-        .strip
-        .sendToServer(sm.MessageType.Options, sm.Command.Color, ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]);
+    this.widget.strip.sendToServer(sm.MessageType.Options, sm.Command.Color,
+        ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]);
   }
 
   void changeDelay(int delay) {
-    this.widget.strip.sendToServer(sm.MessageType.Options, sm.Command.Delay, ["$delay"]);
-  }
-
-  void changeBrightness(int delay) {
     this
         .widget
         .strip
-        .sendToServer(sm.MessageType.Options, sm.Command.Brightness, ["0x${(brightness.toInt()).toRadixString(16)}"]);
+        .sendToServer(sm.MessageType.Options, sm.Command.Delay, ["$delay"]);
+  }
+
+  void changeBrightness(int delay) {
+    this.widget.strip.sendToServer(sm.MessageType.Options,
+        sm.Command.Brightness, ["0x${(brightness.toInt()).toRadixString(16)}"]);
   }
 
   @override
@@ -158,7 +172,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("Off"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+              onTap: () => this
+                  .widget
+                  .strip
+                  .sendToServer(sm.MessageType.Update, sm.Command.Off, []),
               trailing: Text(""),
             ),
             new ListTile(
@@ -171,7 +188,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("Fast RGB"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGB, []),
+              onTap: () => this
+                  .widget
+                  .strip
+                  .sendToServer(sm.MessageType.Update, sm.Command.RGB, []),
               trailing: Text(""),
             ),
             new ListTile(
@@ -183,7 +203,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("Flicker"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
+              onTap: () => this
+                  .widget
+                  .strip
+                  .sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
               trailing: Text(""),
             ),
             new ListTile(
@@ -195,7 +218,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("Strobo"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.Strobo, []),
+              onTap: () => this
+                  .widget
+                  .strip
+                  .sendToServer(sm.MessageType.Update, sm.Command.Strobo, []),
               trailing: Text(""),
             ),
             new ListTile(
@@ -207,7 +233,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("RGBCycle"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGBCycle, []),
+              onTap: () => this
+                  .widget
+                  .strip
+                  .sendToServer(sm.MessageType.Update, sm.Command.RGBCycle, []),
               trailing: Text(""),
             ),
             new ListTile(
@@ -219,7 +248,8 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("Wander"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.LightWander, []),
+              onTap: () => this.widget.strip.sendToServer(
+                  sm.MessageType.Update, sm.Command.LightWander, []),
               trailing: Text(""),
             ),
             new ListTile(
@@ -231,12 +261,14 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("Wander RGB"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.RGBWander, []),
+              onTap: () => this.widget.strip.sendToServer(
+                  sm.MessageType.Update, sm.Command.RGBWander, []),
               trailing: Text(""),
             ),
             new ListTile(
               title: Center(
-                child: (this.widget.strip.baseModel.colorMode == "SingleColor" &&
+                child: (this.widget.strip.baseModel.colorMode ==
+                            "SingleColor" &&
                         this.widget.strip.baseModel.colorNumber == 0xFF000000)
                     ? const Text(
                         'White',
@@ -245,7 +277,8 @@ class _LedStripScreenState extends State<LedStripScreen> {
                     : Text("White"),
               ),
               onTap: () {
-                this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]);
+                this.widget.strip.sendToServer(sm.MessageType.Update,
+                    sm.Command.SingleColor, ["0xFF000000"]);
               },
               trailing: Text(""),
             ),
@@ -258,7 +291,10 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       )
                     : Text("Reverse"),
               ),
-              onTap: () => this.widget.strip.sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
+              onTap: () => this
+                  .widget
+                  .strip
+                  .sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
               trailing: Text(""),
             ),
             new ExpansionTile(
@@ -332,7 +368,9 @@ class _LedStripScreenState extends State<LedStripScreen> {
                       child: new Text(
                         'SingleColor',
                       ),
-                      onPressed: () => this.widget.strip.sendToServer(sm.MessageType.Update, sm.Command.SingleColor,
+                      onPressed: () => this.widget.strip.sendToServer(
+                          sm.MessageType.Update,
+                          sm.Command.SingleColor,
                           ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]),
                     ),
                   ],
@@ -371,7 +409,8 @@ class _LedStripScreenState extends State<LedStripScreen> {
                   ),
                   data: SliderTheme.of(context).copyWith(
                       trackShape: GradientRoundedRectSliderTrackShape(
-                          LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
+                          LinearGradient(
+                              colors: [Colors.grey.shade800, Colors.white]))),
                 ),
               ),
             ),
@@ -383,7 +422,9 @@ class _LedStripScreenState extends State<LedStripScreen> {
                   onChanged: (d) {
                     setState(() => numLeds = d);
                     this.widget.strip.sendToServer(
-                        sm.MessageType.Options, sm.Command.Calibration, ["0x${(numLeds.toInt()).toRadixString(16)}"]);
+                        sm.MessageType.Options,
+                        sm.Command.Calibration,
+                        ["0x${(numLeds.toInt()).toRadixString(16)}"]);
                   },
                   min: 0.0,
                   max: 255.0,

@@ -51,14 +51,16 @@ class TempSchedulingState extends State<TempScheduling> {
 
   void sortAndGroupHeaterConfigs() {
     heaterConfigs.sort((x, y) => x.compareTo(y));
-    hConfig = heaterConfigs.groupBy((x) => new Tuple(x.timeOfDay, x.temperature));
+    hConfig =
+        heaterConfigs.groupBy((x) => new Tuple(x.timeOfDay, x.temperature));
   }
 
   Future<bool> _onWillPop() async {
     if (!_saveNeeded) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!.copyWith(color: theme.textTheme.caption!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!
+        .copyWith(color: theme.textTheme.caption!.color);
 
     return await (showDialog<bool>(
             context: context,
@@ -82,7 +84,8 @@ class TempSchedulingState extends State<TempScheduling> {
   }
 
   void showInSnackBar(String value) {
-    ScaffoldMessenger.of(context).showSnackBar(new SnackBar(content: new Text(value)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(new SnackBar(content: new Text(value)));
   }
 
   Future<bool> _handleSubmitted() async {
@@ -108,14 +111,18 @@ class TempSchedulingState extends State<TempScheduling> {
       key: _scaffoldKey,
       appBar: new AppBar(
           title: new Text("Temperatur Einstellungen"),
-          actions: <Widget>[new IconButton(icon: Icon(Icons.save), onPressed: () => _handleSubmitted())]),
+          actions: <Widget>[
+            new IconButton(
+                icon: Icon(Icons.save), onPressed: () => _handleSubmitted())
+          ]),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () async {
           var res = await Navigator.push(
               context,
               new MaterialPageRoute<Tuple<bool, List<HeaterConfig>>>(
-                  builder: (BuildContext context) => HeaterTempSettings(Tuple(TimeOfDay.now(), 21.0), []),
+                  builder: (BuildContext context) =>
+                      HeaterTempSettings(Tuple(TimeOfDay.now(), 21.0), []),
                   fullscreenDialog: true));
           storeNewTempConfigs(res, []);
         },
@@ -128,12 +135,15 @@ class TempSchedulingState extends State<TempScheduling> {
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: new ListView(
                 padding: const EdgeInsets.all(16.0),
-                children: hConfig.entries.map((x) => newHeaterConfigToWidget(x.key, x.value)).toList())),
+                children: hConfig.entries
+                    .map((x) => newHeaterConfigToWidget(x.key, x.value))
+                    .toList())),
       ),
     );
   }
 
-  Widget newHeaterConfigToWidget(Tuple<TimeOfDay?, double?> x, List<HeaterConfig> value) {
+  Widget newHeaterConfigToWidget(
+      Tuple<TimeOfDay?, double?> x, List<HeaterConfig> value) {
     return Container(
       padding: EdgeInsets.only(top: 8.0),
       child: BlurryCard(
@@ -143,7 +153,9 @@ class TempSchedulingState extends State<TempScheduling> {
               var res = await Navigator.push(
                   context,
                   new MaterialPageRoute<Tuple<bool, List<HeaterConfig>>>(
-                      builder: (BuildContext context) => HeaterTempSettings(x, value), fullscreenDialog: true));
+                      builder: (BuildContext context) =>
+                          HeaterTempSettings(x, value),
+                      fullscreenDialog: true));
               storeNewTempConfigs(res, value);
             },
             child: Column(
@@ -154,7 +166,9 @@ class TempSchedulingState extends State<TempScheduling> {
                   children: [
                     Expanded(
                       child: Wrap(
-                        children: value.map((x) => dayOfWeekChip(x.dayOfWeek)).toList(growable: false),
+                        children: value
+                            .map((x) => dayOfWeekChip(x.dayOfWeek))
+                            .toList(growable: false),
                       ),
                     ),
                     Container(
@@ -307,18 +321,21 @@ class TempSchedulingState extends State<TempScheduling> {
   static List<DropdownMenuItem> buildItems() {
     var menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
-      menuItems.add(DropdownMenuItem(child: Text(d.toStringAsFixed(1)), value: (d * 10).round()));
+      menuItems.add(DropdownMenuItem(
+          child: Text(d.toStringAsFixed(1)), value: (d * 10).round()));
     }
     return menuItems;
   }
 
-  void storeNewTempConfigs(Tuple<bool, List<HeaterConfig>>? res, List<HeaterConfig> value) {
+  void storeNewTempConfigs(
+      Tuple<bool, List<HeaterConfig>>? res, List<HeaterConfig> value) {
     if (res == null || res.item1 == false) return;
     heaterConfigs.removeElements(value);
 
     res.item2.forEach((element) {
-      var hc = heaterConfigs
-          .firstOrNull((x) => x.dayOfWeek.index == element.dayOfWeek.index && x.timeOfDay == element.timeOfDay);
+      var hc = heaterConfigs.firstOrNull((x) =>
+          x.dayOfWeek.index == element.dayOfWeek.index &&
+          x.timeOfDay == element.timeOfDay);
       if (hc != null) heaterConfigs.remove(hc);
       heaterConfigs.add(element);
     });

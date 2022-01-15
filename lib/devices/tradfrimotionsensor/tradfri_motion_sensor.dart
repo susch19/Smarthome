@@ -11,16 +11,21 @@ import 'tradfri_motion_sensor_model.dart';
 import '../../helper/datetime_helper.dart';
 
 class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
-  TradfriMotionSensor(int? id, String typeName, TradfriMotionSensorModel model, HubConnection connection, IconData icon)
-      : super(id, typeName, model, connection, icon);
+  TradfriMotionSensor(int? id, String typeName, TradfriMotionSensorModel model,
+      HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, iconData: icon);
 
   @override
   void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => TradfriMotionSensorScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) =>
+                TradfriMotionSensorScreen(this)));
   }
 
   @override
-  Widget? lowerLeftWidget() {
+  Widget rightWidgets() {
     return Icon(
       (baseModel.battery > 80
           ? SmarthomeIcons.bat4
@@ -28,7 +33,9 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
               ? SmarthomeIcons.bat3
               : (baseModel.battery > 40
                   ? SmarthomeIcons.bat2
-                  : (baseModel.battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))),
+                  : (baseModel.battery > 20
+                      ? SmarthomeIcons.bat1
+                      : SmarthomeIcons.bat_charge)))),
       size: 20,
     );
   }
@@ -39,7 +46,8 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
         children: (<Widget>[
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Text((baseModel.occupancy ? "Blockiert" : "Frei"),
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
               ]),
               Container(
                 height: 2,
@@ -49,9 +57,12 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
                 runAlignment: WrapAlignment.spaceEvenly,
                 children: [
                   Text(
-                      (baseModel.lastReceived.millisecondsSinceEpoch == -62135600400000
+                      (baseModel.lastReceived.millisecondsSinceEpoch ==
+                              -62135600400000
                           ? ""
-                          : baseModel.lastReceived.subtract(Duration(seconds: baseModel.noMotion)).toDate()),
+                          : baseModel.lastReceived
+                              .subtract(Duration(seconds: baseModel.noMotion))
+                              .toDate()),
                       style: TextStyle()),
                 ],
               ),
@@ -61,7 +72,9 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Text(baseModel.lastReceived.toDate()),
                     ]),
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text(baseModel.id.toRadixString(16))]),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [Text(baseModel.id.toRadixString(16))]),
                   ]
                 : <Widget>[])));
   }
@@ -118,7 +131,10 @@ class _TradfriMotionSensorScreenState extends State<TradfriMotionSensorScreen> {
           title: Text("Blockiert: " + (model.occupancy ? "Ja" : "Nein")),
         ),
         ListTile(
-          title: Text("Letzte Bewegung: " + model.lastReceived.subtract(Duration(seconds: model.noMotion)).toDate()),
+          title: Text("Letzte Bewegung: " +
+              model.lastReceived
+                  .subtract(Duration(seconds: model.noMotion))
+                  .toDate()),
         ),
         ListTile(
           title: Text("Battery: " + model.battery.toStringAsFixed(0) + " %"),

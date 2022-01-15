@@ -13,7 +13,11 @@ class ZigbeeModel extends BaseModel {
   @override
   bool get isConnected => available;
 
-  ZigbeeModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
+  ZigbeeModel(
+    int id,
+    String friendlyName,
+    bool isConnected,
+  ) : super(id, friendlyName, isConnected);
   factory ZigbeeModel.fromJson(Map<String, dynamic> json) => _$ZigbeeModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$ZigbeeModelToJson(this);

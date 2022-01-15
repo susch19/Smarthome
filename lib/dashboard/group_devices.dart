@@ -51,14 +51,16 @@ class GroupDevicesState extends State<GroupDevices> {
   List<Widget> mapDevices() {
     var widgets = <Widget>[];
     var localCopy = DeviceManager.devices;
-    localCopy.sort((x, b) => x.baseModel.friendlyName.compareTo(b.baseModel.friendlyName));
+    localCopy.sort(
+        (x, b) => x.baseModel.friendlyName.compareTo(b.baseModel.friendlyName));
     for (var device in DeviceManager.devices) {
       var contains = this.widget.groupDevices.value.contains(device);
       widgets.add(ListTile(
-        leading: Checkbox(value: contains, onChanged: (v) => changed(v, device)),
+        leading:
+            Checkbox(value: contains, onChanged: (v) => changed(v, device)),
         title: Wrap(
           children: [
-            Icon(device.icon),
+            device.icon,
             Text(device.baseModel.friendlyName),
             Text(": "),
             Text(device.typeName),
@@ -94,7 +96,8 @@ class GroupDevicesState extends State<GroupDevices> {
     if (!isNewGroup && modifiedDevices.length == 0) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!.copyWith(color: theme.textTheme.caption!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!
+        .copyWith(color: theme.textTheme.caption!.color);
 
     return await (showDialog<bool>(
             context: context,

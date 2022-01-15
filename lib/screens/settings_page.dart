@@ -2,6 +2,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:smarthome/controls/checked_button.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/ipport.dart';
@@ -160,6 +161,20 @@ class SettingsPageState extends State<SettingsPage> {
                     onTap: () => ConnectionManager.hubConnection.invoke("UpdateTime"),
                   )
                 : Container(),
+            Divider(),
+            ListTile(
+              title: Text(
+                "Geräte Layouts neu laden",
+              ),
+              onTap: () {
+                ConnectionManager.hubConnection.invoke("ReloadDeviceLayouts");
+                DeviceLayoutService.instanceDeviceLayouts.clear();
+                DeviceLayoutService.typeDeviceLayouts.clear();
+                for (var dev in DeviceManager.devices) {
+                  dev.baseModel.cacheLoaded = false;
+                }
+              },
+            ),
             ListTile(
               leading: Text("Über"),
               onTap: () => Navigator.push(

@@ -11,12 +11,16 @@ import '../device_manager.dart';
 import 'osram_plug_model.dart';
 
 class OsramPlug extends Device<OsramPlugModel> {
-  OsramPlug(int? id, String typeName, OsramPlugModel model, HubConnection connection, IconData icon)
-      : super(id, typeName, model, connection, icon);
+  OsramPlug(int? id, String typeName, OsramPlugModel model,
+      HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, iconData: icon);
 
   @override
   void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => OsramPlugScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => OsramPlugScreen(this)));
   }
 
   @override
@@ -28,16 +32,22 @@ class OsramPlug extends Device<OsramPlugModel> {
         MaterialButton(
           child: Text(
             "An",
-            style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
           child: Text(
             "Aus",
-            style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: !baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
       ],
     );
@@ -87,7 +97,10 @@ class _OsramPlugScreenState extends State<OsramPlugScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => this.widget.osramPlug.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () => this
+            .widget
+            .osramPlug
+            .sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }

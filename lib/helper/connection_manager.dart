@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/session/permanent_retry_policy.dart';
@@ -39,6 +40,7 @@ class ConnectionManager {
       }
     });
     hubConnection.on("Update", DeviceManager.updateMethod);
+    hubConnection.on("UpdateUi", DeviceLayoutService.updateFromServer);
 
     if (SettingsManager.serverUrl != "") {
       await hubConnection.start();
@@ -57,7 +59,7 @@ class ConnectionManager {
     }
   }
 
-  static void newHubConnection() async {
+  static Future newHubConnection() async {
     connectionIconChanged.value = Icons.refresh;
 
     hubConnection.off("Update");
@@ -65,6 +67,7 @@ class ConnectionManager {
     hubConnection = createHubConnection();
 
     hubConnection.on("Update", DeviceManager.updateMethod);
+    hubConnection.on("UpdateUi", DeviceLayoutService.updateFromServer);
 
     await hubConnection.start();
     connectionIconChanged.value = Icons.check;
@@ -85,5 +88,4 @@ class ConnectionManager {
         .withAutomaticReconnect(PermanentRetryPolicy())
         .build();
   }
-
 }

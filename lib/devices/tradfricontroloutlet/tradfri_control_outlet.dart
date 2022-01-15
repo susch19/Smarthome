@@ -11,13 +11,17 @@ import '../device_manager.dart';
 import 'tradfri_control_outlet_model.dart';
 
 class TradfriControlOutlet extends Device<TradfriControlOutletModel> {
-  TradfriControlOutlet(
-      int? id, String typeName, TradfriControlOutletModel model, HubConnection connection, IconData icon)
-      : super(id, typeName, model, connection, icon);
+  TradfriControlOutlet(int? id, String typeName,
+      TradfriControlOutletModel model, HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, iconData: icon);
 
   @override
   void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => TradfriControlOutletScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) =>
+                TradfriControlOutletScreen(this)));
   }
 
   @override
@@ -29,16 +33,22 @@ class TradfriControlOutlet extends Device<TradfriControlOutletModel> {
         MaterialButton(
           child: Text(
             "An",
-            style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
           child: Text(
             "Aus",
-            style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: !baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
       ],
     );
@@ -58,7 +68,8 @@ class TradfriControlOutletScreen extends DeviceScreen {
   State<StatefulWidget> createState() => _TradfriControlOutletScreenState();
 }
 
-class _TradfriControlOutletScreenState extends State<TradfriControlOutletScreen> {
+class _TradfriControlOutletScreenState
+    extends State<TradfriControlOutletScreen> {
   DateTime dateTime = DateTime.now();
   late StreamSubscription sub;
 
@@ -80,7 +91,8 @@ class _TradfriControlOutletScreenState extends State<TradfriControlOutletScreen>
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: AppBar(
-        title: new Text(this.widget.tradfriControlOutlet.baseModel.friendlyName),
+        title:
+            new Text(this.widget.tradfriControlOutlet.baseModel.friendlyName),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
@@ -88,7 +100,10 @@ class _TradfriControlOutletScreenState extends State<TradfriControlOutletScreen>
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => this.widget.tradfriControlOutlet.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () => this
+            .widget
+            .tradfriControlOutlet
+            .sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }

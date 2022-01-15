@@ -18,7 +18,8 @@ class ExpandableFab extends StatefulWidget {
   _ExpandableFabState createState() => _ExpandableFabState();
 }
 
-class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProviderStateMixin {
+class _ExpandableFabState extends State<ExpandableFab>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _expandAnimation;
   bool _open = false;
@@ -98,7 +99,9 @@ class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProvider
     final children = <Widget>[];
     final count = widget.children.length;
     final step = 56.0; //90.0 / (count - 1);
-    for (var i = 0, angleInDegrees = step + 8.0; i < count; i++, angleInDegrees += step) {
+    for (var i = 0, angleInDegrees = step + 8.0;
+        i < count;
+        i++, angleInDegrees += step) {
       children.add(
         _ExpandingActionButton(
           positionOffsetInPx: angleInDegrees,

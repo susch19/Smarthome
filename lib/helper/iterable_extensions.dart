@@ -44,6 +44,12 @@ extension Maps<K, E> on Map<K, E> {
   }
 }
 
+extension StringShortcuts on String {
+  String substringReverse(int end, {int start = 0}) {
+    return this.substring(start, this.length - start - end);
+  }
+}
+
 extension Iterables<E> on Iterable<E> {
   Map<K, List<E>> groupBy<K>(K Function(E) keyFunction) => fold(<K, List<E>>{},
       (Map<K, List<E>> map, E element) => map..putIfAbsent(keyFunction(element), () => <E>[]).add(element));

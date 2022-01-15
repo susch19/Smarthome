@@ -14,8 +14,9 @@ class LedStripModel extends BaseModel {
   int colorNumber;
   int version;
 
-
-  LedStripModel(this.colorMode, this.delay, this.numberOfLeds, this.brightness, this.step, this.reverse, this.colorNumber, this.version, int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
+  LedStripModel(this.colorMode, this.delay, this.numberOfLeds, this.brightness, this.step, this.reverse,
+      this.colorNumber, this.version, int id, String friendlyName, bool isConnected)
+      : super(id, friendlyName, isConnected);
 
   factory LedStripModel.fromJson(Map<String, dynamic> json) => _$LedStripModelFromJson(json);
 

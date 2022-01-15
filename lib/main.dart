@@ -254,7 +254,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           ],
                         )
                         // IconButton(
-                        //   icon: Icon(Icons.edit),
+                        //   iconData: icon(Icons.edit),
                         //   onPressed: () {
 
                         //   },
@@ -352,20 +352,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       return;
     }
 
-    var typeNames = device["typeNames"];
+    var typeNamesDyn = device["typeNames"] as List<dynamic>;
+    var typeNames = typeNamesDyn.map((e) => e as String).toList(growable: false);
 
     for (var item in typeNames) {
-      if (await tryCreateDevice(id, device, item)) return;
+      if (await tryCreateDevice(id, device, item, typeNames: typeNames)) return;
     }
   }
 
-  Future<bool> tryCreateDevice(int? id, dynamic device, String item) async {
+  Future<bool> tryCreateDevice(int? id, dynamic device, String item, {List<String>? typeNames}) async {
     if (!DeviceManager.ctorFactory.containsKey(item) || !DeviceManager.stringNameJsonFactory.containsKey(item)) {
       return false;
     }
-    DeviceManager.devices.add(
-        DeviceManager.ctorFactory[item]!(device["id"], DeviceManager.stringNameJsonFactory[item]!(device))
-            as Device<BaseModel>);
+    DeviceManager.devices.add(DeviceManager.ctorFactory[item]!(
+            device["id"], DeviceManager.stringNameJsonFactory[item]!(device, typeNames ?? <String>[]))
+        as Device<BaseModel>);
     PreferencesManager.instance.setInt("SHD" + device["id"].toString(), device["id"]);
     PreferencesManager.instance.setString("Json" + device["id"].toString(), jsonEncode(device));
     PreferencesManager.instance.setString("Type" + device["id"].toString(), item);
@@ -622,8 +623,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   void refresh() {
-    ConnectionManager.newHubConnection();
-    setState(() {});
+    ConnectionManager.newHubConnection().then((value) async {
+      await DeviceManager.reloadCurrentDevices();
+      setState(() {});
+    });
   }
 
   void addGroup() {

@@ -15,12 +15,16 @@ import '../../device_manager.dart';
 import 'zigbee_lamp_model.dart';
 
 class ZigbeeLamp extends Device<ZigbeeLampModel> {
-  ZigbeeLamp(int? id, String typeName, ZigbeeLampModel model, HubConnection connection, IconData icon)
-      : super(id, typeName, model, connection, icon);
+  ZigbeeLamp(int? id, String typeName, ZigbeeLampModel model,
+      HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, iconData: icon);
 
   @override
   void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => ZigbeeLampScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => ZigbeeLampScreen(this)));
   }
 
   @override
@@ -32,16 +36,22 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
         MaterialButton(
           child: Text(
             "An",
-            style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
         ),
         MaterialButton(
           child: Text(
             "Aus",
-            style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: !baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
       ],
     );
@@ -66,7 +76,8 @@ class _ZigbeeLampScreenState extends State<ZigbeeLampScreen> {
   late StreamSubscription sub;
 
   void sliderChange(Function f, int dateTimeMilliseconds, [double? val]) {
-    if (DateTime.now().isAfter(dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
+    if (DateTime.now().isAfter(
+        dateTime.add(new Duration(milliseconds: dateTimeMilliseconds)))) {
       Function.apply(f, val == null ? [] : [val]);
       dateTime = DateTime.now();
     }
@@ -87,15 +98,18 @@ class _ZigbeeLampScreenState extends State<ZigbeeLampScreen> {
   }
 
   void changeDelay(double? delay) {
-    this.widget.zigbeeLamp.sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()]);
+    this.widget.zigbeeLamp.sendToServer(
+        sm.MessageType.Options, sm.Command.Delay, [delay.toString()]);
   }
 
   void changeBrightness(double brightness) {
-    this.widget.zigbeeLamp.sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
+    this.widget.zigbeeLamp.sendToServer(sm.MessageType.Update,
+        sm.Command.Brightness, [brightness.round().toString()]);
   }
 
   void changeColorTemp(double colorTemp) {
-    this.widget.zigbeeLamp.sendToServer(sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()]);
+    this.widget.zigbeeLamp.sendToServer(
+        sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()]);
   }
 
   @override
@@ -110,7 +124,10 @@ class _ZigbeeLampScreenState extends State<ZigbeeLampScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => this.widget.zigbeeLamp.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () => this
+            .widget
+            .zigbeeLamp
+            .sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }
@@ -144,13 +161,15 @@ class _ZigbeeLampScreenState extends State<ZigbeeLampScreen> {
               ),
               data: SliderTheme.of(context).copyWith(
                   trackShape: GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
+                      LinearGradient(
+                          colors: [Colors.grey.shade800, Colors.white]))),
             ),
             onTapCancel: () => changeBrightness(model.brightness.toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Farbtemparatur " + (model.colorTemp - 204).toStringAsFixed(0)),
+          title: Text(
+              "Farbtemparatur " + (model.colorTemp - 204).toStringAsFixed(0)),
           subtitle: GestureDetector(
             child: SliderTheme(
               child: Slider(
@@ -166,13 +185,18 @@ class _ZigbeeLampScreenState extends State<ZigbeeLampScreen> {
               ),
               data: SliderTheme.of(context).copyWith(
                   trackShape: GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Color.fromARGB(255, 255, 209, 163), Color.fromARGB(255, 255, 147, 44)]))),
+                      LinearGradient(colors: [
+                Color.fromARGB(255, 255, 209, 163),
+                Color.fromARGB(255, 255, 147, 44)
+              ]))),
             ),
             onTapCancel: () => changeColorTemp(model.colorTemp.toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Übergangszeit " + model.transitionTime.toStringAsFixed(1) + " Sekunden"),
+          title: Text("Übergangszeit " +
+              model.transitionTime.toStringAsFixed(1) +
+              " Sekunden"),
           subtitle: GestureDetector(
             child: Slider(
               value: model.transitionTime,

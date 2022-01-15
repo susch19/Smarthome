@@ -12,23 +12,30 @@ import '../device_manager.dart';
 import 'tradfri_led_bulb_model.dart';
 
 class TradfriLedBulb extends Device<TradfriLedBulbModel> {
-  TradfriLedBulb(int? id, String typeName, TradfriLedBulbModel model, HubConnection connection, IconData icon)
-      : super(id, typeName, model, connection, icon);
+  TradfriLedBulb(int? id, String typeName, TradfriLedBulbModel model,
+      HubConnection connection, IconData icon)
+      : super(id, typeName, model, connection, iconData: icon);
 
   @override
   void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => TradfriLedBulbScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => TradfriLedBulbScreen(this)));
   }
 
   @override
-  Widget? lowerLeftWidget() {
+  Widget rightWidgets() {
     if (baseModel.color != null) {
-      var colorNum = int.parse(baseModel.color!.replaceFirst('#', ''), radix: 16);
+      var colorNum =
+          int.parse(baseModel.color!.replaceFirst('#', ''), radix: 16);
       var r = (colorNum & 0xFF0000) >> 16;
       var g = (colorNum & 0xFF00) >> 8;
       var b = (colorNum & 0xFF) >> 0;
-      return Icon(Icons.bubble_chart, color: Color.fromRGBO(r, g, b, 1), size: 24.0);
+      return Icon(Icons.bubble_chart,
+          color: Color.fromRGBO(r, g, b, 1), size: 24.0);
     }
+    return Container();
   }
 
   @override
@@ -40,16 +47,22 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
         MaterialButton(
           child: Text(
             "An",
-            style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
           child: Text(
             "Aus",
-            style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+            style: !baseModel.state
+                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                : TextStyle(),
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+          onPressed: () =>
+              sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
         DeviceManager.showDebugInformation ? Text(id.toString()) : Container()
       ],
@@ -82,7 +95,9 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
       setState(() {});
     });
     if (this.widget.tradfriLedBulb.baseModel.color != null) {
-      var colorNum = int.parse(this.widget.tradfriLedBulb.baseModel.color!.replaceFirst('#', ''), radix: 16);
+      var colorNum = int.parse(
+          this.widget.tradfriLedBulb.baseModel.color!.replaceFirst('#', ''),
+          radix: 16);
       this.rgb.r = (colorNum & 0xFF0000) >> 16;
       this.rgb.g = (colorNum & 0xFF00) >> 8;
       this.rgb.b = (colorNum & 0xFF) >> 0;
@@ -97,10 +112,8 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
   }
 
   void changeBrightness(double brightness) {
-    this
-        .widget
-        .tradfriLedBulb
-        .sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
+    this.widget.tradfriLedBulb.sendToServer(sm.MessageType.Update,
+        sm.Command.Brightness, [brightness.round().toString()]);
   }
 
   double brightness = 255.0;
@@ -108,7 +121,8 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
   int get ibrightness => brightness.toInt();
 
   void changeColor() {
-    this.widget.tradfriLedBulb.sendToServer(sm.MessageType.Update, sm.Command.Color, ["#${rgb.hr + rgb.hg + rgb.hb}"]);
+    this.widget.tradfriLedBulb.sendToServer(sm.MessageType.Update,
+        sm.Command.Color, ["#${rgb.hr + rgb.hg + rgb.hb}"]);
   }
 
   @override
@@ -123,7 +137,10 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => this.widget.tradfriLedBulb.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () => this
+            .widget
+            .tradfriLedBulb
+            .sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }
@@ -141,7 +158,8 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
           title: Text("Verbindungsqualität: " + (model.linkQuality.toString())),
         ),
         ListTile(
-          title: Text("Helligkeit aktuell " + model.brightness.toStringAsFixed(0)),
+          title:
+              Text("Helligkeit aktuell " + model.brightness.toStringAsFixed(0)),
           subtitle: GestureDetector(
             child: SliderTheme(
               child: Slider(
@@ -153,11 +171,13 @@ class _TradfriLedBulbScreenState extends State<TradfriLedBulbScreen> {
                 max: 100.0,
                 divisions: 100,
                 label: '${model.brightness}',
-                onChangeEnd: (c) => changeBrightness(model.brightness.toDouble()),
+                onChangeEnd: (c) =>
+                    changeBrightness(model.brightness.toDouble()),
               ),
               data: SliderTheme.of(context).copyWith(
                   trackShape: GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
+                      LinearGradient(
+                          colors: [Colors.grey.shade800, Colors.white]))),
             ),
           ),
         ),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:signalr_client/signalr_client.dart';
 import 'package:signalr_core/signalr_core.dart';
+import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
@@ -100,7 +101,7 @@ class DeviceManager {
       for (var d in removeD) {
         notSubscribedDevices.remove(d);
       }
-      await Future.delayed(Duration(seconds: 10));
+      await Future.delayed(Duration(seconds: 1));
     }
   }
 
@@ -132,8 +133,9 @@ class DeviceManager {
   static final ctorFactory = <String, Object Function(int? id, BaseModel model)>{
     //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
     'Heater': (i, s) => Heater(i, "Heizung", s as HeaterModel, ConnectionManager.hubConnection, Icons.whatshot),
-    'XiaomiTempSensor': (i, s) => XiaomiTempSensor(
-        i, "Temperatursensor", s as TempSensorModel, ConnectionManager.hubConnection, SmarthomeIcons.xiaomiTempSensor),
+    // 'XiaomiTempSensor': (i, s) => XiaomiTempSensor(i, "Temperatursensor",
+    //     s as TempSensorModel, ConnectionManager.hubConnection,
+    //     icon: SmarthomeIcons.xiaomiTempSensor),
     'LedStrip': (i, s) =>
         LedStrip(i, "Ledstrip", s as LedStripModel, ConnectionManager.hubConnection, Icons.lightbulb_outline),
     'FloaltPanel': (i, s) =>
@@ -149,33 +151,36 @@ class DeviceManager {
     'TradfriControlOutlet': (i, s) => TradfriControlOutlet(i, "Tradfri Control Outlet", s as TradfriControlOutletModel,
         ConnectionManager.hubConnection, Icons.radio_button_checked),
     'TradfriMotionSensor': (i, s) => TradfriMotionSensor(
-        i, "Tradfri Motion Sensor", s as TradfriMotionSensorModel, ConnectionManager.hubConnection, Icons.sensors)
+        i, "Tradfri Motion Sensor", s as TradfriMotionSensorModel, ConnectionManager.hubConnection, Icons.sensors),
+    'Device': (i, s) => GenericDevice(i, "Generic Device", s, ConnectionManager.hubConnection),
   };
-  static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
+  static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>, List<String>)>{
     // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-    'Heater': (m) => HeaterModel.fromJson(m),
-    'XiaomiTempSensor': (m) => TempSensorModel.fromJson(m),
-    'LedStrip': (m) => LedStripModel.fromJson(m),
-    'ZigbeeLamp': (m) => ZigbeeLampModel.fromJson(m),
-    'FloaltPanel': (m) => ZigbeeLampModel.fromJson(m),
-    'OsramB40RW': (m) => ZigbeeLampModel.fromJson(m),
-    'OsramPlug': (m) => OsramPlugModel.fromJson(m),
-    'TradfriLedBulb': (m) => TradfriLedBulbModel.fromJson(m),
-    'TradfriControlOutlet': (m) => TradfriControlOutletModel.fromJson(m),
-    'TradfriMotionSensor': (m) => TradfriMotionSensorModel.fromJson(m)
+    'Heater': (m, _) => HeaterModel.fromJson(m),
+    // 'XiaomiTempSensor': (m) => TempSensorModel.fromJson(m),
+    'LedStrip': (m, _) => LedStripModel.fromJson(m),
+    'ZigbeeLamp': (m, _) => ZigbeeLampModel.fromJson(m),
+    'FloaltPanel': (m, _) => ZigbeeLampModel.fromJson(m),
+    'OsramB40RW': (m, _) => ZigbeeLampModel.fromJson(m),
+    'OsramPlug': (m, _) => OsramPlugModel.fromJson(m),
+    'TradfriLedBulb': (m, _) => TradfriLedBulbModel.fromJson(m),
+    'TradfriControlOutlet': (m, _) => TradfriControlOutletModel.fromJson(m),
+    'TradfriMotionSensor': (m, _) => TradfriMotionSensorModel.fromJson(m),
+    'Device': (m, t) => BaseModel.fromJson(m, t)
   };
 
-  static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
-    // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-    HeaterModel: (m) => HeaterModel.fromJson(m),
-    TempSensorModel: (m) => TempSensorModel.fromJson(m),
-    LedStripModel: (m) => LedStripModel.fromJson(m),
-    ZigbeeLampModel: (m) => ZigbeeLampModel.fromJson(m),
-    OsramPlugModel: (m) => OsramPlugModel.fromJson(m),
-    TradfriLedBulbModel: (m) => TradfriLedBulbModel.fromJson(m),
-    TradfriControlOutletModel: (m) => TradfriControlOutletModel.fromJson(m),
-    TradfriMotionSensorModel: (m) => TradfriMotionSensorModel.fromJson(m)
-  };
+  // static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
+  //   // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
+  //   HeaterModel: (m) => HeaterModel.fromJson(m),
+  //   // TempSensorModel: (m) => TempSensorModel.fromJson(m),
+  //   LedStripModel: (m) => LedStripModel.fromJson(m),
+  //   ZigbeeLampModel: (m) => ZigbeeLampModel.fromJson(m),
+  //   OsramPlugModel: (m) => OsramPlugModel.fromJson(m),
+  //   TradfriLedBulbModel: (m) => TradfriLedBulbModel.fromJson(m),
+  //   TradfriControlOutletModel: (m) => TradfriControlOutletModel.fromJson(m),
+  //   TradfriMotionSensorModel: (m) => TradfriMotionSensorModel.fromJson(m),
+  //   BaseModel: (m) => BaseModel.fromJson(m)
+  // };
 
   static void stopSubbing() {
     sub = false;
@@ -185,17 +190,17 @@ class DeviceManager {
     var hubConnection = ConnectionManager.hubConnection;
     for (var id in ids) {
       var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
-      var types = PreferencesManager.instance.getStringList("Types" + id.toString());
+      var types = PreferencesManager.instance.getStringList("Types" + id.toString()) ?? <String>[];
       BaseModel? model;
       var previousModel = jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!);
       String? type;
-      if (types == null || types.length == 0) {
+      if (types.length == 0) {
         type = PreferencesManager.instance.getString("Type" + id.toString());
-        model = stringNameJsonFactory[type!]!(previousModel);
+        model = stringNameJsonFactory[type!]!(previousModel, types);
       } else {
         for (var item in types) {
           if (!stringNameJsonFactory.containsKey(item)) continue;
-          model = stringNameJsonFactory[item]!(previousModel);
+          model = stringNameJsonFactory[item]!(previousModel, types);
           type = item;
           break;
         }
@@ -205,7 +210,7 @@ class DeviceManager {
 
       model.friendlyName += "(old)";
       if (sub != null) {
-        model = stringNameJsonFactory[type]!(sub);
+        model = stringNameJsonFactory[type]!(sub, types);
         try {
           var dev = ctorFactory[type]!(id, model);
           devices.add(dev as Device<BaseModel>);
@@ -233,6 +238,18 @@ class DeviceManager {
       }
     }
   }
+
+  static Future reloadCurrentDevices() async {
+    var s = ConnectionManager.hubConnection.invoke("GetAllDevices", args: []);
+
+    List<dynamic> serverDevices = await s;
+
+    for (var device in devices) {
+      var existingDevice = serverDevices.firstOrNull((element) => element["id"] == device.id);
+      if (existingDevice == null) continue;
+      device.baseModel.updateFromJson(existingDevice);
+    }
+  }
 }
 
 enum DeviceTypes {
@@ -245,7 +262,8 @@ enum DeviceTypes {
   TradfriLedBulb,
   TradfriControlOutlet,
   TradfriMotionSensor,
-  ZigbeeLamp
+  ZigbeeLamp,
+  Generic
 }
 
 enum SortTypes { NameAsc, NameDesc, TypeAsc, TypeDesc, IdAsd, IdDesc }

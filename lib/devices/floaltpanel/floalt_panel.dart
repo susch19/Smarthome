@@ -10,7 +10,8 @@ import 'package:smarthome/devices/zigbee/zigbeelamp/zigbee_lamp_model.dart';
 import '../device_manager.dart';
 
 class FloaltPanel extends ZigbeeLamp {
-  FloaltPanel(int? id, String typeName, ZigbeeLampModel model, HubConnection connection, IconData icon)
+  FloaltPanel(int? id, String typeName, ZigbeeLampModel model,
+      HubConnection connection, IconData icon)
       : super(id, typeName, model, connection, icon);
 
   @override

@@ -18,24 +18,35 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'temp_scheduling.dart';
 
 class Heater extends Device<HeaterModel> {
-  Heater(int? id, String typeName, HeaterModel baseModel, HubConnection connection, IconData icon)
-      : super(id, typeName, baseModel, connection, icon);
+  Heater(int? id, String typeName, HeaterModel baseModel,
+      HubConnection connection, IconData icon)
+      : super(id, typeName, baseModel, connection, iconData: icon);
 
   @override
   void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => HeaterScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => HeaterScreen(this)));
   }
 
   void updateFromServer(Map<String, dynamic> message) {
     super.updateFromServer(message);
-    PreferencesManager.instance.setString("Json" + id.toString(), jsonEncode(message));
+    PreferencesManager.instance
+        .setString("Json" + id.toString(), jsonEncode(message));
   }
 
   @override
-  Widget? lowerLeftWidget() {
-    return Icon(
-      baseModel.disableHeating ?? false ? Icons.power_off_outlined : Icons.power_outlined,
-      size: 20,
+  Widget rightWidgets() {
+    return Column(
+      children: [
+        Icon(
+          baseModel.disableHeating ?? false
+              ? Icons.power_off_outlined
+              : Icons.power_outlined,
+          size: 20,
+        ),
+      ],
     );
   }
 
@@ -63,7 +74,9 @@ class Heater extends Device<HeaterModel> {
               Text(
                 baseModel.currentConfig == null
                     ? ""
-                    : ((baseModel.currentConfig?.temperature.toStringAsFixed(1) ?? "")),
+                    : ((baseModel.currentConfig?.temperature
+                            .toStringAsFixed(1) ??
+                        "")),
                 style: TextStyle(fontWeight: FontWeight.normal),
               ),
               Text(
@@ -79,7 +92,9 @@ class Heater extends Device<HeaterModel> {
                   ),
             // (xs.id == 0 ? Text(baseModel.xiaomiTempSensor.toString()) : Text(xs.baseModel.friendlyName)),
           ] +
-          (DeviceManager.showDebugInformation ? [Text(baseModel.id.toString())] : <Widget>[]),
+          (DeviceManager.showDebugInformation
+              ? [Text(baseModel.id.toString())]
+              : <Widget>[]),
     );
   }
 
@@ -115,7 +130,8 @@ class _HeaterScreenState extends State<HeaterScreen> {
       setState(() {});
     });
 
-    handlePointerValueChanged(this.widget.heater.baseModel.currentConfig?.temperature ?? 21);
+    handlePointerValueChanged(
+        this.widget.heater.baseModel.currentConfig?.temperature ?? 21);
     textEditingController = TextEditingController(text: tempString());
     // _setPointerValue(this.widget.heater.baseModel.currentConfig?.temperature ?? 21.0);
     super.initState();
@@ -130,14 +146,18 @@ class _HeaterScreenState extends State<HeaterScreen> {
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
-    XiaomiTempSensor xs =
-        DeviceManager.devices.firstWhere((x) => x.id == this.widget.heater.baseModel.xiaomiTempSensor, orElse: () {
+    XiaomiTempSensor xs = DeviceManager.devices.firstWhere(
+        (x) => x.id == this.widget.heater.baseModel.xiaomiTempSensor,
+        orElse: () {
       return XiaomiTempSensor(
           -1,
           "",
-          TempSensorModel(-1, "", false)..temperature = this.widget.heater.baseModel.temperature?.temperature ?? 21,
+          TempSensorModel(-1, "", false)
+            ..temperature =
+                this.widget.heater.baseModel.temperature?.temperature ?? 21,
           this.widget.heater.connection,
-          this.widget.heater.icon);
+          iconBytes: this.widget.heater.iconBytes,
+          icon: this.widget.heater.iconData);
     }) as XiaomiTempSensor;
 
     return DefaultTabController(
@@ -146,9 +166,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
         appBar: AppBar(
           title: TabBar(
             tabs: [
-              Tab(
-                icon: Icon(this.widget.heater.icon),
-              ),
+              Tab(icon: this.widget.heater.icon),
               Tab(
                 icon: Icon(Icons.settings),
               ),
@@ -177,17 +195,20 @@ class _HeaterScreenState extends State<HeaterScreen> {
     var dc = await widget.heater.getFromServer("GetConfig", [widget.heater.id]);
     List<HeaterConfig> heaterConfigs;
     if (dc != "[]" && dc != null)
-      heaterConfigs = new List<HeaterConfig>.from(jsonDecode(dc).map((f) => HeaterConfig.fromJson(f)));
+      heaterConfigs = new List<HeaterConfig>.from(
+          jsonDecode(dc).map((f) => HeaterConfig.fromJson(f)));
     else
       heaterConfigs = <HeaterConfig>[];
 
     final res = await Navigator.push(
         context,
         new MaterialPageRoute<Tuple<bool, List<HeaterConfig>>>(
-            builder: (BuildContext context) => TempScheduling(heaterConfigs), fullscreenDialog: true));
+            builder: (BuildContext context) => TempScheduling(heaterConfigs),
+            fullscreenDialog: true));
     if (res == null || !res.item1) return;
 
-    widget.heater.sendToServer(sm.MessageType.Options, sm.Command.Temp, res.item2.map((f) => jsonEncode(f)).toList());
+    widget.heater.sendToServer(sm.MessageType.Options, sm.Command.Temp,
+        res.item2.map((f) => jsonEncode(f)).toList());
   }
 
   buildColumnView(double width, XiaomiTempSensor xs) {
@@ -197,7 +218,9 @@ class _HeaterScreenState extends State<HeaterScreen> {
           margin: EdgeInsets.only(left: 8, right: 8, top: 8.0),
           child: Row(
             children: [
-              Container(margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: Icon(Icons.person)),
+              Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  child: Icon(Icons.person)),
               Text(widget.heater.baseModel.friendlyName),
             ],
           ),
@@ -206,13 +229,17 @@ class _HeaterScreenState extends State<HeaterScreen> {
           margin: EdgeInsets.only(left: 8, right: 8, top: 8.0),
           child: Row(
             children: [
-              Container(margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: Icon(Icons.timer)),
+              Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  child: Icon(Icons.timer)),
               Text("Zuletzt Empfangen: "),
               Text(widget.heater.baseModel.temperature == null
                   ? "Keine Daten vorliegend"
-                  : DayOfWeekToStringMap[widget.heater.baseModel.temperature!.dayOfWeek]! +
+                  : DayOfWeekToStringMap[
+                          widget.heater.baseModel.temperature!.dayOfWeek]! +
                       " " +
-                      widget.heater.baseModel.temperature!.timeOfDay.format(context)),
+                      widget.heater.baseModel.temperature!.timeOfDay
+                          .format(context)),
             ],
           ),
         ),
@@ -220,16 +247,22 @@ class _HeaterScreenState extends State<HeaterScreen> {
           margin: EdgeInsets.only(left: 8, right: 8, top: 8.0),
           child: Row(
             children: [
-              Container(margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: Icon(Icons.receipt)),
+              Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  child: Icon(Icons.receipt)),
               Text("Kalibrierung: "),
-              Text(widget.heater.baseModel.currentCalibration?.temperature == null
+              Text(widget.heater.baseModel.currentCalibration?.temperature ==
+                      null
                   ? "Kein Ziel"
-                  : widget.heater.baseModel.currentCalibration!.temperature.toStringAsFixed(1) +
+                  : widget.heater.baseModel.currentCalibration!.temperature
+                          .toStringAsFixed(1) +
                       "°C " +
                       "(" +
-                      DayOfWeekToStringMap[widget.heater.baseModel.currentCalibration!.dayOfWeek]! +
+                      DayOfWeekToStringMap[widget
+                          .heater.baseModel.currentCalibration!.dayOfWeek]! +
                       " " +
-                      widget.heater.baseModel.currentCalibration!.timeOfDay.format(context) +
+                      widget.heater.baseModel.currentCalibration!.timeOfDay
+                          .format(context) +
                       ")"),
             ],
           ),
@@ -245,7 +278,8 @@ class _HeaterScreenState extends State<HeaterScreen> {
 
   void handlePointerValueChangedEnd(double value) {
     handlePointerValueChanged(value);
-    this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.Temp, <String>[_annotationValue]);
+    this.widget.heater.sendToServer(
+        sm.MessageType.Update, sm.Command.Temp, <String>[_annotationValue]);
   }
 
   void handlePointerValueChanging(ValueChangingArgs args) {
@@ -278,16 +312,23 @@ class _HeaterScreenState extends State<HeaterScreen> {
               DropdownButton(
                 items: (DeviceManager.getDevicesOfType<XiaomiTempSensor>()
                     .map((f) => DropdownMenuItem(
-                          child: Text("${f.baseModel.friendlyName} ${f.baseModel.temperature}°C"),
+                          child: Text(
+                              "${f.baseModel.friendlyName} ${f.baseModel.temperature}°C"),
                           value: f,
                         ))
                     .toList()),
                 onChanged: (dynamic a) {
-                  this.widget.heater.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping, [
+                  this.widget.heater.sendToServer(
+                      sm.MessageType.Update, sm.Command.DeviceMapping, [
                     a.id.toString(),
                     this.widget.heater.baseModel.xiaomiTempSensor == null
                         ? "0"
-                        : this.widget.heater.baseModel.xiaomiTempSensor.toString()
+                        : this
+                            .widget
+                            .heater
+                            .baseModel
+                            .xiaomiTempSensor
+                            .toString()
                   ]);
                   this.widget.heater.baseModel.xiaomiTempSensor = a.id;
                   setState(() {});
@@ -303,7 +344,7 @@ class _HeaterScreenState extends State<HeaterScreen> {
             children: [
               Container(
                 margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                child: Icon(this.widget.heater.icon),
+                child: this.widget.heater.icon,
               ),
               Text("Heizung: "),
               Switch(
@@ -314,7 +355,10 @@ class _HeaterScreenState extends State<HeaterScreen> {
                     command = sm.Command.On;
                   else
                     command = sm.Command.Off;
-                  this.widget.heater.sendToServer(sm.MessageType.Update, command, []);
+                  this
+                      .widget
+                      .heater
+                      .sendToServer(sm.MessageType.Update, command, []);
                 },
               ),
             ],
@@ -337,7 +381,10 @@ class _HeaterScreenState extends State<HeaterScreen> {
                     command = sm.Command.On;
                   else
                     command = sm.Command.Off;
-                  this.widget.heater.sendToServer(sm.MessageType.Options, command, []);
+                  this
+                      .widget
+                      .heater
+                      .sendToServer(sm.MessageType.Options, command, []);
                 },
               ),
             ],
@@ -399,7 +446,9 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 interval: 1,
                 canScaleToFit: false,
                 axisLineStyle: const AxisLineStyle(
-                    gradient: SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                    gradient: SweepGradient(
+                        colors: [Colors.blue, Colors.amber, Colors.red],
+                        stops: [0.3, 0.5, 1]),
                     color: Colors.red,
                     thickness: 0.04,
                     thicknessUnit: GaugeSizeUnit.factor,
@@ -413,8 +462,10 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 showLabels: false,
                 labelsPosition: ElementsPosition.outside,
                 minorTicksPerInterval: 10,
-                minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
-                majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                minorTickStyle: const MinorTickStyle(
+                    length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
+                majorTickStyle: const MajorTickStyle(
+                    length: 0.05, lengthUnit: GaugeSizeUnit.factor),
               ),
               RadialAxis(
                 showFirstLabel: true,
@@ -426,7 +477,9 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 interval: 5,
                 canScaleToFit: false,
                 axisLineStyle: const AxisLineStyle(
-                    gradient: SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                    gradient: SweepGradient(
+                        colors: [Colors.blue, Colors.amber, Colors.red],
+                        stops: [0.3, 0.5, 1]),
                     color: Colors.red,
                     thickness: 0.04,
                     thicknessUnit: GaugeSizeUnit.factor,
@@ -440,8 +493,10 @@ class _HeaterScreenState extends State<HeaterScreen> {
                 showAxisLine: true,
                 labelsPosition: ElementsPosition.outside,
                 minorTicksPerInterval: 0,
-                minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
-                majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                minorTickStyle: const MinorTickStyle(
+                    length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
+                majorTickStyle: const MajorTickStyle(
+                    length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                 pointers: <GaugePointer>[
                   MarkerPointer(
                     value: _value,
@@ -481,19 +536,32 @@ class _HeaterScreenState extends State<HeaterScreen> {
                               children: <Widget>[
                                 // Text("Ausgelesen: "),
                                 // Icon(Icons.search),
-                                widget.heater.baseModel.temperature?.temperature == null
-                                    ? Text("Kein Messergebnis", style: TextStyle(fontSize: 24))
+                                widget.heater.baseModel.temperature
+                                            ?.temperature ==
+                                        null
+                                    ? Text("Kein Messergebnis",
+                                        style: TextStyle(fontSize: 24))
                                     : Row(children: [
                                         Text(
-                                          widget.heater.baseModel.temperature!.temperature.toStringAsFixed(1),
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                                          widget.heater.baseModel.temperature!
+                                              .temperature
+                                              .toStringAsFixed(1),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24),
                                         ),
                                         Text(
                                             "°C " +
                                                 "(" +
-                                                DayOfWeekToStringMap[widget.heater.baseModel.temperature!.dayOfWeek]! +
+                                                DayOfWeekToStringMap[widget
+                                                    .heater
+                                                    .baseModel
+                                                    .temperature!
+                                                    .dayOfWeek]! +
                                                 " " +
-                                                widget.heater.baseModel.temperature!.timeOfDay.format(context) +
+                                                widget.heater.baseModel
+                                                    .temperature!.timeOfDay
+                                                    .format(context) +
                                                 ")",
                                             style: TextStyle(fontSize: 24))
                                       ])
@@ -506,20 +574,33 @@ class _HeaterScreenState extends State<HeaterScreen> {
                             children: <Widget>[
                               // Text("Ziel: "),
                               // Icon(Icons.),
-                              widget.heater.baseModel.currentConfig?.temperature == null
-                                  ? Text("Keins", style: TextStyle(fontSize: 24))
+                              widget.heater.baseModel.currentConfig
+                                          ?.temperature ==
+                                      null
+                                  ? Text("Keins",
+                                      style: TextStyle(fontSize: 24))
                                   : Row(
                                       children: [
                                         Text(
-                                          widget.heater.baseModel.currentConfig!.temperature.toStringAsFixed(1),
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                                          widget.heater.baseModel.currentConfig!
+                                              .temperature
+                                              .toStringAsFixed(1),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24),
                                         ),
                                         Text(
                                           "°C " +
                                               "(" +
-                                              DayOfWeekToStringMap[widget.heater.baseModel.currentConfig!.dayOfWeek]! +
+                                              DayOfWeekToStringMap[widget
+                                                  .heater
+                                                  .baseModel
+                                                  .currentConfig!
+                                                  .dayOfWeek]! +
                                               " " +
-                                              widget.heater.baseModel.currentConfig!.timeOfDay.format(context) +
+                                              widget.heater.baseModel
+                                                  .currentConfig!.timeOfDay
+                                                  .format(context) +
                                               ")",
                                           style: TextStyle(fontSize: 24),
                                         ),

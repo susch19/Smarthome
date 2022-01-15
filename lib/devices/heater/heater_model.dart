@@ -14,10 +14,13 @@ class HeaterModel extends BaseModel {
   bool? disableLed;
   bool? disableHeating;
 
+  HeaterModel(
+    int id,
+    String friendlyName,
+    bool isConnected,
+  ) : super(id, friendlyName, isConnected);
 
-  HeaterModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
-
- factory HeaterModel.fromJson(Map<String, dynamic> json) => _$HeaterModelFromJson(json);
+  factory HeaterModel.fromJson(Map<String, dynamic> json) => _$HeaterModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$HeaterModelToJson(this);
 }
