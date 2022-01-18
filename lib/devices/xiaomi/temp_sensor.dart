@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';
@@ -210,15 +211,15 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
     var h = histories.firstWhereOrNull((x) => x.propertyName == "humidity");
     if (h != null)
       return buildTimeSeriesRangeAnnotationChart(h, " %", "rel. Luftfeuchtigkeit",
-          ThemeManager.isLightTheme ? Colors.blueAccent.shade700 : Colors.blueAccent.shade100);
+          AdaptiveTheme.of(context).mode.isLight ? Colors.blueAccent.shade700 : Colors.blueAccent.shade100);
     return buildDataMissing();
   }
 
   Widget buildGraphViewTemp() {
     var h = histories.firstWhereOrNull((x) => x.propertyName == "temperature");
     if (h != null)
-      return buildTimeSeriesRangeAnnotationChart(
-          h, " °C", "Temperatur", ThemeManager.isLightTheme ? Colors.redAccent.shade700 : Colors.redAccent);
+      return buildTimeSeriesRangeAnnotationChart(h, " °C", "Temperatur",
+          AdaptiveTheme.of(context).mode.isLight ? Colors.redAccent.shade700 : Colors.redAccent);
     return buildDataMissing();
   }
 
@@ -226,7 +227,7 @@ class _XiaomiTempSensorScreenState extends State<XiaomiTempSensorScreen> with Si
     var h = histories.firstWhereOrNull((x) => x.propertyName == "pressure");
     if (h != null)
       return buildTimeSeriesRangeAnnotationChart(h, " hPA", "Luftdruck",
-          ThemeManager.isLightTheme ? Colors.greenAccent.shade700 : Colors.greenAccent.shade400);
+          AdaptiveTheme.of(context).mode.isLight ? Colors.greenAccent.shade700 : Colors.greenAccent.shade400);
     return buildDataMissing();
   }
 

@@ -44,8 +44,8 @@ void main() async {
   // prefs.clear();
 
   PreferencesManager.instance = PreferencesManager(prefs);
-  final savedThemeMode = await AdaptiveTheme.getThemeMode();
-  ThemeManager.initThemeManager(savedThemeMode);
+
+  final savedThemeMode = await AdaptiveTheme.getThemeMode() ?? AdaptiveThemeMode.system;
   DeviceManager.init();
   SettingsManager.initialize();
   Intl.defaultLocale = "de-DE";
@@ -57,23 +57,14 @@ class MyApp extends StatelessWidget {
   MyApp(this.savedThemeMode);
 
   static late PreferencesManager prefManager;
-  final AdaptiveThemeMode? savedThemeMode;
+  final AdaptiveThemeMode savedThemeMode;
 
   @override
   Widget build(BuildContext context) {
-    // ThemeManager.initalize();
     return AdaptiveTheme(
-        //      light: ThemeData(
-        //   brightness: Brightness.light,
-        //   primarySwatch: Colors.blue,
-        // ),
-        // dark: ThemeData(
-        //   brightness: Brightness.dark,
-        //   primarySwatch: Colors.blue,
-        // ),
         light: ThemeManager.getLightTheme(),
         dark: ThemeManager.getDarkTheme(),
-        initial: savedThemeMode ?? AdaptiveThemeMode.system,
+        initial: savedThemeMode,
         builder: (theme, darkTheme) => MaterialApp(
               scrollBehavior: CustomScrollBehavior(),
               title: 'Smarthome',
@@ -489,8 +480,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         setState(() {});
         break;
       case "Theme":
-        ThemeManager.toogleThemeMode(context);
-
+        AdaptiveTheme.of(context).toggleThemeMode();
         break;
       // case "Groups":
       //   setState(() {
