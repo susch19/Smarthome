@@ -11,7 +11,7 @@ class SimpleDialog {
     Function? onCancel,
   }) =>
       AlertDialog(
-          title: title == "" ? null : Text(title),
+          title: Text(title),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[Text(content)],

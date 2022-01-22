@@ -11,7 +11,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class UpdateManager {
   static final Version version = Version(1, 1, 5);
-  static final int checkEveryHours = 16;
+  static const int checkEveryHours = 16;
   static final GitHub gitHub = GitHub();
   static final RepositorySlug repositorySlug = RepositorySlug("susch19", "SmartHome");
   static final RegExp versionRegExp = RegExp(r'v|V');
@@ -119,7 +119,7 @@ class UpdateManager {
         // TODO: log
         return null;
       }
-    }).firstWhere((element) => element != null && element > version);
+    }).firstWhere((element) => (element ?? Version(0, 0, 0)) > version, orElse: () => null);
   }
 
   static Future<String?> _newVersionUrl() async {
