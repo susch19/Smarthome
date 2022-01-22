@@ -1,7 +1,7 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
-import 'package:smarthome/helper/theme_manager.dart';
 
 class StatelessDashboardCard extends StatelessWidget {
   final Device device;
@@ -26,7 +26,7 @@ class StatelessDashboardCard extends StatelessWidget {
         // shadowColor: ThemeManager.isLightTheme ?  Colors.white.withOpacity(0) : Colors.black,
         // color: ThemeManager.isLightTheme ?  Colors.indigo.shade100.withOpacity(1) : Colors.indigo.shade800.withOpacity(0.25),
         child: BlurryContainer(
-          color: ThemeManager.isLightTheme ?  Colors.white54 : Colors.black38,
+          color: AdaptiveTheme.of(context).mode.isLight ? Colors.white54 : Colors.black38,
           child: MaterialButton(
             splashColor: Colors.transparent,
             disabledColor: Colors.transparent,

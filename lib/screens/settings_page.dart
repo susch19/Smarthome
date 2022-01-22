@@ -1,5 +1,6 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:smarthome/controls/checked_button.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
@@ -25,6 +26,8 @@ class SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = AdaptiveTheme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Serversuche"),
@@ -42,49 +45,49 @@ class SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: Row(
                 children: [
-                  // MaterialButton(
-                  //   child: Column(
-                  //     crossAxisAlignment: CrossAxisAlignment.center,
-                  //     children: [
-                  //       Icon(Icons.phone_android_outlined),
-                  //       Text("System folgen"),
-                  //     ],
-                  //   ),
-                  //   onPressed: () =>
-                  //       ThemeManager.setThemeMode(context, AdaptiveThemeMode.system, setState: () => setState(() {})),
-                  // ),
                   MaterialButton(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.light_mode),
-                        Text("Helles Design"),
-                      ],
-                    ),
-                    onPressed: () =>
-                        ThemeManager.setThemeMode(context, AdaptiveThemeMode.light, setState: () => setState(() {})),
-                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.smartphone,
+                            color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isSystem ? 1 : 0.3),
+                          ),
+                          Text("System folgen"),
+                        ],
+                      ),
+                      onPressed: () {
+                        theme.setSystem();
+                        setState(() {});
+                      }),
                   MaterialButton(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.dark_mode_outlined),
-                        Text("Dunkles Design"),
-                      ],
-                    ),
-                    onPressed: () =>
-                        ThemeManager.setThemeMode(context, AdaptiveThemeMode.dark, setState: () => setState(() {})),
-                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(theme.mode.isLight ? Icons.light_mode : Icons.light_mode_outlined,
+                              color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isLight ? 1 : 0.3)),
+                          Text("Helles Design"),
+                        ],
+                      ),
+                      onPressed: () {
+                        theme.setLight();
+                        setState(() {});
+                      }),
+                  MaterialButton(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(theme.mode.isDark ? Icons.dark_mode : Icons.dark_mode_outlined,
+                              color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isDark ? 1 : 0.3)),
+                          Text("Dunkles Design"),
+                        ],
+                      ),
+                      onPressed: () {
+                        theme.setDark();
+                        setState(() {});
+                      }),
                 ],
               ),
-              // title: Text("Dunklen Modus anschalten"),
-              // trailing: Switch(
-              //   value: !ThemeManager.isLightTheme,
-              //   onChanged: (a) {
-              //     ThemeManager.toogleThemeMode(context);
-              //     setState(() {});
-              //   },
-              // ),
             ),
             ListTile(
               title: Text("Gruppierungen ausblenden"),
@@ -149,7 +152,6 @@ class SettingsPageState extends State<SettingsPage> {
               ),
             ),
             Divider(),
-
             DeviceManager.showDebugInformation
                 ? ListTile(
                     title: Text(
@@ -158,7 +160,6 @@ class SettingsPageState extends State<SettingsPage> {
                     onTap: () => ConnectionManager.hubConnection.invoke("UpdateTime"),
                   )
                 : Container(),
-
             ListTile(
               leading: Text("Über"),
               onTap: () => Navigator.push(

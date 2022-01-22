@@ -1,5 +1,5 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:smarthome/helper/theme_manager.dart';
 
 import 'blurry_container.dart';
 
@@ -36,7 +36,7 @@ class BlurryCard extends StatelessWidget {
       child: Container(
         margin: margin,
         child: BlurryContainer(
-            color: ThemeManager.isLightTheme ? defaultLightShadowColor : defaultDarkShadowColor,
+          color: AdaptiveTheme.of(context).mode.isLight ? defaultLightShadowColor : defaultDarkShadowColor,
           blur: blur,
           child: Card(
             color: Colors.transparent,

@@ -1,20 +1,9 @@
 import 'dart:math';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 
 class ThemeManager {
-  static AdaptiveThemeMode brightness = AdaptiveThemeMode.light;
-  static bool get isLightTheme => brightness ==  AdaptiveThemeMode.light || brightness == AdaptiveThemeMode.system;
-
-  static void initThemeManager(AdaptiveThemeMode? savedThemeMode) {
-    if (savedThemeMode == null) savedThemeMode = AdaptiveThemeMode.system;
-    brightness = savedThemeMode;
-    
-  }
-
   static ThemeData getDarkTheme() {
-    // return ThemeData.dark();
     return ThemeData(
       brightness: Brightness.dark,
       dialogBackgroundColor: Colors.indigo.shade900.withOpacity(0.95),
@@ -22,7 +11,6 @@ class ThemeManager {
       backgroundColor: Colors.indigo.shade800.withOpacity(0.95),
       sliderTheme: SliderThemeData(thumbColor: Colors.tealAccent, activeTrackColor: Colors.tealAccent),
       canvasColor: Colors.indigo.shade800.withOpacity(0.95),
-      // dialogTheme: DialogTheme(backgroundColor: Colors.indigo.shade800.withOpacity(0.95),),
       popupMenuTheme: PopupMenuThemeData(
         color: Colors.indigo.shade800.withOpacity(0.95),
       ),
@@ -58,9 +46,6 @@ class ThemeManager {
 
   static ThemeData getLightTheme() {
     final Color indigoColor = Colors.indigo.shade50;
-
-    // return ThemeData.light();
-
     return ThemeData(
       brightness: Brightness.light,
       dialogBackgroundColor: indigoColor.withOpacity(0.95),
@@ -101,49 +86,20 @@ class ThemeManager {
     );
   }
 
-  static toogleThemeMode(BuildContext context) {
-    var adaptiveTheme = AdaptiveTheme.of(context);
-    brightness = adaptiveTheme.mode == AdaptiveThemeMode.dark ? AdaptiveThemeMode.light : AdaptiveThemeMode.dark;
-    adaptiveTheme.setThemeMode(brightness);
-  }
-
-  static setThemeMode(BuildContext context, AdaptiveThemeMode mode, {Function? setState}) {
-    var adaptiveTheme = AdaptiveTheme.of(context);
-    adaptiveTheme.setThemeMode(mode);
-    brightness = mode;
-    if (setState != null) setState();
-  }
-
   static BoxDecoration getBackgroundDecoration(BuildContext context) {
     var fract = MediaQuery.of(context).size.width / MediaQuery.of(context).size.height;
     fract = pow(fract, 2).toDouble();
     return BoxDecoration(
       gradient: LinearGradient(
-          colors: !ThemeManager.isLightTheme
-              ? [Colors.blue.shade900, /*Colors.indigo.shade900, 0d47a1 -> 311b92*/ Colors.deepPurple.shade700]
+          colors: !AdaptiveTheme.of(context).mode.isLight
+              ? [Colors.blue.shade900, Colors.deepPurple.shade700]
               : [Colors.blue.shade100, Colors.purple.shade100],
-          // colors: [Colors.black, Colors.white, Colors.black],
-          // begin: Alignment(-1/fract,-1 *fract),
-          // end: Alignment(1*fract,1/fract),
           begin: Alignment((-0.88 / fract), -1),
           end: Alignment((0.88 / fract), 1),
-          // fract: 1.623469387755102
-          // begin:Alignment(0.5,0.8),
-          // end: Alignment(-0.15,-1.2),
-          // transform: GradientRotation(MediaQuery.of(context).size.width / MediaQuery.of(context).size.height),
           stops: [
             0.3,
             fract.clamp(0.8, 1),
-          ]
-          // stops: [
-          //             0.495,
-          //             0.5,
-          //             0.505
-          //           ]
-          // begin: Alignment(-2.0, -8.0),
-          // end: Alignment(1.0, 4.0),
-          // transform: GradientRotation(3.14/4)
-          ),
+          ]),
     );
   }
 
