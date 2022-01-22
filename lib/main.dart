@@ -17,6 +17,7 @@ import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:smarthome/helper/update_manager.dart';
 import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/screens/settings_page.dart';
 import 'package:smarthome/session/cert_file.dart';
@@ -49,6 +50,7 @@ void main() async {
   SettingsManager.initialize();
   Intl.defaultLocale = "de-DE";
   initializeDateFormatting("de-DE", null).then((_) => runApp(MyApp(savedThemeMode)));
+  UpdateManager.initialize();
 }
 
 class MyApp extends StatelessWidget {
@@ -99,6 +101,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void initState() {
     infoIcon = Icons.refresh;
     super.initState();
+    UpdateManager.showUpdateNotification(context);
+
     WidgetsBinding.instance!.addObserver(this);
     doStuff();
     Timer.periodic(Duration(milliseconds: 500), (timer) async {

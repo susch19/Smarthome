@@ -1,8 +1,10 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:smarthome/helper/helper_methods.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:smarthome/helper/update_manager.dart';
+import 'package:smarthome/models/versionAndUrl.dart';
 
 class AboutScreen extends StatelessWidget {
   @override
@@ -55,7 +57,7 @@ class AboutScreen extends StatelessWidget {
           ),
           ListTile(
             title: Text(
-              "Tolle beschreibung dieser Smarthome App",
+              "Tolle Beschreibung dieser Smarthome App",
               textAlign: TextAlign.center,
             ),
             // "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."),
@@ -72,9 +74,25 @@ class AboutScreen extends StatelessWidget {
               "Entwickelt von susch19 (Sascha Hering)",
             ),
           ),
-          ListTile(
-            title: Text("Version 0.1"),
-          ),
+          FutureBuilder<VersionAndUrl?>(
+              future: UpdateManager.getVersionAndUrl(),
+              builder: (context, AsyncSnapshot<VersionAndUrl?> snapshot) {
+                return ListTile(
+                    title: Row(children: [
+                      Text(UpdateManager.getVersionString(snapshot.data?.version)),
+                      if (!snapshot.hasData && !snapshot.hasError)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: CircularProgressIndicator(),
+                        )
+                    ]),
+                    onTap: () {
+                      if (snapshot.data?.url != null) {
+                        HelperMethods.openUrl(snapshot.data!.url!);
+                      }
+                    });
+              }),
+
           Divider(),
           ListTile(
             leading: SvgPicture.asset(
@@ -83,34 +101,20 @@ class AboutScreen extends StatelessWidget {
               width: 32,
             ),
             title: Text("Schau doch mal in den Code auf GitHub rein"),
-            onTap: () {
-              var urlString = "https://github.com/susch19/smarthome";
-              canLaunch(urlString).then((value) {
-                if (value) launch(urlString);
-              });
-            },
+            onTap: () => HelperMethods.openUrl("https://github.com/susch19/smarthome"),
           ),
           Divider(),
           ListTile(
             leading: SvgPicture.asset("assets/vectors/smarthome_icon.svg", alignment: Alignment.center, width: 32),
             title: Text("Wer hat dieses schicke Icon gemacht? Finde es heraus!"),
-            onTap: () {
-              var urlString = "https://iconarchive.com/show/flatwoken-icons-by-alecive/Apps-Home-icon.html";
-              canLaunch(urlString).then((value) {
-                if (value) launch(urlString);
-              });
-            },
+            onTap: () =>
+                HelperMethods.openUrl("https://iconarchive.com/show/flatwoken-icons-by-alecive/Apps-Home-icon.html"),
           ),
           // Divider(),
           // ListTile(
           //   leading: SvgPicture.asset("assets/vectors/google_play.svg", alignment: Alignment.center, width: 32),
           //   title: Text("Play Store Eintrag"),
-          //   onTap: () {
-          //     var urlString = "https://play.google.com/store/apps/details?id=de.susch19.nssl";
-          //     canLaunch(urlString).then((value) {
-          //       if (value) launch(urlString);
-          //     });
-          //   },
+          //   onTap: () => HelperMethods.openUrl("https://play.google.com/store/apps/details?id=de.susch19.nssl"),
           // ),
         ],
       ),
