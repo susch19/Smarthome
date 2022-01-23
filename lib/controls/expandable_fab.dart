@@ -4,7 +4,7 @@ import 'dart:math' as math;
 @immutable
 class ExpandableFab extends StatefulWidget {
   const ExpandableFab({
-    Key? key,
+    final Key? key,
     this.initialOpen,
     required this.distance,
     required this.children,
@@ -18,8 +18,7 @@ class ExpandableFab extends StatefulWidget {
   _ExpandableFabState createState() => _ExpandableFabState();
 }
 
-class _ExpandableFabState extends State<ExpandableFab>
-    with SingleTickerProviderStateMixin {
+class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _expandAnimation;
   bool _open = false;
@@ -58,7 +57,7 @@ class _ExpandableFabState extends State<ExpandableFab>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return SizedBox.expand(
       child: Stack(
         alignment: Alignment.bottomRight,
@@ -83,8 +82,8 @@ class _ExpandableFabState extends State<ExpandableFab>
           elevation: 4.0,
           child: InkWell(
             onTap: _toggle,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
               child: Icon(
                 Icons.close,
               ),
@@ -98,10 +97,8 @@ class _ExpandableFabState extends State<ExpandableFab>
   List<Widget> _buildExpandingActionButtons() {
     final children = <Widget>[];
     final count = widget.children.length;
-    final step = 56.0; //90.0 / (count - 1);
-    for (var i = 0, angleInDegrees = step + 8.0;
-        i < count;
-        i++, angleInDegrees += step) {
+    const step = 56.0; //90.0 / (count - 1);
+    for (var i = 0, angleInDegrees = step + 8.0; i < count; i++, angleInDegrees += step) {
       children.add(
         _ExpandingActionButton(
           positionOffsetInPx: angleInDegrees,
@@ -142,8 +139,8 @@ class _ExpandableFabState extends State<ExpandableFab>
 
 @immutable
 class _ExpandingActionButton extends StatelessWidget {
-  _ExpandingActionButton({
-    Key? key,
+  const _ExpandingActionButton({
+    final Key? key,
     required this.positionOffsetInPx,
     required this.maxDistance,
     required this.progress,
@@ -156,10 +153,10 @@ class _ExpandingActionButton extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return AnimatedBuilder(
       animation: progress,
-      builder: (context, child) {
+      builder: (final context, final child) {
         final offset = Offset.fromDirection(
           90 * (math.pi / 180.0),
           positionOffsetInPx,
@@ -185,7 +182,7 @@ class _ExpandingActionButton extends StatelessWidget {
 @immutable
 class ActionButton extends StatelessWidget {
   const ActionButton({
-    Key? key,
+    final Key? key,
     this.onPressed,
     required this.icon,
   }) : super(key: key);
@@ -194,7 +191,7 @@ class ActionButton extends StatelessWidget {
   final Widget icon;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final theme = Theme.of(context);
     return Material(
       shape: const CircleBorder(),

@@ -7,8 +7,7 @@ import '../zigbee/zigbeelamp/zigbee_lamp.dart';
 import '../zigbee/zigbeelamp/zigbee_lamp_model.dart';
 
 class OsramB40RW extends ZigbeeLamp {
-  OsramB40RW(int? id, String typeName, ZigbeeLampModel model,
-      HubConnection connection, IconData icon)
+  OsramB40RW(final int id, final String typeName, final ZigbeeLampModel model, final HubConnection connection, final IconData icon)
       : super(id, typeName, model, connection, icon);
 
   @override

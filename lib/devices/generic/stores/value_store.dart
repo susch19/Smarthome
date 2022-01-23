@@ -1,45 +1,48 @@
-import 'dart:async';
-
+import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/datetime_helper.dart';
 import 'package:smarthome/models/message.dart';
 
-class ValueChangedModel<T> {
-  T value;
-  bool sendToSever;
-
-  ValueChangedModel(this.value, this.sendToSever);
-}
-
-class ValueStore<T> {
+class ValueStore<T> extends ChangeNotifier {
   T currentValue;
   String key;
   Command command;
+  int id;
+  bool sendToServer = false;
+  bool _debugDisposes = false;
 
-  var valueChanged = StreamController<ValueChangedModel<T>>.broadcast();
+  bool get disposed => _debugDisposes;
 
-  ValueStore(this.currentValue, this.key, this.command);
+  ValueStore(this.id, this.currentValue, this.key, this.command);
+
+  @override
+  dispose() {
+    _debugDisposes = true;
+    super.dispose();
+  }
 
   T getValue() {
     return currentValue;
   }
 
-  setValue(T newValue) {
+  setValue(final T newValue) {
     if (currentValue == newValue) return;
     currentValue = newValue;
-    valueChanged.add(ValueChangedModel(newValue, true));
+    sendToServer = true;
+    notifyListeners();
   }
 
-  updateValue(T newValue) {
+  updateValue(final T newValue) {
     if (currentValue == newValue) return;
     currentValue = newValue;
-    valueChanged.add(ValueChangedModel(newValue, false));
+    sendToServer = false;
+    notifyListeners();
   }
 
   String getMeasuremtUnit() {
     return "";
   }
 
-  String getValueAsString({String? format}) {
+  String getValueAsString({final String? format}) {
     if (currentValue.runtimeType == (double)) return (currentValue as double).toStringAsFixed(1);
     if (format != null) {
       if (currentValue.runtimeType == (DateTime)) {
@@ -48,9 +51,5 @@ class ValueStore<T> {
     }
 
     return currentValue.toString();
-  }
-
-  void dispose() {
-    valueChanged.close();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:quiver/core.dart';
 
 part 'linked_device_tab.g.dart';
 
@@ -9,7 +10,14 @@ class LinkedDeviceTab {
 
   LinkedDeviceTab(this.deviceIdPropertyName, this.deviceType);
 
-  factory LinkedDeviceTab.fromJson(Map<String, dynamic> json) => _$LinkedDeviceTabFromJson(json);
+  @override
+  bool operator ==(final Object other) =>
+      other is LinkedDeviceTab && other.deviceIdPropertyName == deviceIdPropertyName && other.deviceType == deviceType;
+
+  @override
+  int get hashCode => hash2(deviceIdPropertyName, deviceType);
+
+  factory LinkedDeviceTab.fromJson(final Map<String, dynamic> json) => _$LinkedDeviceTabFromJson(json);
 
   Map<String, dynamic> toJson() => _$LinkedDeviceTabToJson(this);
 }

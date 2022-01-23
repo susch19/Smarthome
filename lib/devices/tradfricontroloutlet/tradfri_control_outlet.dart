@@ -1,27 +1,23 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';
-import 'package:smarthome/devices/device.dart';
+import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../device_manager.dart';
-import 'tradfri_control_outlet_model.dart';
 
-class TradfriControlOutlet extends Device<TradfriControlOutletModel> {
-  TradfriControlOutlet(int? id, String typeName,
-      TradfriControlOutletModel model, HubConnection connection, IconData icon)
+class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
+  TradfriControlOutlet(final int id, final String typeName, final ZigbeeSwitchModel model,
+      final HubConnection connection, final IconData icon)
       : super(id, typeName, model, connection, iconData: icon);
 
   @override
-  void navigateToDevice(BuildContext context) {
+  void navigateToDevice(final BuildContext context) {
     Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (BuildContext context) =>
-                TradfriControlOutletScreen(this)));
+        context, MaterialPageRoute(builder: (final BuildContext context) => TradfriControlOutletScreen(this)));
   }
 
   @override
@@ -33,22 +29,16 @@ class TradfriControlOutlet extends Device<TradfriControlOutletModel> {
         MaterialButton(
           child: Text(
             "An",
-            style: baseModel.state
-                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                : TextStyle(),
+            style: baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
           ),
-          onPressed: () =>
-              sendToServer(sm.MessageType.Update, sm.Command.On, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
           child: Text(
             "Aus",
-            style: !baseModel.state
-                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                : TextStyle(),
+            style: !baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
           ),
-          onPressed: () =>
-              sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
       ],
     );
@@ -60,55 +50,38 @@ class TradfriControlOutlet extends Device<TradfriControlOutletModel> {
   }
 }
 
-class TradfriControlOutletScreen extends DeviceScreen {
-  final TradfriControlOutlet tradfriControlOutlet;
-  TradfriControlOutletScreen(this.tradfriControlOutlet);
+class TradfriControlOutletScreen extends ConsumerStatefulWidget {
+  final TradfriControlOutlet device;
+  const TradfriControlOutletScreen(this.device, {final Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _TradfriControlOutletScreenState();
+  _TradfriControlOutletScreenState createState() => _TradfriControlOutletScreenState();
 }
 
-class _TradfriControlOutletScreenState
-    extends State<TradfriControlOutletScreen> {
+class _TradfriControlOutletScreenState extends ConsumerState<TradfriControlOutletScreen> {
   DateTime dateTime = DateTime.now();
-  late StreamSubscription sub;
 
   @override
-  void initState() {
-    super.initState();
-    sub = this.widget.tradfriControlOutlet.listenOnUpdateFromServer((p0) {
-      setState(() {});
-    });
-  }
-
-  @override
-  void deactivate() {
-    super.deactivate();
-    sub.cancel();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
+  Widget build(final BuildContext context) {
+    return Scaffold(
       appBar: AppBar(
-        title:
-            new Text(this.widget.tradfriControlOutlet.baseModel.friendlyName),
+        title: Text(widget.device.baseModel.friendlyName),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
-        child: buildBody(this.widget.tradfriControlOutlet.baseModel),
+        child: buildBody(widget.device.baseModel),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => this
-            .widget
-            .tradfriControlOutlet
-            .sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }
 
-  Widget buildBody(TradfriControlOutletModel model) {
+  Widget buildBody(final ZigbeeSwitchModel model) {
+    final model = ref.watch(widget.device.baseModelTProvider(widget.device.id));
+    if (model is! ZigbeeSwitchModel) return Container();
+
     return ListView(
       children: <Widget>[
         ListTile(

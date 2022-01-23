@@ -6,14 +6,30 @@ part 'temp_sensor_model.g.dart';
 
 @JsonSerializable()
 class TempSensorModel extends ZigbeeModel {
-  late double temperature;
-  late double humidity;
-  late double pressure;
-  late int battery;
+  final double temperature;
+  final double humidity;
+  final double pressure;
+  final int battery;
 
-  TempSensorModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
+  const TempSensorModel(final int id, final String friendlyName, final bool isConnected, final bool available,
+      final DateTime lastReceived, final int linkQuality, this.temperature, this.humidity, this.pressure, this.battery)
+      : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
 
-  factory TempSensorModel.fromJson(Map<String, dynamic> json) => _$TempSensorModelFromJson(json);
+  factory TempSensorModel.fromJson(final Map<String, dynamic> json) => _$TempSensorModelFromJson(json);
 
+  @override
   Map<String, dynamic> toJson() => _$TempSensorModelToJson(this);
+
+  @override
+  bool operator ==(final Object other) =>
+      other is TempSensorModel &&
+      super == other &&
+      other.temperature == temperature &&
+      other.humidity == humidity &&
+      other.pressure == pressure &&
+      other.battery == battery;
+
+  @override
+  int get hashCode => Object.hash(
+      id, friendlyName, isConnected, available, lastReceived, linkQuality, temperature, humidity, pressure, battery);
 }

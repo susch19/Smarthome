@@ -14,8 +14,19 @@ class ServerTextStyle {
 
   ServerTextStyle(this.fontFamily, this.fontWeight, this.fontStyle);
 
+  @override
+  bool operator ==(final Object other) =>
+      other is ServerTextStyle &&
+      other.fontStyle == fontStyle &&
+      other.fontWeight == fontWeight &&
+      fontFamily == other.fontFamily &&
+      fontSize == other.fontSize;
+
+  @override
+  int get hashCode => Object.hash(fontStyle, fontWeight, fontFamily, fontSize);
+
   TextStyle toTextStyle() {
-    var ts = TextStyle();
+    var ts = const TextStyle();
     if (fontSize != null) ts = ts.copyWith(fontSize: fontSize);
     if (fontFamily != null && fontFamily != "") ts = ts.copyWith(fontFamily: fontFamily);
     ts = ts.copyWith(fontStyle: fontStyle);
@@ -23,18 +34,18 @@ class ServerTextStyle {
     return ts;
   }
 
-  factory ServerTextStyle.fromJson(Map<String, dynamic> json) => _$ServerTextStyleFromJson(json);
+  factory ServerTextStyle.fromJson(final Map<String, dynamic> json) => _$ServerTextStyleFromJson(json);
 
   Map<String, dynamic> toJson() => _$ServerTextStyleToJson(this);
 
-  static FontWeight _fontWeightFromJson(dynamic abc) {
+  static FontWeight _fontWeightFromJson(final dynamic abc) {
     // var str = abc as num;
     // if (str == 1) return FontWeight.bold;
     // return FontWeight.normal;
     return _$enumDecode(_$FontWeightEnumMap, abc);
   }
 
-  static String _fontWeightToJson(FontWeight abc) {
+  static String _fontWeightToJson(final FontWeight abc) {
     // if (abc == FontWeight.bold) return 1;
     // return 0;
 

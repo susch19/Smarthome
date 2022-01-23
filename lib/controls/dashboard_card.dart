@@ -1,32 +1,36 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
-class StatelessDashboardCard extends StatelessWidget {
+class StatelessDashboardCard extends ConsumerWidget {
   final Device device;
-  late final BaseModel _model;
-  final Widget? icon;
-  late final Widget _lowerLeftWidget;
   final VoidCallback onLongPress;
   final Object tag;
 
-  StatelessDashboardCard(
-      {Key? key, required this.device, required this.onLongPress, required this.tag, required this.icon}) {
-    _model = device.baseModel;
-    _lowerLeftWidget = device.rightWidgets();
-  }
+  const StatelessDashboardCard({
+    final Key? key,
+    required this.device,
+    required this.onLongPress,
+    required this.tag,
+  }) : super(key: key);
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final friendlyName = ref.watch(baseModelFriendlyNameProvider(device.id));
+    final typeNames = ref.watch(baseModelTypeNamesProvider(device.id));
+    final isConnected = ref.watch(baseModelIsConnectedProvider(device.id));
+
+    final deviceIcon = ref.watch(iconWidgetProvider(Tuple3(typeNames ?? [], device, AdaptiveTheme.of(context))));
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Card(
         color: Colors.transparent,
-        // color: Colors.white.withOpacity(0.5),
-        // shadowColor: ThemeManager.isLightTheme ?  Colors.white.withOpacity(0) : Colors.black,
-        // color: ThemeManager.isLightTheme ?  Colors.indigo.shade100.withOpacity(1) : Colors.indigo.shade800.withOpacity(0.25),
         child: BlurryContainer(
-          color: AdaptiveTheme.of(context).mode.isLight ? Colors.white54 : Colors.black38,
+          color: AdaptiveTheme.of(context).brightness == Brightness.light ? Colors.white54 : Colors.black38,
           child: MaterialButton(
             splashColor: Colors.transparent,
             disabledColor: Colors.transparent,
@@ -131,36 +135,33 @@ class StatelessDashboardCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                        margin: EdgeInsets.only(left: 4, top: 8.0, bottom: 8.0),
-                        child: Container(
-                          width: 32,
-                          height: 40,
-                          child: icon,
-                        )),
+                        margin: const EdgeInsets.only(left: 4, top: 8.0, bottom: 8.0),
+                        child: SizedBox(width: 32, height: 40, child: deviceIcon //icon,
+                            )),
                     Expanded(
                       child: Container(
-                        margin: EdgeInsets.only(top: 4.0),
+                        margin: const EdgeInsets.only(top: 4.0),
                         child: device.dashboardCardBody(),
                       ),
                     ),
                     Container(
                       // width: 16,
                       // height: 16,
-                      child: _lowerLeftWidget,
-                      margin: EdgeInsets.only(right: 8.0, top: 8.0, bottom: 8.0),
+                      child: device.getRightWidgets(),
+                      margin: const EdgeInsets.only(right: 8.0, top: 8.0, bottom: 8.0),
                     ),
                   ],
                 ),
                 Container(
-                  margin: EdgeInsets.only(left: 8.0, bottom: 8.0),
+                  margin: const EdgeInsets.only(left: 8.0, bottom: 8.0),
                   child: Row(
                     children: [
                       Container(
-                        margin: EdgeInsets.only(left: 12, bottom: 0, top: 8),
+                        margin: const EdgeInsets.only(left: 12, top: 8),
                         child: CustomPaint(
                           painter: CircleBlurPainter(
-                            device.isConnected ? Colors.greenAccent : Colors.red,
-                            Offset(0, 8),
+                            isConnected ?? false ? Colors.greenAccent : Colors.red,
+                            const Offset(0, 8),
                             blurSigma: 2,
                             circleWidth: 10,
                           ),
@@ -170,16 +171,16 @@ class StatelessDashboardCard extends StatelessWidget {
                       ),
                       Expanded(
                         child: Container(
-                          margin: EdgeInsets.only(top: 8.0),
+                          margin: const EdgeInsets.only(top: 8.0),
                           child: Text(
-                            _model.friendlyName.toString(),
-                            style: TextStyle(),
+                            friendlyName ?? "",
+                            style: const TextStyle(),
                             softWrap: true,
                             textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                      Container(
+                      SizedBox(
                         height: 16,
                         width: 12,
                       ),

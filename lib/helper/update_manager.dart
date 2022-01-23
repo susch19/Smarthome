@@ -8,6 +8,13 @@ import 'package:smarthome/helper/simple_dialog.dart' as simpleDialog;
 import 'package:smarthome/models/versionAndUrl.dart';
 import 'package:version/version.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final versionAndUrlProvider = StateProvider<VersionAndUrl?>((final ref) {
+  UpdateManager(ref);
+  UpdateManager.checkForNewestVersion();
+  return null;
+});
 
 class UpdateManager {
   static final Version version = Version(1, 1, 5);
@@ -25,6 +32,11 @@ class UpdateManager {
 
   static int notificationId = 0;
 
+  static late Ref _ref;
+  UpdateManager(StateProviderRef<VersionAndUrl?> ref) {
+    _ref = ref;
+  }
+
   static Future<void> initialize() async {
     lastChecked = PreferencesManager.instance.getDateTime("lastChecked");
 
@@ -41,7 +53,7 @@ class UpdateManager {
     });
   }
 
-  static Future<void> showUpdateNotification(BuildContext context) async {
+  static Future<void> checkForNewestVersion() async {
     print("showUpdateNotification called " + (lastChecked?.toString() ?? "lastChecked is null"));
     // TODO: at a later point maybe schedule this notification to be shown every x hours
     // TODO: maybe also put the check every x hours in the settings
@@ -51,22 +63,27 @@ class UpdateManager {
 
       final versionAndUrl = await getVersionAndUrl();
       if (versionAndUrl?.url != null && await _isNewVersionAvailable(versionAndUrl?.version)) {
-        if (Platform.isAndroid) {
-          // Show notification
-          await _showNotification(versionAndUrl!);
-        } else {
-          // Show dialog
-          showDialog(
-              context: context,
-              builder: (BuildContext c) => simpleDialog.SimpleDialog.create(
-                  context: c,
-                  title: updateNotificationTitle,
-                  content: updateNotificationBody + versionAndUrl!.version.toString(),
-                  okButtonText: "Aktualisieren",
-                  cancelButtonText: "Später",
-                  onSubmitted: () => HelperMethods.openUrl(versionAndUrl.url!)));
-        }
+        _ref.read(versionAndUrlProvider.notifier).state = versionAndUrl;
       }
+    }
+  }
+
+  static Future<void> displayNotificationDialog(final BuildContext context, final VersionAndUrl versionAndUrl) async {
+    _ref.read(versionAndUrlProvider.notifier).state = null;
+    if (Platform.isAndroid) {
+      // Show notification
+      await _showNotification(versionAndUrl);
+    } else {
+      // Show dialog
+      showDialog(
+          context: context,
+          builder: (final BuildContext c) => simpleDialog.SimpleDialog.create(
+              context: c,
+              title: updateNotificationTitle,
+              content: updateNotificationBody + versionAndUrl.version.toString(),
+              okButtonText: "Aktualisieren",
+              cancelButtonText: "Später",
+              onSubmitted: () => HelperMethods.openUrl(versionAndUrl.url!)));
     }
   }
 

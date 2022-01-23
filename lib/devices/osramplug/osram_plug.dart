@@ -1,26 +1,23 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:signalr_core/signalr_core.dart';
+import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../device_manager.dart';
-import 'osram_plug_model.dart';
 
-class OsramPlug extends Device<OsramPlugModel> {
-  OsramPlug(int? id, String typeName, OsramPlugModel model,
-      HubConnection connection, IconData icon)
+class OsramPlug extends Device<ZigbeeSwitchModel> {
+  OsramPlug(final int id, final String typeName, final ZigbeeSwitchModel model, final HubConnection connection,
+      final IconData icon)
       : super(id, typeName, model, connection, iconData: icon);
 
   @override
-  void navigateToDevice(BuildContext context) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (BuildContext context) => OsramPlugScreen(this)));
+  void navigateToDevice(final BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => OsramPlugScreen(this)));
   }
 
   @override
@@ -32,22 +29,16 @@ class OsramPlug extends Device<OsramPlugModel> {
         MaterialButton(
           child: Text(
             "An",
-            style: baseModel.state
-                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                : TextStyle(),
+            style: baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
           ),
-          onPressed: () =>
-              sendToServer(sm.MessageType.Update, sm.Command.On, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
           child: Text(
             "Aus",
-            style: !baseModel.state
-                ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                : TextStyle(),
+            style: !baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
           ),
-          onPressed: () =>
-              sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
       ],
     );
@@ -59,53 +50,32 @@ class OsramPlug extends Device<OsramPlugModel> {
   }
 }
 
-class OsramPlugScreen extends DeviceScreen {
-  final OsramPlug osramPlug;
-  OsramPlugScreen(this.osramPlug);
+class OsramPlugScreen extends ConsumerWidget {
+  final OsramPlug device;
+  const OsramPlugScreen(this.device, {final Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _OsramPlugScreenState();
-}
-
-class _OsramPlugScreenState extends State<OsramPlugScreen> {
-  DateTime dateTime = DateTime.now();
-  late StreamSubscription sub;
-
-  @override
-  void initState() {
-    super.initState();
-    sub = this.widget.osramPlug.listenOnUpdateFromServer((p0) {
-      setState(() {});
-    });
-  }
-
-  @override
-  void deactivate() {
-    super.deactivate();
-    sub.cancel();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final friendlyName = ref.watch(baseModelFriendlyNameProvider(device.id));
+    return Scaffold(
       appBar: AppBar(
-        title: new Text(this.widget.osramPlug.baseModel.friendlyName),
+        title: Text(friendlyName ?? ""),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
-        child: buildBody(this.widget.osramPlug.baseModel),
+        child: buildBody(ref),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => this
-            .widget
-            .osramPlug
-            .sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () => device.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }
 
-  Widget buildBody(OsramPlugModel model) {
+  Widget buildBody(final WidgetRef ref) {
+    final model = ref.watch(device.baseModelTProvider(device.id));
+    if (model is! ZigbeeSwitchModel) return Container();
+
     return ListView(
       children: <Widget>[
         ListTile(

@@ -16,7 +16,23 @@ class LayoutBasePropertyInfo {
 
   LayoutBasePropertyInfo(this.name, this.order);
 
-  factory LayoutBasePropertyInfo.fromJson(Map<String, dynamic> json) => _$LayoutBasePropertyInfoFromJson(json);
+  @override
+  bool operator ==(final Object other) =>
+      other is LayoutBasePropertyInfo &&
+      other.name == name &&
+      other.order == order &&
+      textStyle == other.textStyle &&
+      editInfo == other.editInfo &&
+      rowNr == other.rowNr &&
+      unitOfMeasurement == other.unitOfMeasurement &&
+      format == other.format &&
+      showOnlyInDeveloperMode == other.showOnlyInDeveloperMode;
+
+  @override
+  int get hashCode =>
+      Object.hash(name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format, showOnlyInDeveloperMode);
+
+  factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) => _$LayoutBasePropertyInfoFromJson(json);
 
   Map<String, dynamic> toJson() => _$LayoutBasePropertyInfoToJson(this);
 }

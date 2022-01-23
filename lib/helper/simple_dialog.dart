@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class SimpleDialog {
   static AlertDialog create({
-    required BuildContext context,
+    required final BuildContext context,
     String title = "",
     String content = "",
     String cancelButtonText = "Cancel",
     String okButtonText = "Ok",
-    Function? onSubmitted,
-    Function? onCancel,
+    final Function? onSubmitted,
+    final Function? onCancel,
   }) =>
       AlertDialog(
           title: Text(title),

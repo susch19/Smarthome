@@ -9,7 +9,7 @@ class ThemeManager {
       dialogBackgroundColor: Colors.indigo.shade900.withOpacity(0.95),
       cardTheme: CardTheme(color: Colors.indigo.shade800.withOpacity(0.95), shadowColor: Colors.black38),
       backgroundColor: Colors.indigo.shade800.withOpacity(0.95),
-      sliderTheme: SliderThemeData(thumbColor: Colors.tealAccent, activeTrackColor: Colors.tealAccent),
+      sliderTheme: const SliderThemeData(thumbColor: Colors.tealAccent, activeTrackColor: Colors.tealAccent),
       canvasColor: Colors.indigo.shade800.withOpacity(0.95),
       popupMenuTheme: PopupMenuThemeData(
         color: Colors.indigo.shade800.withOpacity(0.95),
@@ -19,26 +19,21 @@ class ThemeManager {
         foregroundColor: MaterialStateProperty.resolveWith(_getColor),
       )),
       primarySwatch: Colors.blue,
-      textTheme: TextTheme(subtitle1: TextStyle(decorationColor: Colors.teal)),
+      textTheme: const TextTheme(subtitle1: TextStyle(decorationColor: Colors.teal)),
       colorScheme: ColorScheme.dark(
           primary: Colors.blue,
           secondary: Colors.teal,
           background: Colors.indigo.shade700,
-          secondaryVariant: Colors.indigo.shade900,
-          primaryVariant: Colors.blue.shade900,
           surface: Colors.blue.shade900,
-          brightness: Brightness.dark,
-          onSurface: Colors.white,
-          onBackground: Colors.white,
           onPrimary: Colors.white,
           onSecondary: Colors.white),
       chipTheme: ChipThemeData(
           backgroundColor: Colors.indigo.shade600.withOpacity(0.95),
           brightness: Brightness.dark,
           disabledColor: Colors.indigo.shade900,
-          labelStyle: TextStyle(),
-          padding: EdgeInsetsDirectional.all(4),
-          secondaryLabelStyle: TextStyle(),
+          labelStyle: const TextStyle(),
+          padding: const EdgeInsetsDirectional.all(4),
+          secondaryLabelStyle: const TextStyle(),
           secondarySelectedColor: Colors.indigo.withOpacity(0.95),
           selectedColor: Colors.indigo),
     );
@@ -66,32 +61,26 @@ class ThemeManager {
           primary: Colors.lightBlue.shade200,
           secondary: Colors.tealAccent.shade100,
           background: Colors.indigo.shade200,
-          secondaryVariant: indigoColor,
-          primaryVariant: Colors.lightBlue.shade50,
           surface: indigoColor,
-          brightness: Brightness.light,
-          onSurface: Colors.black,
-          onBackground: Colors.black,
-          onPrimary: Colors.black,
-          onSecondary: Colors.black),
+          onPrimary: Colors.black),
       chipTheme: ChipThemeData(
           backgroundColor: indigoColor.withOpacity(0.95),
           brightness: Brightness.light,
           disabledColor: Colors.indigo.shade400,
-          labelStyle: TextStyle(),
-          padding: EdgeInsetsDirectional.all(4),
-          secondaryLabelStyle: TextStyle(color: Colors.green),
+          labelStyle: const TextStyle(),
+          padding: const EdgeInsetsDirectional.all(4),
+          secondaryLabelStyle: const TextStyle(color: Colors.green),
           secondarySelectedColor: Colors.indigo.withOpacity(0.95),
           selectedColor: Colors.indigo),
     );
   }
 
-  static BoxDecoration getBackgroundDecoration(BuildContext context) {
+  static BoxDecoration getBackgroundDecoration(final BuildContext context) {
     var fract = MediaQuery.of(context).size.width / MediaQuery.of(context).size.height;
     fract = pow(fract, 2).toDouble();
     return BoxDecoration(
       gradient: LinearGradient(
-          colors: !AdaptiveTheme.of(context).mode.isLight
+          colors: AdaptiveTheme.of(context).brightness == Brightness.dark
               ? [Colors.blue.shade900, Colors.deepPurple.shade700]
               : [Colors.blue.shade100, Colors.purple.shade100],
           begin: Alignment((-0.88 / fract), -1),
@@ -103,7 +92,7 @@ class ThemeManager {
     );
   }
 
-  static Color _getColor(Set<MaterialState> states) {
+  static Color _getColor(final Set<MaterialState> states) {
     const Set<MaterialState> interactiveStates = <MaterialState>{
       MaterialState.scrolledUnder,
       MaterialState.error,
@@ -115,7 +104,7 @@ class ThemeManager {
     return Colors.tealAccent;
   }
 
-  static Color _getLightColor(Set<MaterialState> states) {
+  static Color _getLightColor(final Set<MaterialState> states) {
     const Set<MaterialState> interactiveStates = <MaterialState>{
       MaterialState.scrolledUnder,
       MaterialState.error,

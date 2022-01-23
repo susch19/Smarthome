@@ -11,16 +11,16 @@ class CircleBlurPainter extends CustomPainter {
 
 
   @override
-  void paint(Canvas canvas, Size size) {
-    Paint line = new Paint()
+  void paint(final Canvas canvas, final Size size) {
+    final Paint line = Paint()
       ..color = color
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, blurSigma);
-    Offset center = offset;
+    final Offset center = offset;
     canvas.drawCircle(center, circleWidth, line);
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
+  bool shouldRepaint(final CustomPainter oldDelegate) {
     return true;
   }
 }

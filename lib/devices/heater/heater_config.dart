@@ -4,9 +4,10 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'heater_config.g.dart';
 
+// ignore: constant_identifier_names
 enum DayOfWeek { Mon, Tue, Wed, Thu, Fri, Sat, Sun }
 
-const DayOfWeekToStringMap = <DayOfWeek, String>{
+const dayOfWeekToStringMap = <DayOfWeek, String>{
   DayOfWeek.Mon: 'Mo',
   DayOfWeek.Tue: 'Di',
   DayOfWeek.Wed: 'Mi',
@@ -16,7 +17,7 @@ const DayOfWeekToStringMap = <DayOfWeek, String>{
   DayOfWeek.Sun: 'So'
 };
 
-const DayOfWeekToFlagMap = <DayOfWeek, int>{
+const dayOfWeekToFlagMap = <DayOfWeek, int>{
   DayOfWeek.Mon: 1 << 1,
   DayOfWeek.Tue: 1 << 2,
   DayOfWeek.Wed: 1 << 3,
@@ -26,7 +27,7 @@ const DayOfWeekToFlagMap = <DayOfWeek, int>{
   DayOfWeek.Sun: 1 << 7
 };
 
-const FlagToDayOfWeekMap = <int, DayOfWeek>{
+const flagToDayOfWeekMap = <int, DayOfWeek>{
   1 << 1: DayOfWeek.Mon,
   1 << 2: DayOfWeek.Tue,
   1 << 3: DayOfWeek.Wed,
@@ -36,7 +37,7 @@ const FlagToDayOfWeekMap = <int, DayOfWeek>{
   1 << 7: DayOfWeek.Sun
 };
 
-const DayOfWeekStringToFlagMap = <String, int>{
+const dayOfWeekStringToFlagMap = <String, int>{
   'Mo': 1 << 1,
   'Di': 1 << 2,
   'Mi': 1 << 3,
@@ -46,7 +47,7 @@ const DayOfWeekStringToFlagMap = <String, int>{
   'So': 1 << 7
 };
 
-const DayOfWeekToLongStringMap = <DayOfWeek, String>{
+const dayOfWeekToLongStringMap = <DayOfWeek, String>{
   DayOfWeek.Mon: 'Montag',
   DayOfWeek.Tue: 'Dienstag',
   DayOfWeek.Wed: 'Mittwoch',
@@ -68,26 +69,26 @@ class HeaterConfig extends Equatable implements Comparable {
         timeOfDay = TimeOfDay.now(),
         temperature = 21.0;
 
-  HeaterConfig(this.dayOfWeek, this.timeOfDay, this.temperature);
+  const HeaterConfig(this.dayOfWeek, this.timeOfDay, this.temperature);
 
-  static String timeOfDayToJson(TimeOfDay? val) {
+  static String timeOfDayToJson(final TimeOfDay? val) {
     if (val == null) return "";
-    final now = new DateTime.now();
-    return (new DateTime(now.year, now.month, now.day, val.hour, val.minute)).toIso8601String();
+    final now = DateTime.now();
+    return (DateTime(now.year, now.month, now.day, val.hour, val.minute)).toIso8601String();
   }
 
-  static TimeOfDay timeOfDayFromJson(String val) {
+  static TimeOfDay timeOfDayFromJson(final String val) {
     final dt = DateTime.tryParse(val)!.toLocal();
-    new TimeOfDay(hour: 0, minute: 0);
+    const TimeOfDay(hour: 0, minute: 0);
     return TimeOfDay.fromDateTime(dt);
   }
 
-  factory HeaterConfig.fromJson(Map<String, dynamic> json) => _$HeaterConfigFromJson(json);
+  factory HeaterConfig.fromJson(final Map<String, dynamic> json) => _$HeaterConfigFromJson(json);
 
   Map<String, dynamic> toJson() => _$HeaterConfigToJson(this);
 
   @override
-  int compareTo(other) {
+  int compareTo(final other) {
     return (dayOfWeek.index * 1440 + timeOfDay.hour * 60 + timeOfDay.minute) -
         (other.dayOfWeek.index * 1440 + other.timeOfDay.hour * 60 + other.timeOfDay.minute) as int;
   }
