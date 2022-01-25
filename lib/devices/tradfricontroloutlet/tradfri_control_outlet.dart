@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
@@ -10,9 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../device_manager.dart';
 
 class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
-  TradfriControlOutlet(final int id, final String typeName, final ZigbeeSwitchModel model,
-      final HubConnection connection, final IconData icon)
-      : super(id, typeName, model, connection, iconData: icon);
+  TradfriControlOutlet(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -27,16 +24,26 @@ class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
         MaterialButton(
-          child: Text(
-            "An",
-            style: baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+              return Text(
+                "An",
+                style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
         ),
         MaterialButton(
-          child: Text(
-            "Aus",
-            style: !baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+              return Text(
+                "Aus",
+                style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
           onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
@@ -63,13 +70,14 @@ class _TradfriControlOutletScreenState extends ConsumerState<TradfriControlOutle
 
   @override
   Widget build(final BuildContext context) {
+    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(widget.device.id));
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.device.baseModel.friendlyName),
+        title: Text(friendlyName),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
-        child: buildBody(widget.device.baseModel),
+        child: buildBody(),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
@@ -78,7 +86,7 @@ class _TradfriControlOutletScreenState extends ConsumerState<TradfriControlOutle
     );
   }
 
-  Widget buildBody(final ZigbeeSwitchModel model) {
+  Widget buildBody() {
     final model = ref.watch(widget.device.baseModelTProvider(widget.device.id));
     if (model is! ZigbeeSwitchModel) return Container();
 

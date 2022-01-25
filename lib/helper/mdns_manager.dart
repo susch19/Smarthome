@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:multicast_dns/multicast_dns.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/models/server_record.dart';
@@ -14,17 +15,16 @@ class MdnsManager {
       {final bool? reuseAddress, final bool? reusePort, final int? ttl}) {
     return RawDatagramSocket.bind(host, port, reuseAddress: reuseAddress ?? true, ttl: ttl ?? 255);
   });
+  static bool get initialized => _isInitialized;
   static bool _isInitialized = false;
   static final Map<String, ServerRecord> _founded = <String, ServerRecord>{};
   static late List<NetworkInterface> _interfaces;
-  static final List<LastCheckCacheItem> _checkCache = [];
   static DateTime _lastSearched = DateTime.fromMillisecondsSinceEpoch(0);
 
-  static void initialize() {
+  static Future initialize() async {
     if (kIsWeb || _isInitialized) return;
-    _client.start(interfacesFactory: getInterfaces).then((final value) {
-      _isInitialized = true;
-    });
+    await _client.start(interfacesFactory: getInterfaces);
+    _isInitialized = true;
   }
 
   static void stop() {
@@ -119,28 +119,32 @@ class MdnsManager {
   }
 
   static Future<bool> checkConnection(final IPAddressResourceRecord ipAddr, final SrvResourceRecord srv) async {
-    var item = _checkCache
-        .firstOrNull((final element) => element.address == ipAddr.address.toString() && element.port == srv.port);
-    if (item != null && item.nextCheck.isAfter(DateTime.now())) {
-      return item.result;
-    } else if (item == null) {
-      item = LastCheckCacheItem(
-          ipAddr.address.toString(), srv.port, DateTime.now().add(const Duration(minutes: 1)), false);
-      _checkCache.add(item);
-    }
-
     try {
-      final Socket s = await Socket.connect(ipAddr.address, srv.port, timeout: const Duration(milliseconds: 500));
-      s.destroy();
-      item.result = true;
-      item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+      final isIpv6 = ipAddr.address.type.name == "IPv6";
+      // if (isIpv6) {
+      //   item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+      //   return item.result = false;
+      // }
+      final hc = HubConnectionBuilder()
+          .withUrl(
+              "http://${isIpv6 ? "[" : ""}${ipAddr.address.address}${isIpv6 ? "]" : ""}:${srv.port}/SmartHome",
+              HttpConnectionOptions(
+                  //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
+                  logging: (final level, final message) => print('$level: $message')))
+          .build();
+      await hc.start();
+
+      // item.result = hc.state == HubConnectionState.connected;
+      // item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+      await hc.stop();
+
       return true;
     } catch (e) {
       print(e);
     }
 
-    item.result = false;
-    item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+    // item.result = false;
+    // item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
     return false;
   }
 }

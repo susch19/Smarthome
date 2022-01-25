@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
+import 'package:riverpod/riverpod.dart';
 
 part 'heater_model.g.dart';
 
@@ -16,6 +17,42 @@ class HeaterModel extends BaseModel {
   final String? version;
   final bool? disableLed;
   final bool? disableHeating;
+
+  static final temperatureProvider = Provider.family<HeaterConfig?, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is HeaterModel) return baseModel.temperature;
+    return null;
+  });
+  static final currentConfigProvider = Provider.family<HeaterConfig?, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is HeaterModel) return baseModel.currentConfig;
+    return null;
+  });
+  static final currentCalibrationProvider = Provider.family<HeaterConfig?, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is HeaterModel) return baseModel.currentCalibration;
+    return null;
+  });
+  static final disableHeatingProvider = Provider.family<bool, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is! HeaterModel) return false;
+    return baseModel.disableHeating ?? false;
+  });
+  static final disableLedProvider = Provider.family<bool, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is! HeaterModel) return false;
+    return baseModel.disableHeating ?? false;
+  });
+  static final versionProvider = Provider.family<String, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is! HeaterModel) return "";
+    return baseModel.version ?? "";
+  });
+  static final xiaomiProvider = Provider.family<int?, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is! HeaterModel) return null;
+    return baseModel.xiaomiTempSensor;
+  });
 
   const HeaterModel(
     final int id,

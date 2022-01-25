@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 import '../../device_exporter.dart';
+import 'package:riverpod/riverpod.dart';
 
 part 'zigbee_lamp_model.g.dart';
 
@@ -13,6 +14,23 @@ class ZigbeeLampModel extends ZigbeeModel {
   final int colorTemp;
   @JsonKey(name: 'transition_Time')
   final double transitionTime;
+
+  static final transitionTimeProvider = Provider.family<double, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).transitionTime;
+  });
+  static final brightnessProvider = Provider.family<int, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).brightness;
+  });
+  static final colorTempProvider = Provider.family<int, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).colorTemp;
+  });
+  static final stateProvider = Provider.family<bool, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).state;
+  });
 
   const ZigbeeLampModel(
       final int id,
@@ -28,6 +46,11 @@ class ZigbeeLampModel extends ZigbeeModel {
       : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
 
   factory ZigbeeLampModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
+
+  @override
+  BaseModel getModelFromJson(final Map<String, dynamic> json) {
+    return ZigbeeLampModel.fromJson(json);
+  }
 
   @override
   Map<String, dynamic> toJson() => _$ZigbeeLampModelToJson(this);

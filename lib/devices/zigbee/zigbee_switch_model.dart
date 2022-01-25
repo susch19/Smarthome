@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/zigbee/zigbee_model.dart';
+import 'package:riverpod/riverpod.dart';
 
 part 'zigbee_switch_model.g.dart';
 
@@ -8,6 +10,12 @@ part 'zigbee_switch_model.g.dart';
 @immutable
 class ZigbeeSwitchModel extends ZigbeeModel {
   final bool state;
+
+  static final stateProvider = Provider.family<bool, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeSwitchModel).state;
+  });
+
   const ZigbeeSwitchModel(final int id, final String friendlyName, final bool isConnected, final bool available,
       final DateTime lastReceived, final int linkQuality, this.state)
       : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);

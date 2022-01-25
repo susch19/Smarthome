@@ -62,27 +62,27 @@ final iconWidgetSingleProvider = Provider.autoDispose
 
 abstract class Device<T extends BaseModel> {
   final baseModelTProvider = Provider.family<T?, int>((final ref, final id) {
-    final baseModel = ref.watch(baseModelByIdProvider(id));
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is T) return baseModel;
     return null;
+  });
+
+  static final groupsProvider = StateProvider.family<List<String>, int>((final ref, final id) {
+    final friendlyNameSplit = ref.read(BaseModel.friendlyNameProvider(id)).split(" ");
+    return [friendlyNameSplit.first];
   });
 
   IconData? iconData;
   final String typeName;
   final int id;
-  T baseModel;
-  HubConnection connection;
-  final List<String> groups = [];
 
   final Random r = Random();
 
   @mustCallSuper
-  Device(this.id, this.typeName, this.baseModel, this.connection,
-      {final IconData? iconData, final Uint8List? iconBytes}) {
+  Device(this.id, this.typeName, {final IconData? iconData, final Uint8List? iconBytes}) {
     if (iconData != null) {
       this.iconData = iconData;
-    } else {}
-    groups.add(baseModel.friendlyName.split(' ').first);
+    }
   }
 
   Widget _createIcon(final Brightness themeMode, final Uint8List? iconBytes) {
@@ -120,10 +120,10 @@ abstract class Device<T extends BaseModel> {
     );
   }
 
-  @mustCallSuper
-  BaseModel updateFromServer(final Map<String, dynamic> message) {
-    return baseModel.updateFromJson(message);
-  }
+  // @mustCallSuper
+  // BaseModel updateFromServer(final Map<String, dynamic> message) {
+  //   return baseModel.updateFromJson(message);
+  // }
 
   Future<dynamic> getFromServer(final String methodName, final List<Object?> args) async {
     if (ConnectionManager.hubConnection.state == HubConnectionState.disconnected) {

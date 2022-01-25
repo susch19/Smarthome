@@ -10,7 +10,7 @@ class FriendlyNameDisplay extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final friendlyName = ref.watch(baseModelFriendlyNameProvider(id));
-    return Text(friendlyName ?? "");
+    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(id));
+    return Text(friendlyName);
   }
 }

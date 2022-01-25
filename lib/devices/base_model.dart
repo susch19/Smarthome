@@ -8,36 +8,11 @@ part 'base_model.g.dart';
 
 final baseModelProvider = StateProvider<List<BaseModel>>((final ref) => []);
 
-final baseModelByIdProvider = Provider.family<BaseModel?, int>((final ref, final id) {
-  final baseModels = ref.watch(baseModelProvider);
-  return baseModels.firstOrNull((final bm) => bm.id == id);
-});
+final baseModelASMapProvider = StateProvider<Map<int, BaseModel>>(
+    (final ref) => ref.watch(baseModelProvider).toMap((final bm) => bm.id, (final bm) => bm));
 
-// final baseModelChangedProvider = ChangeNotifierProvider.family<BaseModel?, int>((final ref, final id) {
-//   return ref.watch(idBaseModelProvider(id));
-// });
-
-final baseModelFriendlyNameProvider = Provider.family<String?, int>((final ref, final id) {
-  final baseModel = ref.watch(baseModelByIdProvider(id));
-  return baseModel?.friendlyName;
-});
-
-final baseModelIsConnectedProvider = Provider.family<bool?, int>((final ref, final id) {
-  final baseModel = ref.watch(baseModelByIdProvider(id));
-  return baseModel?.isConnected;
-});
-
-final baseModelTypeNamesProvider = Provider.family<List<String>?, int>((final ref, final id) {
-  final baseModel = ref.watch(baseModelByIdProvider(id));
-  return baseModel?.typeNames;
-});
-
-final baseModelTypeNameProvider = Provider.family<String, int>((final ref, final id) {
-  final baseModel = ref.watch(baseModelTypeNamesProvider(id));
-  if (baseModel?.isEmpty ?? true) {
-    return "";
-  }
-  return baseModel!.first;
+final baseModelFriendlyNamesMapProvider = Provider<Map<int, String>>((final ref) {
+  return ref.watch(baseModelProvider).toMap((final bm) => bm.id, (final bm) => bm.friendlyName);
 });
 
 const defaultList = <String>[];
@@ -45,6 +20,34 @@ const defaultList = <String>[];
 @JsonSerializable()
 @immutable
 class BaseModel {
+  static final byIdProvider = Provider.family<BaseModel?, int>((final ref, final id) {
+    final baseModels = ref.watch(baseModelProvider);
+    return baseModels.firstOrNull((final bm) => bm.id == id);
+  });
+
+  static final friendlyNameProvider = Provider.family<String, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return baseModel?.friendlyName ?? "";
+  });
+
+  static final isConnectedProvider = Provider.family<bool?, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return baseModel?.isConnected;
+  });
+
+  static final typeNamesProvider = Provider.family<List<String>?, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return baseModel?.typeNames;
+  });
+
+  static final typeNameProvider = Provider.family<String, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.typeNamesProvider(id));
+    if (baseModel?.isEmpty ?? true) {
+      return "";
+    }
+    return baseModel!.first;
+  });
+
   final int id;
   final String friendlyName;
   final bool isConnected;

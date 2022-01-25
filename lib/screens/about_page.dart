@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smarthome/helper/helper_methods.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
-import 'package:smarthome/models/versionAndUrl.dart';
+import 'package:smarthome/models/version_and_url.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({final Key? key}) : super(key: key);

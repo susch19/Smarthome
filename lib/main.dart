@@ -25,7 +25,6 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smarthome/helper/simple_dialog.dart' as simple_dialog;
 
 import 'controls/expandable_fab.dart';
 import 'helper/connection_manager.dart';
@@ -153,18 +152,23 @@ final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
   (final ref) => InfoIconProvider(ref),
 );
 
+final maxCrossAxisExtentProvider = StateProvider<double>((final _) =>
+    PreferencesManager.instance.getDouble("DashboardCardSize") ?? (!kIsWeb && Platform.isAndroid ? 370 : 300));
+
 class MyHomePage extends ConsumerWidget {
   const MyHomePage({final Key? key, this.title}) : super(key: key);
 
   final String? title;
 
   Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
-    final deviceGroups = ref.watch(sortedDeviceProvider).groupManyBy((final x) => x.groups);
+    final deviceGroupsRaw = ref.watch(sortedDeviceProvider);
+    final deviceGroups = deviceGroupsRaw.groupManyBy((final x) => ref.watch(Device.groupsProvider(x.id)));
     final versionAndUrl = ref.watch(versionAndUrlProvider);
-    if (versionAndUrl != null)
-      WidgetsBinding.instance?.addPostFrameCallback((_) async {
+    if (versionAndUrl != null) {
+      WidgetsBinding.instance?.addPostFrameCallback((final _) async {
         await UpdateManager.displayNotificationDialog(context, versionAndUrl);
       });
+    }
 
     return Container(
       decoration: ThemeManager.getBackgroundDecoration(context),
@@ -172,20 +176,25 @@ class MyHomePage extends ConsumerWidget {
         child: ConstrainedBox(
           child: OrientationBuilder(
             builder: (final context, final orientation) {
-              return StaggeredGridView.extentBuilder(
-                  maxCrossAxisExtent: !kIsWeb && Platform.isAndroid ? 370 : 300,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  itemCount: deviceGroups.length,
-                  itemBuilder: (final context, final i) {
-                    final deviceGroup = deviceGroups.elementAt(i);
-                    if (deviceGroup == null) return const Text("Empty Entry");
-                    return Container(
-                      margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                      child: getDashboardCard(context, ref, deviceGroup),
-                    );
-                  },
-                  staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1));
+              return Consumer(
+                builder: (final context, final ref, final child) {
+                  return StaggeredGridView.extentBuilder(
+                      maxCrossAxisExtent:
+                          ref.watch(maxCrossAxisExtentProvider), //!kIsWeb && Platform.isAndroid ? 370 : 300,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      itemCount: deviceGroups.length,
+                      itemBuilder: (final context, final i) {
+                        final deviceGroup = deviceGroups.elementAt(i);
+                        if (deviceGroup == null) return const Text("Empty Entry");
+                        return Container(
+                          margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+                          child: getDashboardCard(context, deviceGroup),
+                        );
+                      },
+                      staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1));
+                },
+              );
             },
           ),
           constraints: BoxConstraints.tight(Size.infinite),
@@ -203,21 +212,25 @@ class MyHomePage extends ConsumerWidget {
         child: ConstrainedBox(
           child: OrientationBuilder(
             builder: (final context, final orientation) {
-              return StaggeredGridView.extentBuilder(
-                  maxCrossAxisExtent: !kIsWeb && Platform.isAndroid ? 370 : 300,
-                  itemCount: devices.length,
-                  itemBuilder: (final context, final i) {
-                    final device = devices[i];
-                    return Container(
-                      margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                      child: device.dashboardView(
-                        () {
-                          deviceAction(context, ref, device);
-                        },
-                      ),
-                    );
-                  },
-                  staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1));
+              return Consumer(
+                builder: (final context, final ref, final child) {
+                  return StaggeredGridView.extentBuilder(
+                      maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
+                      itemCount: devices.length,
+                      itemBuilder: (final context, final i) {
+                        final device = devices[i];
+                        return Container(
+                          margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+                          child: device.dashboardView(
+                            () {
+                              deviceAction(context, ref, device);
+                            },
+                          ),
+                        );
+                      },
+                      staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1));
+                },
+              );
             },
           ),
           constraints: BoxConstraints.tight(Size.infinite),
@@ -229,7 +242,6 @@ class MyHomePage extends ConsumerWidget {
 
   Widget getDashboardCard(
     final BuildContext context,
-    final WidgetRef ref,
     final MapEntry<String, List<Device<BaseModel>>> deviceGroup,
   ) {
     return Column(
@@ -249,29 +261,35 @@ class MyHomePage extends ConsumerWidget {
                         maxLines: 1,
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      onSelected: (final o) => groupOption(context, ref, o, deviceGroup),
-                      itemBuilder: (final BuildContext context) => <PopupMenuItem<String>>[
-                        const PopupMenuItem<String>(value: 'Rename', child: Text("Umbenennen")),
-                        const PopupMenuItem<String>(value: 'Delete', child: Text("Entfernen")),
-                        const PopupMenuItem<String>(value: 'Edit', child: Text("Geräte zuordnen")),
-                      ],
+                    Consumer(
+                      builder: (final context, final ref, final child) {
+                        return PopupMenuButton<String>(
+                          onSelected: (final o) => groupOption(context, ref, o, deviceGroup),
+                          itemBuilder: (final BuildContext context) => <PopupMenuItem<String>>[
+                            const PopupMenuItem<String>(value: 'Rename', child: Text("Umbenennen")),
+                            const PopupMenuItem<String>(value: 'Delete', child: Text("Entfernen")),
+                            const PopupMenuItem<String>(value: 'Edit', child: Text("Geräte zuordnen")),
+                          ],
+                        );
+                      },
                     )
                   ],
                 ),
               ),
             ] +
             deviceGroup.value
-                .map<Widget>(
-                  (final e) => Container(
-                    margin: const EdgeInsets.only(),
-                    child: e.dashboardView(
-                      () {
-                        deviceAction(context, ref, e);
+                .map<Widget>((final e) => Consumer(
+                      builder: (final context, final ref, final child) {
+                        return Container(
+                          margin: const EdgeInsets.only(),
+                          child: e.dashboardView(
+                            () {
+                              deviceAction(context, ref, e);
+                            },
+                          ),
+                        );
                       },
-                    ),
-                  ),
-                )
+                    ))
                 .toList());
   }
 
@@ -296,14 +314,18 @@ class MyHomePage extends ConsumerWidget {
         break;
       case 'Delete':
         for (final element in deviceGroup.value) {
-          element.groups.remove(deviceGroup.key);
-          if (element.groups.isEmpty) removeDevice(context, ref, element.id, pop: false);
+          final groupsState = ref.read(Device.groupsProvider(element.id).notifier);
+          final groups = groupsState.state.toList();
+
+          groups.remove(deviceGroup.key);
+          if (groups.isEmpty) removeDevice(context, ref, element.id, pop: false);
+          groupsState.state = groups;
         }
         DeviceManager.saveDeviceGroups();
 
         break;
       case 'Edit':
-        Navigator.push(context, MaterialPageRoute(builder: (final c) => GroupDevices(deviceGroup, deviceGroup.key)));
+        Navigator.push(context, MaterialPageRoute(builder: (final c) => GroupDevices(deviceGroup.key, false)));
 
         break;
 
@@ -398,7 +420,7 @@ class MyHomePage extends ConsumerWidget {
     actions.add(
       SimpleDialogOption(
         child: const Text("Umbenennen"),
-        onPressed: () => renameDevice(context, d),
+        onPressed: () => renameDevice(context, ref, d),
       ),
     );
     actions.add(
@@ -410,7 +432,11 @@ class MyHomePage extends ConsumerWidget {
 
     final dialog = SimpleDialog(
       children: actions,
-      title: Text("Gerät " + (d.baseModel.friendlyName)),
+      title: Consumer(
+        builder: (final context, final ref, final child) {
+          return Text("Gerät " + (ref.watch(BaseModel.friendlyNameProvider(d.id))));
+        },
+      ),
     );
     showDialog(context: context, builder: (final b) => dialog);
   }
@@ -423,7 +449,7 @@ class MyHomePage extends ConsumerWidget {
     if (pop) Navigator.pop(context);
   }
 
-  renameDevice(final BuildContext context, final Device x) {
+  renameDevice(final BuildContext context, final WidgetRef ref, final Device x) {
     showDialog(
         context: context,
         builder: (final BuildContext context) => SimpleDialogSingleInput.create(
@@ -431,28 +457,29 @@ class MyHomePage extends ConsumerWidget {
             title: "Gerät benennen",
             hintText: "Name für das Gerät",
             labelText: "Name",
-            defaultText: x.baseModel.friendlyName,
+            defaultText: ref.read(BaseModel.friendlyNameProvider(x.id)),
             maxLines: 2,
             onSubmitted: (final s) async {
-              x.updateDeviceOnServer(x.baseModel.id, s);
+              x.updateDeviceOnServer(x.id, s);
             })).then((final x) => Navigator.of(context).pop());
   }
 
   void selectedSort(final WidgetRef ref, final String value) {
-    final currentSort = ref.watch(deviceSortProvider);
-    SortTypes newSort = currentSort;
+    final currentSortState = ref.watch(deviceSortProvider.notifier);
+    SortTypes newSort = currentSortState.state;
     switch (value) {
       case "Name":
-        newSort = currentSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
+        newSort = newSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
         break;
       case "Typ":
-        newSort = currentSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
+        newSort = newSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
         break;
       case "Id":
-        newSort = currentSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
+        newSort = newSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
         break;
     }
-    DeviceManager.sortDevices(newSort);
+    currentSortState.state = newSort;
+    PreferencesManager.instance.setInt("SortOrder", newSort.index);
   }
 
   Future addNewDevice(final BuildContext context, final WidgetRef ref) async {
@@ -516,7 +543,7 @@ class MyHomePage extends ConsumerWidget {
         acceptButtonText: "Erstellen",
         cancelButtonText: "Abbrechen",
         onSubmitted: (final s) {
-          Navigator.push(context, MaterialPageRoute(builder: (final c) => GroupDevices(MapEntry(s, []), "")));
+          Navigator.push(context, MaterialPageRoute(builder: (final c) => GroupDevices(s, true)));
         },
         title: "Neue Gruppe",
         context: context);

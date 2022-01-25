@@ -1,6 +1,8 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 
+import 'package:riverpod/riverpod.dart';
+
 part 'zigbee_model.g.dart';
 
 @JsonSerializable()
@@ -9,6 +11,19 @@ class ZigbeeModel extends BaseModel {
   final DateTime lastReceived;
   @JsonKey(name: 'link_Quality')
   final int linkQuality;
+
+  static final availableProvider = Provider.family<bool, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeModel).available;
+  });
+  static final lastReceivedProvider = Provider.family<DateTime, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeModel).lastReceived;
+  });
+  static final linkQualityProvider = Provider.family<int, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeModel).linkQuality;
+  });
 
   @override
   bool get isConnected => available;

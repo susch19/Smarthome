@@ -1,7 +1,9 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:smarthome/main.dart';
 import 'package:smarthome/models/ipport.dart';
 
 import '../helper/connection_manager.dart';
@@ -18,6 +20,8 @@ class SettingsPage extends ConsumerStatefulWidget {
 class SettingsPageState extends ConsumerState<SettingsPage> {
   bool isEnabled = false;
   final TextEditingController _textEditingController = TextEditingController();
+
+  static final _maxExtendSlider = StateProvider<double>((final ref) => ref.watch(maxCrossAxisExtentProvider));
 
   @override
   Widget build(final BuildContext context) {
@@ -94,6 +98,26 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 },
               ),
             ),
+            ListTile(
+              leading: const Text("Kachelgröße"),
+              title: Consumer(
+                builder: (final context, final ref, final child) {
+                  return Slider(
+                    value: ref.watch(_maxExtendSlider),
+                    min: 100,
+                    max: 700,
+                    divisions: 60,
+                    onChangeEnd: (final value) {
+                      ref.read(maxCrossAxisExtentProvider.notifier).state = value;
+                      PreferencesManager.instance.setDouble("DashboardCardSize", value);
+                    },
+                    onChanged: (final a) {
+                      ref.read(_maxExtendSlider.notifier).state = a;
+                    },
+                  );
+                },
+              ),
+            ),
             const Divider(),
             const ListTile(
               title: Text(
@@ -107,8 +131,10 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 Navigator.push(context, MaterialPageRoute(builder: (final c) => const ServerSearchScreen()))
                     .then((final value) {
                   if (value is IpPort) {
-                    var uri = Uri.parse("http://" + value.ipAddress);
-                    uri = Uri(host: uri.host, port: value.port, scheme: uri.scheme, path: "SmartHome");
+                    final isIpv6 = value.type.name == "IPv6";
+
+                    final uri = Uri.parse(
+                        "http://${isIpv6 ? "[" : ""}${value.ipAddress}${isIpv6 ? "]" : ""}:${value.port}/SmartHome");
 
                     SettingsManager.setServerUrl(uri.toString());
                     _textEditingController.text = uri.toString();
@@ -152,20 +178,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     onTap: () => hubConnection.invoke("UpdateTime"),
                   )
                 : Container(),
-            const Divider(),
-            // ListTile(
-            //   title: Text(
-            //     "Geräte Layouts neu laden",
-            //   ),
-            //   onTap: () {
-            //     ConnectionManager.hubConnection.invoke("ReloadDeviceLayouts");
-            //     DeviceLayoutService.instanceDeviceLayouts.clear();
-            //     DeviceLayoutService.typeDeviceLayouts.clear();
-            //     for (var dev in DeviceManager.devices) {
-            //       dev.baseModel.cacheLoaded = false;
-            //     }
-            //   },
-            // ),
+            settings.showDebugInformation ? const Divider() : Container(),
             ListTile(
               leading: const Text("Über"),
               onTap: () => Navigator.push(

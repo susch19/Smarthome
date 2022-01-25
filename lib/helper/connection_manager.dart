@@ -108,13 +108,6 @@ class ConnectionManager extends StateNotifier<HubConnection> {
     await hubConnection.start();
     _instance.state = hubConnection;
     connectionIconChanged.value = Icons.check;
-
-    // var devices = _ref.read(deviceProvider);
-
-    // for (var device in devices) {
-    //   device.connection = _instance.state;
-    // }
-    // await DeviceManager.subscribeToDevice(devices.map((x) => x.id).toList());
   }
 
   static HubConnection createHubConnection({final Ref? ref, final WidgetRef? widgetRef}) {

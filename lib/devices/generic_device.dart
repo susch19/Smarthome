@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:signalr_core/signalr_core.dart' as signal_r;
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
@@ -21,8 +20,7 @@ import 'package:tuple/tuple.dart';
 import '../helper/theme_manager.dart';
 
 class GenericDevice extends Device<BaseModel> {
-  GenericDevice(final int id, final String typeName, final BaseModel baseModel, final signal_r.HubConnection connection)
-      : super(id, typeName, baseModel, connection);
+  GenericDevice(final int id, final String typeName) : super(id, typeName);
 
   @override
   DeviceTypes getDeviceType() {
@@ -38,7 +36,7 @@ class GenericDevice extends Device<BaseModel> {
   Widget dashboardCardBody() {
     return Consumer(
       builder: (final context, final ref, final child) {
-        final baseModel = ref.watch(baseModelByIdProvider(id));
+        final baseModel = ref.watch(BaseModel.byIdProvider(id));
 
         if (baseModel == null) return Container();
         final dashboardDeviceLayout =
@@ -54,7 +52,7 @@ class GenericDevice extends Device<BaseModel> {
   Widget getRightWidgets() {
     return Consumer(
       builder: (final context, final ref, final child) {
-        final baseModel = ref.watch(baseModelByIdProvider(id));
+        final baseModel = ref.watch(BaseModel.byIdProvider(id));
 
         if (baseModel == null) return Container();
 
@@ -90,17 +88,26 @@ class DashboardLayoutWidget extends ConsumerWidget {
               .groupBy((final g) => g.rowNr)
               .map((final row, final elements) {
                 return MapEntry(
-                    row,
-                    Wrap(
-                      // mainAxisAlignment: MainAxisAlignment.center,
-                      alignment: WrapAlignment.spaceBetween,
-                      runAlignment: WrapAlignment.spaceBetween,
-                      spacing: 16,
-                      children: elements.map((final e) {
-                        return DashboardValueStoreWidget(e, id);
-                      }).toList(),
-                    ));
+                  row,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        runAlignment: WrapAlignment.spaceBetween,
+                        spacing: 16,
+                        children: elements.map((final e) {
+                          return DashboardValueStoreWidget(e, id);
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                );
               })
+              // .select((p0, p1) => Row(
+              //       mainAxisAlignment: MainAxisAlignment.center,
+              //       children: [p1],
+              //     ))
               .values
               .toList(),
         ),
@@ -186,17 +193,17 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
 
   @override
   Widget build(final BuildContext context) {
-    final name = ref.watch(baseModelTypeNameProvider(widget.genericDevice.id));
+    final name = ref.watch(BaseModel.typeNameProvider(widget.genericDevice.id));
     final historyProps = ref.watch(detailHistoryLayoutProvider(Tuple2(widget.genericDevice.id, name)));
     if (historyProps?.isEmpty ?? true) return buildWithoutHistory(context);
     return buildWithHistory(context, historyProps!);
   }
 
   Widget buildWithoutHistory(final BuildContext context) {
-    final friendlyName = ref.watch(baseModelFriendlyNameProvider(widget.genericDevice.id));
+    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(widget.genericDevice.id));
     return Scaffold(
         appBar: AppBar(
-          title: Text(friendlyName ?? widget.genericDevice.typeName),
+          title: Text(friendlyName),
         ),
         body: buildBody());
   }
@@ -231,7 +238,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
   }
 
   Widget buildBody() {
-    final name = ref.watch(baseModelTypeNameProvider(widget.genericDevice.id));
+    final name = ref.watch(BaseModel.typeNameProvider(widget.genericDevice.id));
     final detailProperties = ref.watch(detailPropertyInfoLayoutProvider(Tuple2(widget.genericDevice.id, name)));
     if (detailProperties == null || detailProperties.isEmpty) return Container();
     final widgets = <Widget>[];

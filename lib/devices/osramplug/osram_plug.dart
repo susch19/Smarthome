@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/devices/zigbee/zigbee_model.dart';
 import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
@@ -11,9 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../device_manager.dart';
 
 class OsramPlug extends Device<ZigbeeSwitchModel> {
-  OsramPlug(final int id, final String typeName, final ZigbeeSwitchModel model, final HubConnection connection,
-      final IconData icon)
-      : super(id, typeName, model, connection, iconData: icon);
+  OsramPlug(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -27,16 +25,26 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
         MaterialButton(
-          child: Text(
-            "An",
-            style: baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+              return Text(
+                "An",
+                style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
           onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
-          child: Text(
-            "Aus",
-            style: !baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+              return Text(
+                "Aus",
+                style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
           onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
@@ -56,10 +64,10 @@ class OsramPlugScreen extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final friendlyName = ref.watch(baseModelFriendlyNameProvider(device.id));
+    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(device.id));
     return Scaffold(
       appBar: AppBar(
-        title: Text(friendlyName ?? ""),
+        title: Text(friendlyName),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
@@ -73,19 +81,20 @@ class OsramPlugScreen extends ConsumerWidget {
   }
 
   Widget buildBody(final WidgetRef ref) {
-    final model = ref.watch(device.baseModelTProvider(device.id));
-    if (model is! ZigbeeSwitchModel) return Container();
+    final state = ref.watch(ZigbeeSwitchModel.stateProvider(device.id));
+    final available = ref.watch(ZigbeeModel.availableProvider(device.id));
+    final linkQuality = ref.watch(ZigbeeModel.linkQualityProvider(device.id));
 
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Angeschaltet: " + (model.state ? "Ja" : "Nein")),
+          title: Text("Angeschaltet: " + (state ? "Ja" : "Nein")),
         ),
         ListTile(
-          title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
+          title: Text("Verfügbar: " + (available ? "Ja" : "Nein")),
         ),
         ListTile(
-          title: Text("Verbindungsqualität: " + (model.linkQuality.toString())),
+          title: Text("Verbindungsqualität: " + (linkQuality.toString())),
         ),
       ],
     );

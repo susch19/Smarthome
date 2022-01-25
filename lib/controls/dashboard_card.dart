@@ -20,9 +20,9 @@ class StatelessDashboardCard extends ConsumerWidget {
   }) : super(key: key);
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final friendlyName = ref.watch(baseModelFriendlyNameProvider(device.id));
-    final typeNames = ref.watch(baseModelTypeNamesProvider(device.id));
-    final isConnected = ref.watch(baseModelIsConnectedProvider(device.id));
+    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(device.id));
+    final typeNames = ref.watch(BaseModel.typeNamesProvider(device.id));
+    final isConnected = ref.watch(BaseModel.isConnectedProvider(device.id));
 
     final deviceIcon = ref.watch(iconWidgetProvider(Tuple3(typeNames ?? [], device, AdaptiveTheme.of(context))));
     return ClipRRect(
@@ -173,7 +173,7 @@ class StatelessDashboardCard extends ConsumerWidget {
                         child: Container(
                           margin: const EdgeInsets.only(top: 8.0),
                           child: Text(
-                            friendlyName ?? "",
+                            friendlyName,
                             style: const TextStyle(),
                             softWrap: true,
                             textAlign: TextAlign.center,

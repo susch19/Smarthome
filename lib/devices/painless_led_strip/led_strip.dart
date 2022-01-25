@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
@@ -12,9 +11,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 
 class LedStrip extends Device<LedStripModel> {
-  LedStrip(
-      final int id, final String typeName, final BaseModel name, final HubConnection connection, final IconData icon)
-      : super(id, typeName, name as LedStripModel, connection, iconData: icon);
+  LedStrip(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
+
+  final colorModeProvider = Provider.family<String, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is LedStripModel) return baseModel.colorMode;
+    return "Off";
+  });
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -29,22 +32,32 @@ class LedStrip extends Device<LedStripModel> {
         alignment: WrapAlignment.center,
         children: [
           MaterialButton(
-            child: Text(
-              "An",
-              textAlign: TextAlign.center,
-              style: baseModel.colorMode != "Off" && baseModel.colorMode != "Mode"
-                  ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                  : const TextStyle(),
+            child: Consumer(
+              builder: (final context, final ref, final child) {
+                final colorMode = ref.watch(colorModeProvider(id));
+                return Text(
+                  "An",
+                  textAlign: TextAlign.center,
+                  style: colorMode != "Off" && colorMode != "Mode"
+                      ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      : const TextStyle(),
+                );
+              },
             ),
             onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]),
           ),
           MaterialButton(
-            child: Text(
-              "Aus",
-              textAlign: TextAlign.center,
-              style: baseModel.colorMode == "Off"
-                  ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                  : const TextStyle(),
+            child: Consumer(
+              builder: (final context, final ref, final child) {
+                final colorMode = ref.watch(colorModeProvider(id));
+                return Text(
+                  "Aus",
+                  textAlign: TextAlign.center,
+                  style: colorMode == "Off"
+                      ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      : const TextStyle(),
+                );
+              },
             ),
             onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
           ),
@@ -53,17 +66,22 @@ class LedStrip extends Device<LedStripModel> {
       MaterialButton(
         child: Container(
           margin: const EdgeInsets.only(bottom: 4.0),
-          child: Text(
-            "Essen fertig",
-            textAlign: TextAlign.center,
-            style: baseModel.colorMode == "Mode"
-                ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                : const TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final colorMode = ref.watch(colorModeProvider(id));
+              return Text(
+                "Essen fertig",
+                textAlign: TextAlign.center,
+                style: colorMode == "Mode"
+                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                    : const TextStyle(),
+              );
+            },
           ),
         ),
         onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
       ),
-      (DeviceManager.showDebugInformation ? Text(baseModel.id.toString()) : Container())
+      (DeviceManager.showDebugInformation ? Text(id.toString()) : Container())
     ]);
   }
 
@@ -112,10 +130,12 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
   @override
   void initState() {
     super.initState();
-
-    brightness = widget.device.baseModel.brightness.toDouble();
-    delay = widget.device.baseModel.delay.toDouble();
-    numLeds = widget.device.baseModel.numberOfLeds.toDouble();
+    final baseModel = ref.watch(widget.device.baseModelTProvider(widget.device.id));
+    if (baseModel is LedStripModel) {
+      brightness = baseModel.brightness.toDouble();
+      delay = baseModel.delay.toDouble();
+      numLeds = baseModel.numberOfLeds.toDouble();
+    }
   }
 
   void sliderChange<T>(final Function f, final int dateTimeMilliseconds, final T val) {

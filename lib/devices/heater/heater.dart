@@ -3,14 +3,12 @@ import 'dart:convert';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/blurry_card.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
-import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/smarthome_icons.dart';
 import 'package:smarthome/models/message.dart' as sm;
@@ -22,29 +20,29 @@ import 'temp_scheduling.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Heater extends Device<HeaterModel> {
-  Heater(final int id, final String typeName, final HeaterModel baseModel, final HubConnection connection,
-      final IconData icon)
-      : super(id, typeName, baseModel, connection, iconData: icon);
+  Heater(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => HeaterScreen(this)));
   }
 
-  @override
-  BaseModel updateFromServer(final Map<String, dynamic> message) {
-    PreferencesManager.instance.setString("Json" + id.toString(), jsonEncode(message));
-    return super.updateFromServer(message);
-  }
+  // @override
+  // BaseModel updateFromServer(final Map<String, dynamic> message) {
+  //   PreferencesManager.instance.setString("Json" + id.toString(), jsonEncode(message));
+  //   return super.updateFromServer(message);
+  // }
 
   @override
   Widget getRightWidgets() {
     return Column(
       children: [
-        Icon(
-          baseModel.disableHeating ?? false ? Icons.power_off_outlined : Icons.power_outlined,
-          size: 20,
-        ),
+        Consumer(builder: (final context, final ref, final child) {
+          return Icon(
+            ref.watch(HeaterModel.disableHeatingProvider(id)) ? Icons.power_off_outlined : Icons.power_outlined,
+            size: 20,
+          );
+        }),
       ],
     );
   }
@@ -57,9 +55,11 @@ class Heater extends Device<HeaterModel> {
     return Column(
       children: <Widget>[
             Row(children: [
-              Text(
-                (baseModel.temperature?.temperature.toStringAsFixed(1) ?? ""),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              Consumer(
+                builder: (final context, final ref, final child) => Text(
+                  (ref.watch(HeaterModel.temperatureProvider(id))?.temperature.toStringAsFixed(1) ?? ""),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                ),
               ),
               const Text(
                 " °C",
@@ -70,11 +70,14 @@ class Heater extends Device<HeaterModel> {
               height: 2,
             ),
             Row(children: [
-              Text(
-                baseModel.currentConfig == null
-                    ? ""
-                    : ((baseModel.currentConfig?.temperature.toStringAsFixed(1) ?? "")),
-                style: const TextStyle(fontWeight: FontWeight.normal),
+              Consumer(
+                builder: (final context, final ref, final child) {
+                  final currentConfig = ref.watch(HeaterModel.currentConfigProvider(id));
+                  return Text(
+                    currentConfig == null ? "" : ((currentConfig.temperature.toStringAsFixed(1))),
+                    style: const TextStyle(fontWeight: FontWeight.normal),
+                  );
+                },
               ),
               const Text(
                 "°C",
@@ -84,12 +87,18 @@ class Heater extends Device<HeaterModel> {
             !DeviceManager.showDebugInformation
                 ? Container()
                 : Row(
-                    children: [Text(baseModel.version.toString())],
+                    children: [
+                      Consumer(
+                        builder: (final context, final ref, final child) {
+                          return Text(ref.watch(HeaterModel.versionProvider(id)));
+                        },
+                      )
+                    ],
                     mainAxisAlignment: MainAxisAlignment.center,
                   ),
             // (xs.id == 0 ? Text(baseModel.xiaomiTempSensor.toString()) : Text(xs.baseModel.friendlyName)),
           ] +
-          (DeviceManager.showDebugInformation ? [Text(baseModel.id.toString())] : <Widget>[]),
+          (DeviceManager.showDebugInformation ? [Text(id.toString())] : <Widget>[]),
     );
   }
 
@@ -119,8 +128,9 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   @override
   void initState() {
     heater = widget.device;
+    final currentConfig = ref.read(HeaterModel.currentConfigProvider(widget.device.id));
 
-    handlePointerValueChanged(widget.device.baseModel.currentConfig?.temperature ?? 21);
+    handlePointerValueChanged(currentConfig?.temperature ?? 21);
     textEditingController = TextEditingController(text: tempString());
     // _setPointerValue(this.widget.heater.baseModel.currentConfig?.temperature ?? 21.0);
     super.initState();
@@ -129,8 +139,9 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   @override
   Widget build(final BuildContext context) {
     final double width = MediaQuery.of(context).size.width;
-    final tempSensorDevice = ref
-        .watch(valueStorePerIdAndNameProvider(Tuple2(widget.device.baseModel.xiaomiTempSensor ?? -1, "temperature")));
+
+    final xiaomiTempSensor = ref.watch(HeaterModel.xiaomiProvider(widget.device.id));
+    final tempSensorDevice = ref.watch(valueStorePerIdAndNameProvider(Tuple2(xiaomiTempSensor ?? -1, "temperature")));
 
     return DefaultTabController(
       length: 2,
@@ -140,7 +151,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
             tabs: [
               Consumer(
                 builder: (final context, final ref, final child) {
-                  final typeNames = ref.watch(baseModelTypeNamesProvider(widget.device.id));
+                  final typeNames = ref.watch(BaseModel.typeNamesProvider(widget.device.id));
                   final icon =
                       ref.watch(iconWidgetProvider(Tuple3(typeNames ?? [], widget.device, AdaptiveTheme.of(context))));
                   return Tab(icon: icon);
@@ -190,7 +201,11 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
             children: [
               Container(
                   margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: const Icon(Icons.person)),
-              Text(widget.device.baseModel.friendlyName),
+              Consumer(
+                builder: (final context, final ref, final child) {
+                  return Text(ref.watch(BaseModel.friendlyNameProvider(widget.device.id)));
+                },
+              ),
             ],
           ),
         ),
@@ -201,11 +216,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
               Container(
                   margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: const Icon(Icons.timer)),
               const Text("Zuletzt Empfangen: "),
-              Text(widget.device.baseModel.temperature == null
-                  ? "Keine Daten vorliegend"
-                  : dayOfWeekToStringMap[widget.device.baseModel.temperature!.dayOfWeek]! +
-                      " " +
-                      widget.device.baseModel.temperature!.timeOfDay.format(context)),
+              Consumer(
+                builder: (final context, final ref, final child) {
+                  final temperature = ref.watch(HeaterModel.temperatureProvider(widget.device.id));
+                  return Text(temperature == null
+                      ? "Keine Daten vorliegend"
+                      : dayOfWeekToStringMap[temperature.dayOfWeek]! + " " + temperature.timeOfDay.format(context));
+                },
+              ),
             ],
           ),
         ),
@@ -216,15 +234,18 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
               Container(
                   margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: const Icon(Icons.receipt)),
               const Text("Kalibrierung: "),
-              Text(widget.device.baseModel.currentCalibration?.temperature == null
-                  ? "Kein Ziel"
-                  : widget.device.baseModel.currentCalibration!.temperature.toStringAsFixed(1) +
-                      "°C " +
-                      "(" +
-                      dayOfWeekToStringMap[widget.device.baseModel.currentCalibration!.dayOfWeek]! +
-                      " " +
-                      widget.device.baseModel.currentCalibration!.timeOfDay.format(context) +
-                      ")"),
+              Consumer(builder: (final context, final ref, final child) {
+                final currentCalibration = ref.watch(HeaterModel.currentCalibrationProvider(widget.device.id));
+                return Text(currentCalibration?.temperature == null
+                    ? "Kein Ziel"
+                    : currentCalibration!.temperature.toStringAsFixed(1) +
+                        "°C " +
+                        "(" +
+                        dayOfWeekToStringMap[currentCalibration.dayOfWeek]! +
+                        " " +
+                        currentCalibration.timeOfDay.format(context) +
+                        ")");
+              }),
             ],
           ),
         ),
@@ -243,7 +264,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   }
 
   void handlePointerValueChanging(final ValueChangingArgs args) {
-    final model = ref.read(baseModelByIdProvider(widget.device.id));
+    final model = ref.read(BaseModel.byIdProvider(widget.device.id));
     if (model is! HeaterModel || model.currentConfig == null) return;
     _setPointerValue(model.currentConfig!.temperature);
   }
@@ -287,18 +308,21 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 },
               ),
               const Text("Heizung: "),
-              Switch(
-                value: !widget.device.baseModel.disableHeating!,
-                onChanged: (final val) {
-                  sm.Command command;
-                  if (val) {
-                    command = sm.Command.On;
-                  } else {
-                    command = sm.Command.Off;
-                  }
-                  widget.device.sendToServer(sm.MessageType.Update, command, []);
-                },
-              ),
+              Consumer(builder: (final context, final ref, final child) {
+                final disableHeater = ref.watch(HeaterModel.disableHeatingProvider(widget.device.id));
+                return Switch(
+                  value: !disableHeater,
+                  onChanged: (final val) {
+                    sm.Command command;
+                    if (val) {
+                      command = sm.Command.On;
+                    } else {
+                      command = sm.Command.Off;
+                    }
+                    widget.device.sendToServer(sm.MessageType.Update, command, []);
+                  },
+                );
+              }),
             ],
           ),
         ),
@@ -311,16 +335,21 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 child: const Icon(SmarthomeIcons.lamp),
               ),
               const Text("Blaue Led: "),
-              Switch(
-                value: !widget.device.baseModel.disableLed!,
-                onChanged: (final val) {
-                  sm.Command command;
-                  if (val) {
-                    command = sm.Command.On;
-                  } else {
-                    command = sm.Command.Off;
-                  }
-                  widget.device.sendToServer(sm.MessageType.Options, command, []);
+              Consumer(
+                builder: (final context, final ref, final child) {
+                  final disableLed = ref.watch(HeaterModel.disableLedProvider(widget.device.id));
+                  return Switch(
+                    value: !disableLed,
+                    onChanged: (final val) {
+                      sm.Command command;
+                      if (val) {
+                        command = sm.Command.On;
+                      } else {
+                        command = sm.Command.Off;
+                      }
+                      widget.device.sendToServer(sm.MessageType.Options, command, []);
+                    },
+                  );
                 },
               ),
             ],
@@ -453,21 +482,26 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                               children: <Widget>[
                                 // Text("Ausgelesen: "),
                                 // Icon(Icons.search),
-                                widget.device.baseModel.temperature?.temperature == null
-                                    ? const Text("Kein Messergebnis", style: TextStyle(fontSize: 24))
-                                    : Row(children: [
-                                        Text(
-                                          widget.device.baseModel.temperature!.temperature.toStringAsFixed(1),
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                                        ),
-                                        Text(
-                                            "°C " "(" +
-                                                dayOfWeekToStringMap[widget.device.baseModel.temperature!.dayOfWeek]! +
-                                                " " +
-                                                widget.device.baseModel.temperature!.timeOfDay.format(context) +
-                                                ")",
-                                            style: const TextStyle(fontSize: 24))
-                                      ])
+                                Consumer(
+                                  builder: (final context, final ref, final child) {
+                                    final temperature = ref.watch(HeaterModel.temperatureProvider(widget.device.id));
+                                    return temperature?.temperature == null
+                                        ? const Text("Kein Messergebnis", style: TextStyle(fontSize: 24))
+                                        : Row(children: [
+                                            Text(
+                                              temperature!.temperature.toStringAsFixed(1),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                                            ),
+                                            Text(
+                                                "°C " "(" +
+                                                    dayOfWeekToStringMap[temperature.dayOfWeek]! +
+                                                    " " +
+                                                    temperature.timeOfDay.format(context) +
+                                                    ")",
+                                                style: const TextStyle(fontSize: 24))
+                                          ]);
+                                  },
+                                )
                               ],
                             ),
                           ),
@@ -477,24 +511,30 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                             children: <Widget>[
                               // Text("Ziel: "),
                               // Icon(Icons.),
-                              widget.device.baseModel.currentConfig?.temperature == null
-                                  ? const Text("Keins", style: TextStyle(fontSize: 24))
-                                  : Row(
-                                      children: [
-                                        Text(
-                                          widget.device.baseModel.currentConfig!.temperature.toStringAsFixed(1),
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                                        ),
-                                        Text(
-                                          "°C " "(" +
-                                              dayOfWeekToStringMap[widget.device.baseModel.currentConfig!.dayOfWeek]! +
-                                              " " +
-                                              widget.device.baseModel.currentConfig!.timeOfDay.format(context) +
-                                              ")",
-                                          style: const TextStyle(fontSize: 24),
-                                        ),
-                                      ],
-                                    ),
+
+                              Consumer(
+                                builder: (final context, final ref, final child) {
+                                  final currentConfig = ref.watch(HeaterModel.currentConfigProvider(widget.device.id));
+                                  return currentConfig?.temperature == null
+                                      ? const Text("Keins", style: TextStyle(fontSize: 24))
+                                      : Row(
+                                          children: [
+                                            Text(
+                                              currentConfig!.temperature.toStringAsFixed(1),
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                                            ),
+                                            Text(
+                                              "°C " "(" +
+                                                  dayOfWeekToStringMap[currentConfig.dayOfWeek]! +
+                                                  " " +
+                                                  currentConfig.timeOfDay.format(context) +
+                                                  ")",
+                                              style: const TextStyle(fontSize: 24),
+                                            ),
+                                          ],
+                                        );
+                                },
+                              )
                             ],
                           ),
                         ],
@@ -522,11 +562,15 @@ class TemperatureSensorDropdown extends ConsumerWidget {
     final model = ref.watch(device.baseModelTProvider(device.id));
     if (model is! HeaterModel) return Container();
     final currentDevice = ref.watch(deviceByIdProvider(model.xiaomiTempSensor ?? -1));
-
     return DropdownButton(
       items: (possibleDevices
           .map((final f) => DropdownMenuItem(
-                child: Text(f.baseModel.friendlyName),
+                child: Consumer(
+                  builder: (final context, final ref, final child) {
+                    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(f.id));
+                    return Text(friendlyName);
+                  },
+                ),
                 value: f,
               ))
           .toList()),

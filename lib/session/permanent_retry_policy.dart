@@ -1,7 +1,7 @@
 import 'package:signalr_core/signalr_core.dart';
 
 class PermanentRetryPolicy extends RetryPolicy {
-  static const List<int> retryTimes = [250, 500, 1000, 2500, 5000, 7500, 10000, 15000, 20000, 25000, 30000];
+  static const List<int> retryTimes = [1, 2, 5, 10, 25, 50, 75, 100, 150, 200, 250, 300];
 
   @override
   int? nextRetryDelayInMilliseconds(final RetryContext retryContext) {

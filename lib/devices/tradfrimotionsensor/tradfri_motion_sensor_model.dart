@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/device_exporter.dart';
+import 'package:riverpod/riverpod.dart';
 
 part 'tradfri_motion_sensor_model.g.dart';
 
@@ -9,6 +10,21 @@ class TradfriMotionSensorModel extends ZigbeeModel {
   final int noMotion;
   final bool occupancy;
 
+  static final batteryProvider = Provider.family<int, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as TradfriMotionSensorModel).battery;
+  });
+
+  static final noMotionProvider = Provider.family<int, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as TradfriMotionSensorModel).noMotion;
+  });
+
+  static final occupancyProvider = Provider.family<bool, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as TradfriMotionSensorModel).occupancy;
+  });
+
   const TradfriMotionSensorModel(final int id, final String friendlyName, final bool isConnected, final bool available,
       final DateTime lastReceived, final int linkQuality, this.battery, this.noMotion, this.occupancy)
       : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
@@ -17,6 +33,11 @@ class TradfriMotionSensorModel extends ZigbeeModel {
 
   @override
   Map<String, dynamic> toJson() => _$TradfriMotionSensorModelToJson(this);
+
+  @override
+  BaseModel getModelFromJson(final Map<String, dynamic> json) {
+    return TradfriMotionSensorModel.fromJson(json);
+  }
 
   @override
   bool operator ==(final Object other) =>

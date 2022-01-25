@@ -1,8 +1,6 @@
-
 import 'package:flutter/material.dart';
-import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
-import 'package:smarthome/devices/device.dart';
+import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/shared_controls/shared_controls_exporter.dart';
 import 'package:smarthome/helper/theme_manager.dart';
@@ -10,12 +8,9 @@ import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../device_manager.dart';
-import 'tradfri_led_bulb_model.dart';
 
 class TradfriLedBulb extends Device<TradfriLedBulbModel> {
-  TradfriLedBulb(final int id, final String typeName, final TradfriLedBulbModel model, final HubConnection connection,
-      final IconData icon)
-      : super(id, typeName, model, connection, iconData: icon);
+  TradfriLedBulb(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -26,10 +21,9 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
   Widget getRightWidgets() {
     return Consumer(
       builder: (final context, final ref, final child) {
-        final model = ref.watch(baseModelTProvider(id));
-        if (model is! TradfriLedBulbModel) return Container();
+        final color = ref.watch(TradfriLedBulbModel.colorProvider(id));
 
-        final colorNum = int.parse(model.color.replaceFirst('#', ''), radix: 16);
+        final colorNum = int.parse(color.replaceFirst('#', ''), radix: 16);
         final r = (colorNum & 0xFF0000) >> 16;
         final g = (colorNum & 0xFF00) >> 8;
         final b = (colorNum & 0xFF) >> 0;
@@ -45,20 +39,29 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
         MaterialButton(
-          child: Text(
-            "An",
-            style: baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(TradfriLedBulbModel.stateProvider(id));
+              return Text(
+                "An",
+                style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
         ),
         MaterialButton(
-          child: Text(
-            "Aus",
-            style: !baseModel.state ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(TradfriLedBulbModel.stateProvider(id));
+              return Text(
+                "Aus",
+                style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
           onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
-        DeviceManager.showDebugInformation ? Text(id.toString()) : Container()
       ],
     );
   }
@@ -75,12 +78,11 @@ class TradfriLedBulbScreen extends ConsumerWidget {
   TradfriLedBulbScreen(this.device, {final Key? key}) : super(key: key);
 
   static final _rgbProvider = StateProvider.family<RGB, Device>((final ref, final device) {
-    final model = ref.watch(device.baseModelTProvider(device.id));
+    final color = ref.watch(TradfriLedBulbModel.colorProvider(device.id));
 
     final rgb = RGB();
-    if (model is! TradfriLedBulbModel) return rgb;
 
-    final colorNum = int.parse(model.color.replaceFirst('#', ''), radix: 16);
+    final colorNum = int.parse(color.replaceFirst('#', ''), radix: 16);
 
     rgb.r = (colorNum & 0xFF) >> 0;
     rgb.g = (colorNum & 0xFF00) >> 8;
