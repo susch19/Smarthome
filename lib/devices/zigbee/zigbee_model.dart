@@ -37,6 +37,11 @@ class ZigbeeModel extends BaseModel {
   Map<String, dynamic> toJson() => _$ZigbeeModelToJson(this);
 
   @override
+  BaseModel getModelFromJson(final Map<String, dynamic> json) {
+    return ZigbeeModel.fromJson(json);
+  }
+
+  @override
   bool operator ==(final Object other) =>
       other is ZigbeeModel &&
       super == other &&

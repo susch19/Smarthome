@@ -1,11 +1,10 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'server_text_style.g.dart';
 
 @JsonSerializable()
 class ServerTextStyle {
-  // @JsonKey(fromJson: _fontStyleFromJson, toJson: _fontStyleToJson)
   FontStyle fontStyle;
   @JsonKey(fromJson: _fontWeightFromJson, toJson: _fontWeightToJson)
   FontWeight fontWeight;
@@ -39,32 +38,19 @@ class ServerTextStyle {
   Map<String, dynamic> toJson() => _$ServerTextStyleToJson(this);
 
   static FontWeight _fontWeightFromJson(final dynamic abc) {
-    // var str = abc as num;
-    // if (str == 1) return FontWeight.bold;
-    // return FontWeight.normal;
-    return _$enumDecode(_$FontWeightEnumMap, abc);
+    return $enumDecode<FontWeightEnum, String>(_$FontWeightEnumMap, abc) == FontWeightEnum.bold
+        ? FontWeight.bold
+        : FontWeight.normal;
   }
 
   static String _fontWeightToJson(final FontWeight abc) {
-    // if (abc == FontWeight.bold) return 1;
-    // return 0;
-
     return _$FontWeightEnumMap[abc]!;
   }
-
-  // static FontStyle? _fontStyleFromJson(dynamic abc) {
-  //   var str = abc as num;
-  //   if (str == 1) return FontStyle.italic;
-  //   return FontStyle.normal;
-  // }
-
-  // static num _fontStyleToJson(FontStyle? abc) {
-  //   if (abc == FontStyle.normal) return 1;
-  //   return 0;
-  // }
 }
 
+enum FontWeightEnum { normal, bold }
+
 const _$FontWeightEnumMap = {
-  FontWeight.normal: 'normal',
-  FontWeight.bold: 'bold',
+  FontWeightEnum.normal: 'normal',
+  FontWeightEnum.bold: 'bold',
 };

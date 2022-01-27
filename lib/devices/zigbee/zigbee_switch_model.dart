@@ -23,6 +23,11 @@ class ZigbeeSwitchModel extends ZigbeeModel {
   factory ZigbeeSwitchModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeSwitchModelFromJson(json);
 
   @override
+  BaseModel getModelFromJson(final Map<String, dynamic> json) {
+    return ZigbeeSwitchModel.fromJson(json);
+  }
+
+  @override
   Map<String, dynamic> toJson() => _$ZigbeeSwitchModelToJson(this);
 
   @override

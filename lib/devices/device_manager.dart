@@ -112,16 +112,15 @@ class DeviceManager extends StateNotifier<List<Device>> {
   late final List<DiffIdModel> _diffIds;
 
   static List<Device> _devices = <Device>[];
-  static final notSubscribedDevices = <int>[];
-
   static late DeviceManager _instance;
   static late Ref? _ref;
-
   static bool showDebugInformation = false;
 
-  static bool sub = false;
-  static Map<String, String> groupNames = <String, String>{};
-  static ValueNotifier<bool> deviceStateChanged = ValueNotifier(false);
+  static final customGroupNameProvider = StateProvider.family<String, String>((final ref, final name) {
+    return _groupNames[name] ?? name;
+  });
+
+  static final Map<String, String> _groupNames = <String, String>{};
 
   static void init() {
     final names = PreferencesManager.instance.getStringList("customGroupNames");
@@ -129,7 +128,8 @@ class DeviceManager extends StateNotifier<List<Device>> {
     if (names != null) {
       for (final name in names) {
         final values = name.split('\u0001');
-        groupNames[values[0]] = values[1];
+
+        _groupNames[values[0]] = values[1];
       }
     }
   }
@@ -169,20 +169,21 @@ class DeviceManager extends StateNotifier<List<Device>> {
     if (_ref == null) return;
 
     final deviceGroups = _instance.state
-        .map((final e) => e.id.toString() + "\u0002" + _ref!.read(Device.groupsProvider(e.id)).join("\u0003"))
+        .map((final e) => e.id.toString() + "\u0002" + _ref!.read(Device.groupsByIdProvider(e.id)).join("\u0003"))
         .join("\u0001");
     PreferencesManager.instance.setString("deviceGroups", deviceGroups);
   }
 
-  static String getGroupName(final String key) {
-    final name = groupNames[key];
-    return name ?? key;
-  }
+  // static String getGroupName(final String key) {
+  //   final name = groupNames[key];
+  //   return name ?? key;
+  // }
 
   static void changeGroupName(final String key, final String newName) {
-    groupNames[key] = newName;
+    _ref!.read(customGroupNameProvider(key).notifier).state = newName;
+    _groupNames[key] = newName;
 
-    final strs = groupNames.select((final key, final value) => key + "\u0001" + value);
+    final strs = _groupNames.select((final key, final value) => key + "\u0001" + value);
     PreferencesManager.instance.setStringList("customGroupNames", strs);
   }
 
@@ -224,10 +225,6 @@ class DeviceManager extends StateNotifier<List<Device>> {
     'TradfriMotionSensor': (final m, final _) => TradfriMotionSensorModel.fromJson(m),
     'Device': (final m, final t) => BaseModel.fromJson(m, t)
   };
-
-  static void stopSubbing() {
-    sub = false;
-  }
 
   void _loadDevices(final subs, final List<int> ids, final Ref ref) {
     final devices = state.toList();
@@ -283,7 +280,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
         final groups = deviceGroup.last.split("\u0003");
         final dev = devices.firstOrNull((final element) => element.id.toString() == deviceId);
         if (dev != null) {
-          final groupings = ref.read(Device.groupsProvider(dev.id).notifier);
+          final groupings = ref.read(Device.groupsByIdProvider(dev.id).notifier);
 
           groupings.state = groups;
         }

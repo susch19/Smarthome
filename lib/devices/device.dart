@@ -67,7 +67,7 @@ abstract class Device<T extends BaseModel> {
     return null;
   });
 
-  static final groupsProvider = StateProvider.family<List<String>, int>((final ref, final id) {
+  static final groupsByIdProvider = StateProvider.family<List<String>, int>((final ref, final id) {
     final friendlyNameSplit = ref.read(BaseModel.friendlyNameProvider(id)).split(" ");
     return [friendlyNameSplit.first];
   });

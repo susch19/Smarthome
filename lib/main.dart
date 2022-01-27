@@ -162,7 +162,7 @@ class MyHomePage extends ConsumerWidget {
 
   Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
     final deviceGroupsRaw = ref.watch(sortedDeviceProvider);
-    final deviceGroups = deviceGroupsRaw.groupManyBy((final x) => ref.watch(Device.groupsProvider(x.id)));
+    final deviceGroups = deviceGroupsRaw.groupManyBy((final x) => ref.watch(Device.groupsByIdProvider(x.id)));
     final versionAndUrl = ref.watch(versionAndUrlProvider);
     if (versionAndUrl != null) {
       WidgetsBinding.instance?.addPostFrameCallback((final _) async {
@@ -251,16 +251,17 @@ class MyHomePage extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
-                      child: Text(
-                        DeviceManager.getGroupName(
-                          deviceGroup.key,
-                        ),
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
+                    Flexible(child: Consumer(
+                      builder: (final context, final ref, final child) {
+                        final groupName = ref.watch(DeviceManager.customGroupNameProvider(deviceGroup.key));
+                        return Text(
+                          groupName,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        );
+                      },
+                    )),
                     Consumer(
                       builder: (final context, final ref, final child) {
                         return PopupMenuButton<String>(
@@ -302,9 +303,7 @@ class MyHomePage extends ConsumerWidget {
             labelText: "Name",
             acceptButtonText: "Umbenennen",
             cancelButtonText: "Abbrechen",
-            defaultText: DeviceManager.getGroupName(
-              deviceGroup.key,
-            ),
+            defaultText: ref.read(DeviceManager.customGroupNameProvider(deviceGroup.key)),
             onSubmitted: (final s) {
               DeviceManager.changeGroupName(deviceGroup.key, s);
             },
@@ -314,7 +313,7 @@ class MyHomePage extends ConsumerWidget {
         break;
       case 'Delete':
         for (final element in deviceGroup.value) {
-          final groupsState = ref.read(Device.groupsProvider(element.id).notifier);
+          final groupsState = ref.read(Device.groupsByIdProvider(element.id).notifier);
           final groups = groupsState.state.toList();
 
           groups.remove(deviceGroup.key);

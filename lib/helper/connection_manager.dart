@@ -56,7 +56,6 @@ class ConnectionManager extends StateNotifier<HubConnection> {
         if (hubConnection.state != HubConnectionState.connected) {
           connectionIconChanged.value = Icons.error_outline;
 
-          DeviceManager.stopSubbing();
           try {
             hubConnection.stop();
             hubConnection = createHubConnection(ref: ref);

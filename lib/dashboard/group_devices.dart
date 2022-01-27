@@ -9,7 +9,7 @@ class GroupDevices extends ConsumerWidget {
   GroupDevices(this.groupName, this.isNewGroup, {final Key? key}) : super(key: key);
 
   final tempGroupProvider = StateProvider.family<List<String>, int>((final ref, final id) {
-    return ref.read(Device.groupsProvider(id));
+    return ref.read(Device.groupsByIdProvider(id));
   });
 
   final List<Device> modifiedDevices = [];
@@ -39,7 +39,7 @@ class GroupDevices extends ConsumerWidget {
         child: const Icon(Icons.save),
         onPressed: () {
           for (final device in modifiedDevices) {
-            ref.read(Device.groupsProvider(device.id).notifier).state = ref.read(tempGroupProvider(device.id));
+            ref.read(Device.groupsByIdProvider(device.id).notifier).state = ref.read(tempGroupProvider(device.id));
           }
           DeviceManager.saveDeviceGroups();
           Navigator.of(context).pop(true);
