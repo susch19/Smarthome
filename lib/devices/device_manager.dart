@@ -262,6 +262,10 @@ class DeviceManager extends StateNotifier<List<Device>> {
         model = stringNameJsonFactory[type]!(sub, types);
         final dev = ctorFactory[type]!(id, types.first);
         devices.add(dev as Device<BaseModel>);
+        final toRemove = baseModels.firstOrNull((element) => element.id == id);
+        if (toRemove != null) {
+          baseModels.remove(toRemove);
+        }
         baseModels.add(model);
         // final _ = ref.read(deviceInstanceLayoutProvider(id));
         // futures.add(DeviceLayoutService.loadInitialLayoutAsync(id, types));
@@ -300,7 +304,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     final List<dynamic> serverDevices = await s;
     final baseModelState = _ref!.read(baseModelProvider.notifier);
     final baseModels = baseModelState.state.toList();
-    for (int i = baseModels.length; i >= 0; i--) {
+    for (int i = baseModels.length - 1; i >= 0; i--) {
       final baseModel = baseModels[i];
       final existingDevice = serverDevices.firstOrNull((final element) => element["id"] == baseModel.id);
       if (existingDevice == null) continue;
@@ -309,6 +313,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
       baseModels.remove(baseModel);
       baseModels.add(newBaseModel);
     }
+    baseModelState.state = baseModels;
   }
 
   static void removeAllDevices() {
