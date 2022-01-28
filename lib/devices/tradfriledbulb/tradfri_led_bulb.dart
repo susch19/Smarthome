@@ -48,7 +48,7 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
               );
             },
           ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
+          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
           child: Consumer(
@@ -90,10 +90,11 @@ class TradfriLedBulbScreen extends ConsumerWidget {
     return rgb;
   });
 
-  final _brighntessProvider = StateProvider<double>((final _) {
-    return 0.0;
-  });
+  final _brightnessProvider = StateProvider.family<int, Device<TradfriLedBulbModel>>((final ref, final device) {
+    final model = ref.watch(device.baseModelTProvider(device.id));
 
+    return model?.brightness ?? 0;
+  });
   void changeBrightness(final double brightness) {
     device.sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
   }
@@ -114,7 +115,11 @@ class TradfriLedBulbScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => device.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () {
+          final state = ref.read(TradfriLedBulbModel.stateProvider(device.id));
+
+          device.sendToServer(sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, []);
+        },
       ),
     );
   }
@@ -139,16 +144,16 @@ class TradfriLedBulbScreen extends ConsumerWidget {
           subtitle: GestureDetector(
             child: SliderTheme(
               child: Consumer(builder: (final context, final ref, final child) {
-                final brightness = ref.watch(_brighntessProvider);
+                final brightness = ref.watch(_brightnessProvider(device));
                 return Slider(
-                  value: brightness,
+                  value: brightness.toDouble(),
                   onChanged: (final d) {
-                    ref.read(_brighntessProvider.notifier).state = d;
+                    ref.read(_brightnessProvider(device).notifier).state = d.round();
                   },
                   max: 100.0,
                   divisions: 100,
-                  label: '${model.brightness}',
-                  onChangeEnd: (final c) => changeBrightness(model.brightness.toDouble()),
+                  label: '$brightness',
+                  onChangeEnd: (final c) => changeBrightness(c),
                 );
               }),
               data: SliderTheme.of(context).copyWith(
