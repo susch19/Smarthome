@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:multicast_dns/multicast_dns.dart';
 import 'package:signalr_core/signalr_core.dart';
-import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/models/server_record.dart';
 import 'package:version/version.dart';

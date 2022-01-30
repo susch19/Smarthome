@@ -11,7 +11,7 @@ import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/controls/dashboard_card.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_manager.dart';
-import 'package:smarthome/devices/generic/icon_manager.dart';
+import 'package:smarthome/devices/generic/icons/icon_manager.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';

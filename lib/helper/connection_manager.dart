@@ -113,10 +113,11 @@ class ConnectionManager extends StateNotifier<HubConnection> {
     final serverUrl = ref?.watch(serverUrlProvider) ?? widgetRef?.watch(serverUrlProvider);
     return HubConnectionBuilder()
         .withUrl(
-            serverUrl ?? fallbackServerUrl,
-            HttpConnectionOptions(
-                //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
-                logging: (final level, final message) => print('$level: $message')))
+          serverUrl ?? fallbackServerUrl,
+          HttpConnectionOptions(
+              //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
+              logging: (final level, final message) => print('$level: $message')),
+        )
         .withAutomaticReconnect(PermanentRetryPolicy())
         .build();
   }

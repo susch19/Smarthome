@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:smarthome/helper/cache_file_manager.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:tuple/tuple.dart';
+import 'package:path/path.dart' as path;
+import 'package:synchronized/synchronized.dart';
 
 import 'generic_device_exporter.dart';
 
@@ -81,18 +87,21 @@ class DeviceLayoutService {
 
   final Ref _ref;
   static DeviceLayoutService? _instance;
+  static final CacheFileManager _cacheFileManager =
+      CacheFileManager(path.join(Directory.systemTemp.path, "smarthome_layout_cache"), "json");
+  static final lock = Lock();
 
   static void updateFromServer(final List<Object?>? arguments) {
-    for (final a in arguments!) {
-      final updateMap = a as Map<String, dynamic>;
-      final deviceLayout = DeviceLayout.fromJson(updateMap);
-      _updateFromServer(deviceLayout);
-    }
+    final updateMap = arguments![0] as Map<String, dynamic>;
+    final hash = arguments[1] as String;
+    _updateFromServer(updateMap, hash, updateStorage: true);
   }
 
-  static void _updateFromServer(final DeviceLayout deviceLayout) {
+  static Future _updateFromServer(final Map<String, dynamic> deviceLayoutJson, final String hash,
+      {final bool updateStorage = false}) async {
     if (_instance == null) return;
     final layoutProvider = _instance!._ref.read(_layoutProvider.notifier);
+    final deviceLayout = DeviceLayout.fromJson(deviceLayoutJson);
 
     final currentList = layoutProvider.state.toList();
     final existingLayout = currentList.firstOrNull((final e) => e.uniqueName == deviceLayout.uniqueName);
@@ -100,16 +109,35 @@ class DeviceLayoutService {
     if (existingLayout != null) currentList.remove(existingLayout);
 
     currentList.add(deviceLayout);
-
+    if (updateStorage) {
+      await _cacheFileManager.ensureDirectoryExists();
+      await _cacheFileManager.writeHashCode(deviceLayout.uniqueName, hash);
+      await _cacheFileManager.writeContentAsString(deviceLayout.uniqueName, jsonEncode(deviceLayoutJson));
+    }
     layoutProvider.state = currentList;
   }
 
   static Future<void> loadFromServer(final int id) async {
     if (_instance == null) return;
-    final fromServer = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutByDeviceId", args: [id]);
-    if (fromServer == null) return;
 
-    final deviceLayout = DeviceLayout.fromJson(fromServer as Map<String, dynamic>);
-    _updateFromServer(deviceLayout);
+    final bestFit = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutHashByDeviceId", args: [id])
+        as Map<String, dynamic>?;
+    if (bestFit == null) return;
+    await lock.synchronized(() async {
+      final hash = bestFit["hash"] as String;
+      final localHash = await _cacheFileManager.readHashCode(bestFit["name"]);
+      if (localHash == hash) {
+        final content = await _cacheFileManager.readContentAsString(bestFit["name"]);
+        if (content != null) {
+          _updateFromServer(jsonDecode(content) as Map<String, dynamic>, hash);
+          return;
+        }
+      }
+
+      final fromServer = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutByDeviceId", args: [id]);
+      if (fromServer == null) return;
+
+      _updateFromServer(fromServer as Map<String, dynamic>, hash, updateStorage: true);
+    });
   }
 }
