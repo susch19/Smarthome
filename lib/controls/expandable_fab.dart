@@ -104,7 +104,10 @@ class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProvider
           positionOffsetInPx: angleInDegrees,
           maxDistance: widget.distance,
           progress: _expandAnimation,
-          child: widget.children[i],
+          child: IgnorePointer(
+            ignoring: !_open,
+            child: widget.children[i],
+          ),
         ),
       );
     }
