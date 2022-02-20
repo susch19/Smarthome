@@ -94,5 +94,15 @@ class HeaterConfig extends Equatable implements Comparable {
   }
 
   @override
+  bool operator ==(final Object other) =>
+      other is HeaterConfig &&
+      other.dayOfWeek == dayOfWeek &&
+      temperature == other.temperature &&
+      timeOfDay == other.timeOfDay;
+
+  @override
+  int get hashCode => Object.hash(dayOfWeek, temperature, timeOfDay);
+
+  @override
   List<Object?> get props => [dayOfWeek, timeOfDay, temperature];
 }

@@ -9,6 +9,7 @@ import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:smarthome/models/message.dart';
 
 class LedStrip extends Device<LedStripModel> {
   LedStrip(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
@@ -112,56 +113,89 @@ final _rgbwProvider = StateProvider.family<RGBW, Device>((final ref, final devic
   return rgbw;
 });
 
+final _brightnessProvider = StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
+  final model = ref.watch(device.baseModelTProvider(device.id));
+
+  return model?.brightness ?? 0;
+});
+final _colorModeProvider = StateProvider.family<String, Device<LedStripModel>>((final ref, final device) {
+  final model = ref.watch(device.baseModelTProvider(device.id));
+
+  return model?.colorMode ?? "Off";
+});
+final _delayProvider = StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
+  final model = ref.watch(device.baseModelTProvider(device.id));
+
+  return model?.delay ?? 0;
+});
+final _numLedsProvider = StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
+  final model = ref.watch(device.baseModelTProvider(device.id));
+
+  return model?.numberOfLeds ?? 0;
+});
+
 class _LedStripScreenState extends ConsumerState<LedStripScreen> {
   // final _brightnessProvider = StateProvider<double>((final _) => 0.0);
   // final _colorModeProvider = StateProvider<String>((final _) => "Off");
 
   DateTime dateTime = DateTime.now();
   static const int colordelay = 1000;
-  double brightness = 255.0;
-  double delay = 30.0;
-  double numLeds = 94.0;
 
   static const TextStyle selectedTextStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
 
-  int get idelay => delay.toInt();
-  int get ibrightness => brightness.toInt();
-
-  @override
-  void initState() {
-    super.initState();
-    final baseModel = ref.watch(widget.device.baseModelTProvider(widget.device.id));
-    if (baseModel is LedStripModel) {
-      brightness = baseModel.brightness.toDouble();
-      delay = baseModel.delay.toDouble();
-      numLeds = baseModel.numberOfLeds.toDouble();
-    }
-  }
-
-  void sliderChange<T>(final Function f, final int dateTimeMilliseconds, final T val) {
-    if (DateTime.now().isAfter(dateTime.add(Duration(milliseconds: dateTimeMilliseconds)))) {
-      Function.apply(f, [val]);
+  void _sliderChange<T>(final WidgetRef ref, final Function f, final int dateTimeMilliseconds, final T val) {
+    final sendToServer = DateTime.now().isAfter(dateTime.add(Duration(milliseconds: dateTimeMilliseconds)));
+    if (sendToServer) {
       dateTime = DateTime.now();
     }
+    Function.apply(f, [ref, val, sendToServer]);
   }
 
-  void changeColor(final RGBW rgbw) {
-    widget.device
-        .sendToServer(sm.MessageType.Options, sm.Command.Color, ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]);
+  void _colorModeChange(final WidgetRef ref, final Command newMode, [final bool sendToServer = true]) {
+    final oldMode = ref.watch(_colorModeProvider(widget.device).notifier);
+    oldMode.state = newMode.name;
+
+    if (sendToServer) widget.device.sendToServer(sm.MessageType.Update, newMode, []);
   }
 
-  void changeDelay(final int delay) {
-    widget.device.sendToServer(sm.MessageType.Options, sm.Command.Delay, ["$delay"]);
+  void _changeColor(final WidgetRef ref, final RGBW rgbw, [final bool sendToServer = true]) {
+    final oldMode = ref.watch(_rgbwProvider(widget.device).notifier);
+    oldMode.state = rgbw;
+    if (sendToServer) {
+      widget.device
+          .sendToServer(sm.MessageType.Options, sm.Command.Color, ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]);
+    }
   }
 
-  void changeBrightness(final int delay) {
-    widget.device
-        .sendToServer(sm.MessageType.Options, sm.Command.Brightness, ["0x${(brightness.toInt()).toRadixString(16)}"]);
+  void _changeDelay(final WidgetRef ref, final int delay, [final bool sendToServer = true]) {
+    if (sendToServer) {
+      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Delay, ["0x${delay.toRadixString(16)}"]);
+    }
+    final oldDelay = ref.watch(_delayProvider(widget.device).notifier);
+    oldDelay.state = delay;
+  }
+
+  void _changeNumLeds(final WidgetRef ref, final int numLeds, [final bool sendToServer = true]) {
+    if (sendToServer) {
+      widget.device
+          .sendToServer(sm.MessageType.Options, sm.Command.Calibration, ["0x${(numLeds.toInt()).toRadixString(16)}"]);
+    }
+    final oldNumLeds = ref.watch(_numLedsProvider(widget.device).notifier);
+    oldNumLeds.state = numLeds;
+  }
+
+  void _changeBrightness(final WidgetRef ref, final int brightness, [final bool sendToServer = true]) {
+    if (sendToServer) {
+      widget.device
+          .sendToServer(sm.MessageType.Options, sm.Command.Brightness, ["0x${(brightness.toInt()).toRadixString(16)}"]);
+    }
+    final oldBrightness = ref.watch(_brightnessProvider(widget.device).notifier);
+    oldBrightness.state = brightness;
   }
 
   @override
   Widget build(final BuildContext context) {
-    final model = ref.watch(widget.device.baseModelTProvider(widget.device.id));
+    final model = ref.read(widget.device.baseModelTProvider(widget.device.id));
     if (model is! LedStripModel) return Container();
     return Scaffold(
       appBar: AppBar(
@@ -171,105 +205,122 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
         decoration: ThemeManager.getBackgroundDecoration(context),
         child: ListView(
           children: <Widget>[
-            ListTile(
-              // leading: this.model.colorMode == "Off" ? Icon(Icons.check) : Text(""),
-              title: Center(
-                child: model.colorMode == "Off"
-                    ? const Text(
-                        'Off',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("Off"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
-              trailing: const Text(""),
-            ),
-            ListTile(
-              // leading: this.model.colorMode == "RGB" ? Icon(Icons.check) : Text(""),
-              title: Center(
-                child: model.colorMode == "RGB"
-                    ? const Text(
-                        'Fast RGB',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("Fast RGB"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.RGB, []),
-              trailing: const Text(""),
-            ),
-            ListTile(
-              title: Center(
-                child: model.colorMode == "Mode"
-                    ? const Text(
-                        'Flicker',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("Flicker"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
-              trailing: const Text(""),
-            ),
-            ListTile(
-              title: Center(
-                child: model.colorMode == "Strobo"
-                    ? const Text(
-                        'Strobo',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("Strobo"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.Strobo, []),
-              trailing: const Text(""),
-            ),
-            ListTile(
-              title: Center(
-                child: model.colorMode == "RGBCycle"
-                    ? const Text(
-                        'RGBCycle',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("RGBCycle"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.RGBCycle, []),
-              trailing: const Text(""),
-            ),
-            ListTile(
-              title: Center(
-                child: model.colorMode == "LightWander"
-                    ? const Text(
-                        'Wander',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("Wander"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.LightWander, []),
-              trailing: const Text(""),
-            ),
-            ListTile(
-              title: Center(
-                child: model.colorMode == "RGBWander"
-                    ? const Text(
-                        'Wander RGB',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("Wander RGB"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.RGBWander, []),
-              trailing: const Text(""),
-            ),
-            ListTile(
-              title: Center(
-                child: (model.colorMode == "SingleColor" && model.colorNumber == 0xFF000000)
-                    ? const Text(
-                        'White',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("White"),
-              ),
-              onTap: () {
-                widget.device.sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]);
+            Consumer(
+              builder: (final context, final ref, final child) {
+                final colorMode = ref.watch(_colorModeProvider(widget.device));
+                return ListView(
+                  physics: const ClampingScrollPhysics(),
+                  shrinkWrap: true,
+                  children: [
+                    ListTile(
+                      title: Center(
+                        child: colorMode == "Off"
+                            ? const Text(
+                                'Off',
+                                style: selectedTextStyle,
+                              )
+                            : const Text("Off"),
+                      ),
+                      onTap: () => _colorModeChange(ref, sm.Command.Off),
+                      trailing: const Text(""),
+                    ),
+                    ListTile(
+                      title: Center(
+                        child: colorMode == "RGB"
+                            ? const Text(
+                                'Fast RGB',
+                                style: selectedTextStyle,
+                              )
+                            : const Text("Fast RGB"),
+                      ),
+                      onTap: () => _colorModeChange(ref, sm.Command.RGB),
+                      trailing: const Text(""),
+                    ),
+                    ListTile(
+                      title: Center(
+                        child: colorMode == "Mode"
+                            ? const Text(
+                                'Flicker',
+                                style: selectedTextStyle,
+                              )
+                            : const Text("Flicker"),
+                      ),
+                      onTap: () => _colorModeChange(ref, sm.Command.Mode),
+                      trailing: const Text(""),
+                    ),
+                    ListTile(
+                      title: Center(
+                        child: colorMode == "Strobo"
+                            ? const Text(
+                                'Strobo',
+                                style: selectedTextStyle,
+                              )
+                            : const Text("Strobo"),
+                      ),
+                      onTap: () => _colorModeChange(ref, sm.Command.Strobo),
+                      trailing: const Text(""),
+                    ),
+                    ListTile(
+                      title: Center(
+                        child: colorMode == "RGBCycle"
+                            ? const Text(
+                                'RGBCycle',
+                                style: selectedTextStyle,
+                              )
+                            : const Text("RGBCycle"),
+                      ),
+                      onTap: () => _colorModeChange(ref, sm.Command.RGBCycle),
+                      trailing: const Text(""),
+                    ),
+                    ListTile(
+                      title: Center(
+                        child: colorMode == "LightWander"
+                            ? const Text(
+                                'Wander',
+                                style: selectedTextStyle,
+                              )
+                            : const Text("Wander"),
+                      ),
+                      onTap: () => _colorModeChange(ref, sm.Command.LightWander),
+                      trailing: const Text(""),
+                    ),
+                    ListTile(
+                      title: Center(
+                        child: colorMode == "RGBWander"
+                            ? const Text(
+                                'Wander RGB',
+                                style: selectedTextStyle,
+                              )
+                            : const Text("Wander RGB"),
+                      ),
+                      onTap: () => _colorModeChange(ref, sm.Command.RGBWander),
+                      trailing: const Text(""),
+                    ),
+                  ],
+                );
               },
-              trailing: const Text(""),
+            ),
+            Consumer(
+              builder: (final context, final ref, final child) {
+                final colorMode = ref.watch(
+                    widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.colorMode));
+                final colorNumber = ref.watch(
+                    widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.colorNumber));
+                return ListTile(
+                  title: Center(
+                    child: (colorMode == "SingleColor" && colorNumber == 0xFF000000)
+                        ? const Text(
+                            'White',
+                            style: selectedTextStyle,
+                          )
+                        : const Text("White"),
+                  ),
+                  onTap: () {
+                    widget.device.sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]);
+                  },
+                  trailing: const Text(""),
+                );
+              },
             ),
             ListTile(
               title: Center(
@@ -283,106 +334,84 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
               onTap: () => widget.device.sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
               trailing: const Text(""),
             ),
-            ExpansionTile(
-              title: (model.colorMode == "SingleColor" && model.colorNumber != 0xFF000000)
-                  ? const Text(
-                      'SingleColor',
-                      style: selectedTextStyle,
-                    )
-                  : const Text("SingleColor"),
-              children: <Widget>[
-                Consumer(
-                  builder: (final context, final ref, final child) {
-                    final rgbw = ref.watch(_rgbwProvider(widget.device));
-                    return ListTile(
+            Consumer(
+              builder: (final context, final ref, final child) {
+                final rgbw = ref.watch(_rgbwProvider(widget.device));
+                final colorMode = ref.watch(
+                    widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.colorMode));
+                return ExpansionTile(
+                  title: (colorMode == "SingleColor" && model.colorNumber != 0xFF000000)
+                      ? const Text(
+                          'SingleColor',
+                          style: selectedTextStyle,
+                        )
+                      : const Text("SingleColor"),
+                  children: <Widget>[
+                    ListTile(
                         subtitle: Text("Red: ${rgbw.hr} | ${rgbw.r}"),
                         title: Slider(
                           value: rgbw.dr,
                           onChanged: (final d) {
                             final newRGBW = rgbw.copyWith(red: d.round());
                             ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            sliderChange(changeColor, colordelay, newRGBW);
+                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(red: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            changeColor(newRGBW);
+                            _changeColor(ref, newRGBW);
                           },
                           max: 255.0,
                           label: 'R',
-                        ));
-                  },
-                ),
-                Consumer(
-                  builder: (final context, final ref, final child) {
-                    final rgbw = ref.watch(_rgbwProvider(widget.device));
-                    return ListTile(
+                        )),
+                    ListTile(
                         subtitle: Text("Green: ${rgbw.hg} | ${rgbw.g}"),
                         title: Slider(
                           value: rgbw.dg,
                           onChanged: (final d) {
-                            final newRGBW = rgbw.copyWith(red: d.round());
+                            final newRGBW = rgbw.copyWith(green: d.round());
                             ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            sliderChange(changeColor, colordelay, newRGBW);
+                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(green: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            changeColor(newRGBW);
+                            _changeColor(ref, newRGBW);
                           },
                           max: 255.0,
                           label: 'G',
-                        ));
-                  },
-                ),
-                Consumer(
-                  builder: (final context, final ref, final child) {
-                    final rgbw = ref.watch(_rgbwProvider(widget.device));
-                    return ListTile(
+                        )),
+                    ListTile(
                         subtitle: Text("Blue: ${rgbw.hb} | ${rgbw.b}"),
                         title: Slider(
                           value: rgbw.db,
                           onChanged: (final d) {
-                            final newRGBW = rgbw.copyWith(red: d.round());
+                            final newRGBW = rgbw.copyWith(blue: d.round());
                             ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            sliderChange(changeColor, colordelay, newRGBW);
+                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(blue: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            changeColor(newRGBW);
+                            _changeColor(ref, newRGBW);
                           },
                           max: 255.0,
                           label: 'B',
-                        ));
-                  },
-                ),
-                Consumer(
-                  builder: (final context, final ref, final child) {
-                    final rgbw = ref.watch(_rgbwProvider(widget.device));
-                    return ListTile(
+                        )),
+                    ListTile(
                         subtitle: Text("White: ${rgbw.hw} | ${rgbw.w}"),
                         title: Slider(
                           value: rgbw.dw,
                           onChanged: (final d) {
-                            final newRGBW = rgbw.copyWith(red: d.round());
+                            final newRGBW = rgbw.copyWith(white: d.round());
                             ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            sliderChange(changeColor, colordelay, newRGBW);
+                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(white: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            changeColor(newRGBW);
+                            _changeColor(ref, newRGBW);
                           },
                           max: 255.0,
                           label: 'W',
-                        ));
-                  },
-                ),
-                Consumer(
-                  builder: (final context, final ref, final child) {
-                    final rgbw = ref.watch(_rgbwProvider(widget.device));
-                    return Row(
+                        )),
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Text(
@@ -396,59 +425,67 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]),
                         ),
                       ],
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             ),
-            ListTile(
-              subtitle: Text("Delay ${idelay.toString()}ms"),
-              title: GestureDetector(
-                child: Slider(
-                  value: delay,
+
+            Consumer(builder: (final context, final ref, final child) {
+              final delay = ref.watch(_delayProvider(widget.device));
+              return ListTile(
+                subtitle: Text("Delay ${delay.toString()}ms"),
+                title: Slider(
+                  value: delay.toDouble(),
                   onChanged: (final d) {
-                    // setState(() => delay = d);
-                    sliderChange(changeDelay, idelay, idelay);
+                    _sliderChange(ref, _changeDelay, 1000, d.round());
                   },
+                  onChangeEnd: (final d) => _changeDelay(ref, d.round()),
                   max: 1000.0,
                   label: '${delay.round()}',
                 ),
-                onTapCancel: () => changeDelay(idelay),
-              ),
-            ),
-            ListTile(
-              subtitle: Text("Brightness ${brightness.toInt().toString()}"),
-              title: GestureDetector(
-                child: SliderTheme(
-                  child: Slider(
-                    value: brightness,
-                    onChanged: (final d) {
-                      // setState(() => brightness = d);
-                      sliderChange(changeBrightness, 500, ibrightness);
-                    },
-                    max: 255.0,
-                    label: '${brightness.round()}',
+              );
+            }),
+            Consumer(
+              builder: (final context, final ref, final child) {
+                final res = ref.watch(_brightnessProvider(widget.device));
+                return ListTile(
+                  subtitle: Text("Brightness ${res.toInt().toString()}"),
+                  title: GestureDetector(
+                    child: SliderTheme(
+                      child: Slider(
+                        value: res.toDouble(),
+                        onChanged: (final d) {
+                          // setState(() => brightness = d);
+                          _sliderChange(ref, _changeBrightness, 500, d.round());
+                        },
+                        max: 255.0,
+                        label: '${res.round()}',
+                      ),
+                      data: SliderTheme.of(context).copyWith(
+                          trackShape: GradientRoundedRectSliderTrackShape(
+                              LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
+                    ),
                   ),
-                  data: SliderTheme.of(context).copyWith(
-                      trackShape: GradientRoundedRectSliderTrackShape(
-                          LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
-                ),
-              ),
+                );
+              },
             ),
-            ListTile(
-              subtitle: Text("Num Leds ${numLeds.toInt().toString()}"),
-              title: GestureDetector(
-                child: Slider(
-                  value: numLeds,
-                  onChanged: (final d) {
-                    // setState(() => numLeds = d);
-                    widget.device.sendToServer(
-                        sm.MessageType.Options, sm.Command.Calibration, ["0x${(numLeds.toInt()).toRadixString(16)}"]);
-                  },
-                  max: 255.0,
-                  label: '${numLeds.round()}',
-                ),
-              ),
+            Consumer(
+              builder: (final context, final ref, final child) {
+                final numLeds = ref.watch(_numLedsProvider(widget.device));
+                return ListTile(
+                  subtitle: Text("Num Leds ${numLeds.toInt().toString()}"),
+                  title: GestureDetector(
+                    child: Slider(
+                      onChangeEnd: (final value) => _changeNumLeds(ref, value.round()),
+                      value: numLeds.toDouble(),
+                      onChanged: (final d) => _changeNumLeds(ref, d.round(), false),
+                      max: 255.0,
+                      label: '${numLeds.round()}',
+                    ),
+                  ),
+                );
+              },
             ),
             // ListTile(
             //   title: Text(this.model.toJson().toString())

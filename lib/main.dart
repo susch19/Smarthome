@@ -123,7 +123,7 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
       state = Icons.check;
     }
 
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     ConnectionManager.connectionIconChanged.addListener(() {
       if (!mounted) return;
       state = ConnectionManager.connectionIconChanged.value;
@@ -143,7 +143,7 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 }
@@ -165,7 +165,7 @@ class MyHomePage extends ConsumerWidget {
     final deviceGroups = deviceGroupsRaw.groupManyBy((final x) => ref.watch(Device.groupsByIdProvider(x.id)));
     final versionAndUrl = ref.watch(versionAndUrlProvider);
     if (versionAndUrl != null) {
-      WidgetsBinding.instance?.addPostFrameCallback((final _) async {
+      WidgetsBinding.instance.addPostFrameCallback((final _) async {
         await UpdateManager.displayNotificationDialog(context, versionAndUrl);
       });
     }
@@ -178,21 +178,23 @@ class MyHomePage extends ConsumerWidget {
             builder: (final context, final orientation) {
               return Consumer(
                 builder: (final context, final ref, final child) {
-                  return StaggeredGridView.extentBuilder(
-                      maxCrossAxisExtent:
-                          ref.watch(maxCrossAxisExtentProvider), //!kIsWeb && Platform.isAndroid ? 370 : 300,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      itemCount: deviceGroups.length,
-                      itemBuilder: (final context, final i) {
-                        final deviceGroup = deviceGroups.elementAt(i);
-                        if (deviceGroup == null) return const Text("Empty Entry");
-                        return Container(
-                          margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                          child: getDashboardCard(context, deviceGroup),
-                        );
-                      },
-                      staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1));
+                  return MasonryGridView.extent(
+                    maxCrossAxisExtent:
+                        ref.watch(maxCrossAxisExtentProvider), //!kIsWeb && Platform.isAndroid ? 370 : 300,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    itemCount: deviceGroups.length,
+                    itemBuilder: (final context, final i) {
+                      final deviceGroup = deviceGroups.elementAt(i);
+                      if (deviceGroup == null) return const Text("Empty Entry");
+                      return Container(
+                        margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+                        child: getDashboardCard(context, deviceGroup),
+                      );
+                    },
+
+                    // staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1)
+                  );
                 },
               );
             },
@@ -214,21 +216,22 @@ class MyHomePage extends ConsumerWidget {
             builder: (final context, final orientation) {
               return Consumer(
                 builder: (final context, final ref, final child) {
-                  return StaggeredGridView.extentBuilder(
-                      maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
-                      itemCount: devices.length,
-                      itemBuilder: (final context, final i) {
-                        final device = devices[i];
-                        return Container(
-                          margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                          child: device.dashboardView(
-                            () {
-                              deviceAction(context, ref, device);
-                            },
-                          ),
-                        );
-                      },
-                      staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1));
+                  return MasonryGridView.extent(
+                    maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
+                    itemCount: devices.length,
+                    itemBuilder: (final context, final i) {
+                      final device = devices[i];
+                      return Container(
+                        margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+                        child: device.dashboardView(
+                          () {
+                            deviceAction(context, ref, device);
+                          },
+                        ),
+                      );
+                    },
+                    // staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1)
+                  );
                 },
               );
             },

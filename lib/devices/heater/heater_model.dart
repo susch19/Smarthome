@@ -85,10 +85,14 @@ class HeaterModel extends BaseModel {
       other.disableHeating == disableHeating &&
       other.disableLed == disableLed &&
       other.version == version &&
-      xiaomiTempSensor == other.xiaomiTempSensor;
+      xiaomiTempSensor == other.xiaomiTempSensor &&
+      currentCalibration == other.currentCalibration &&
+      currentConfig == other.currentConfig &&
+      temperature == other.temperature;
 
   @override
-  int get hashCode => Object.hash(id, friendlyName, disableHeating, disableLed, version, xiaomiTempSensor);
+  int get hashCode => Object.hash(id, friendlyName, disableHeating, disableLed, version, xiaomiTempSensor,
+      currentCalibration, currentConfig, temperature);
 
   HeaterModel copyWith(
       {final int? id,

@@ -12,13 +12,8 @@ final _currentAppVersionProvider = FutureProvider<PackageInfo>((final ref) async
   return await PackageInfo.fromPlatform();
 });
 
-final _forceRefreshProvider = StateProvider<DateTime?>((final ref) {
-  return null;
-});
-
-final serverRecordsProvider =
-    FutureProvider.autoDispose.family<List<ServerRecord>, DateTime?>((final ref, final val) async {
-  final records = ServerSearchScreen.refresh(force: val != null);
+final serverRecordsProvider = FutureProvider.autoDispose<List<ServerRecord>>((final ref) async {
+  final records = ServerSearchScreen.refresh(force: true);
   return records;
 });
 
@@ -40,8 +35,7 @@ class ServerSearchScreen extends ConsumerWidget {
   }
 
   Widget buildBody(final BuildContext context, final WidgetRef ref) {
-    final dt = ref.watch(_forceRefreshProvider);
-    final serverRecordsFinal = ref.watch(serverRecordsProvider(dt));
+    final serverRecordsFinal = ref.watch(serverRecordsProvider);
     final appVersion = ref.watch(_currentAppVersionProvider);
     return RefreshIndicator(
       child: Container(
@@ -71,7 +65,7 @@ class ServerSearchScreen extends ConsumerWidget {
                   ]),
         ),
       ),
-      onRefresh: () async => ref.read(_forceRefreshProvider.notifier).state = DateTime.now(),
+      onRefresh: () async => ref.refresh(serverRecordsProvider),
     );
   }
 
