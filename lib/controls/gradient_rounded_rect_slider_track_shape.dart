@@ -9,16 +9,16 @@ class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSlid
 
   @override
   void paint(
-    PaintingContext context,
-    Offset offset, {
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required Animation<double> enableAnimation,
-    required TextDirection textDirection,
-    required Offset thumbCenter,
-    bool isDiscrete = false,
-    bool isEnabled = false,
-    double additionalActiveTrackHeight = 2,
+    final PaintingContext context,
+    final Offset offset, {
+    required final RenderBox parentBox,
+    required final SliderThemeData sliderTheme,
+    required final Animation<double> enableAnimation,
+    required final TextDirection textDirection,
+    required final Offset thumbCenter,
+    final bool isDiscrete = false,
+    final bool isEnabled = false,
+    final double additionalActiveTrackHeight = 2,
   }) {
     assert(sliderTheme.disabledActiveTrackColor != null);
     assert(sliderTheme.disabledInactiveTrackColor != null);

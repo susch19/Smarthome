@@ -1,42 +1,45 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:smarthome/controls/checked_button.dart';
-import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:smarthome/main.dart';
 import 'package:smarthome/models/ipport.dart';
 
 import '../helper/connection_manager.dart';
 import 'screen_export.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+class SettingsPage extends ConsumerStatefulWidget {
+  const SettingsPage({final Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => SettingsPageState();
+  SettingsPageState createState() => SettingsPageState();
 }
 
-class SettingsPageState extends State<SettingsPage> {
+class SettingsPageState extends ConsumerState<SettingsPage> {
   bool isEnabled = false;
-  TextEditingController _textEditingController = TextEditingController(text: SettingsManager.serverUrl);
+  final TextEditingController _textEditingController = TextEditingController();
 
-  String serverUrl = SettingsManager.serverUrl;
-
-  bool isGrouped = SettingsManager.groupingEnabled;
+  static final _maxExtendSlider = StateProvider<double>((final ref) => ref.watch(maxCrossAxisExtentProvider));
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final theme = AdaptiveTheme.of(context);
+    final hubConnection = ref.watch(hubConnectionProvider);
+    // final _ = ref.watch(brightnessProvider);
+    final settings = ref.watch(settingsProvider);
+    _textEditingController.text = settings.serverUrl;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Serversuche"),
+        title: const Text("Serversuche"),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
         child: ListView(
           children: [
-            ListTile(
+            const ListTile(
               title: Text(
                 "Darstellung",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -47,13 +50,12 @@ class SettingsPageState extends State<SettingsPage> {
                 children: [
                   MaterialButton(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.smartphone,
                             color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isSystem ? 1 : 0.3),
                           ),
-                          Text("System folgen"),
+                          const Text("System folgen"),
                         ],
                       ),
                       onPressed: () {
@@ -62,11 +64,10 @@ class SettingsPageState extends State<SettingsPage> {
                       }),
                   MaterialButton(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(theme.mode.isLight ? Icons.light_mode : Icons.light_mode_outlined,
                               color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isLight ? 1 : 0.3)),
-                          Text("Helles Design"),
+                          const Text("Helles Design"),
                         ],
                       ),
                       onPressed: () {
@@ -75,11 +76,10 @@ class SettingsPageState extends State<SettingsPage> {
                       }),
                   MaterialButton(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(theme.mode.isDark ? Icons.dark_mode : Icons.dark_mode_outlined,
                               color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isDark ? 1 : 0.3)),
-                          Text("Dunkles Design"),
+                          const Text("Dunkles Design"),
                         ],
                       ),
                       onPressed: () {
@@ -90,86 +90,105 @@ class SettingsPageState extends State<SettingsPage> {
               ),
             ),
             ListTile(
-              title: Text("Gruppierungen ausblenden"),
+              title: const Text("Gruppierungen ausblenden"),
               trailing: Switch(
-                value: !SettingsManager.groupingEnabled,
-                onChanged: (a) {
-                  setState(() {
-                    SettingsManager.setGroupingEnabled(a);
-                  });
+                value: !settings.groupingEnabled,
+                onChanged: (final a) {
+                  SettingsManager.setGroupingEnabled(!a);
                 },
               ),
             ),
-            Divider(),
             ListTile(
+              leading: const Text("Kachelgröße"),
+              title: Consumer(
+                builder: (final context, final ref, final child) {
+                  return Slider(
+                    value: ref.watch(_maxExtendSlider),
+                    min: 100,
+                    max: 700,
+                    divisions: 60,
+                    onChangeEnd: (final value) {
+                      ref.read(maxCrossAxisExtentProvider.notifier).state = value;
+                      PreferencesManager.instance.setDouble("DashboardCardSize", value);
+                    },
+                    onChanged: (final a) {
+                      ref.read(_maxExtendSlider.notifier).state = a;
+                    },
+                  );
+                },
+              ),
+            ),
+            const Divider(),
+            const ListTile(
               title: Text(
                 "Server",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
             ListTile(
-              title: Text("Serversuche öffnen"),
+              title: const Text("Serversuche öffnen"),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (c) => ServerSearchScreen())).then((value) {
+                Navigator.push(context, MaterialPageRoute(builder: (final c) => const ServerSearchScreen()))
+                    .then((final value) {
                   if (value is IpPort) {
-                    var uri = Uri.parse("http://" + value.ipAddress);
-                    uri = Uri(host: uri.host, port: value.port, scheme: uri.scheme, path: "SmartHome");
-                    serverUrl = uri.toString();
-                    SettingsManager.setServerUrl(serverUrl);
-                    _textEditingController.text = serverUrl;
-                    setState(() {});
+                    final isIpv6 = value.type.name == "IPv6";
+
+                    final uri = Uri.parse(
+                        "http://${isIpv6 ? "[" : ""}${value.ipAddress}${isIpv6 ? "]" : ""}:${value.port}/SmartHome");
+
+                    SettingsManager.setServerUrl(uri.toString());
+                    _textEditingController.text = uri.toString();
                   }
                 });
               },
             ),
             ListTile(
-              leading: Text("URL"),
+              leading: const Text("URL"),
               title: TextField(
                 controller: _textEditingController,
-                decoration: InputDecoration(hintText: "URL vom Smarthome Server"),
-                onSubmitted: (s) {
-                  serverUrl = s;
-                  SettingsManager.setServerUrl(serverUrl);
+                decoration: const InputDecoration(hintText: "URL vom Smarthome Server"),
+                onSubmitted: (final s) {
+                  SettingsManager.setServerUrl(s);
                 },
               ),
               trailing: MaterialButton(
-                child: Text("Speichern"),
+                child: const Text("Speichern"),
                 onPressed: () {
-                  serverUrl = _textEditingController.text;
-                  SettingsManager.setServerUrl(serverUrl);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Neue URL wurde gespeichert")));
+                  SettingsManager.setServerUrl(_textEditingController.text);
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(const SnackBar(content: Text("Neue URL wurde gespeichert")));
                 },
               ),
             ),
             ListTile(
-              leading: Text("Entwickleransicht"),
+              leading: const Text("Entwickleransicht"),
               trailing: Switch(
-                value: DeviceManager.showDebugInformation,
-                onChanged: (a) {
-                  DeviceManager.showDebugInformation = !DeviceManager.showDebugInformation;
-                  setState(() {});
+                value: settings.showDebugInformation,
+                onChanged: (final a) {
+                  SettingsManager.setShowDebugInformation(a);
                 },
               ),
             ),
-            Divider(),
-            DeviceManager.showDebugInformation
+            const Divider(),
+            settings.showDebugInformation
                 ? ListTile(
-                    title: Text(
+                    title: const Text(
                       "Painless Mesh Zeit Update",
                     ),
-                    onTap: () => ConnectionManager.hubConnection.invoke("UpdateTime"),
+                    onTap: () => hubConnection.invoke("UpdateTime"),
                   )
                 : Container(),
+            settings.showDebugInformation ? const Divider() : Container(),
             ListTile(
-              leading: Text("Über"),
+              leading: const Text("Über"),
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (c) => AboutScreen(),
+                  builder: (final c) => const AboutScreen(),
                 ),
               ),
             ),
-            Divider(),
+            const Divider(),
           ],
         ),
       ),

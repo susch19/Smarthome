@@ -1,28 +1,27 @@
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:smarthome/devices/heater/temp_scheduling.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:tuple/tuple.dart';
 
 import 'heater_config.dart';
 
 class HeaterTempSettings extends StatefulWidget {
   final List<HeaterConfig> configs;
-  final Tuple<TimeOfDay?, double?> timeTemp;
-  HeaterTempSettings(this.timeTemp, this.configs);
+  final Tuple2<TimeOfDay?, double?> timeTemp;
+  const HeaterTempSettings(this.timeTemp, this.configs, {final Key? key}) : super(key: key);
 
   @override
-  HeaterTempSettingsState createState() => new HeaterTempSettingsState(configs);
+  HeaterTempSettingsState createState() => HeaterTempSettingsState();
 }
 
 class HeaterTempSettingsState extends State<HeaterTempSettings> {
-  HeaterTempSettingsState(this.heaterConfigs);
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   bool _saveNeeded = false;
-  List<HeaterConfig> heaterConfigs;
+  late List<HeaterConfig> heaterConfigs;
   int selected = 0;
   double _value = 21.0;
   String _annotationValue = '21.0';
@@ -31,8 +30,8 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   @override
   void initState() {
     super.initState();
-
-    selected = widget.configs.bitOr((x) => DayOfWeekToFlagMap[x.dayOfWeek]!);
+    heaterConfigs = widget.configs;
+    selected = widget.configs.bitOr((final x) => dayOfWeekToFlagMap[x.dayOfWeek]!);
     _setPointerValue(widget.timeTemp.item2!);
     initialDate =
         "${widget.timeTemp.item1!.hour.toString().padLeft(2, "0")}:${widget.timeTemp.item1!.minute.toString().padLeft(2, "0")}";
@@ -46,16 +45,16 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
 
     return await (showDialog<bool>(
             context: context,
-            builder: (BuildContext context) => new AlertDialog(
+            builder: (final BuildContext context) => AlertDialog(
                     content: Text("Neue Temperatureinstellung verwerfen?", style: dialogTextStyle),
                     actions: <Widget>[
                       TextButton(
-                          child: Text("Abbrechen"),
+                          child: const Text("Abbrechen"),
                           onPressed: () {
                             Navigator.of(context).pop(false);
                           }),
                       TextButton(
-                          child: Text("Verwerfen"),
+                          child: const Text("Verwerfen"),
                           onPressed: () {
                             Navigator.of(context).pop(true);
                           })
@@ -63,8 +62,8 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
         false;
   }
 
-  void showInSnackBar(String value) {
-    ScaffoldMessenger.of(context).showSnackBar(new SnackBar(content: new Text(value)));
+  void showInSnackBar(final String value) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
   }
 
   Future<bool> _handleSubmitted() async {
@@ -75,70 +74,70 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
       form.save();
       //double realWeight = recursiveParsing(weight);
       if (_saveNeeded == false) {
-        Navigator.of(context).pop(Tuple(false, <HeaterConfig>[]));
+        Navigator.of(context).pop(const Tuple2(false, <HeaterConfig>[]));
         return true;
       }
-      var configs = <HeaterConfig>[];
-      var time = initialDate.split(":");
+      final configs = <HeaterConfig>[];
+      final time = initialDate.split(":");
 
-      int hour = int.parse(time[0]);
-      int minute = int.parse(time[1]);
-      var tod = TimeOfDay(hour: hour, minute: minute);
+      final int hour = int.parse(time[0]);
+      final int minute = int.parse(time[1]);
+      final tod = TimeOfDay(hour: hour, minute: minute);
       for (int i = 0; i < 7; i++) {
-        var flag = 1 << (i + 1);
+        final flag = 1 << (i + 1);
 
         if (selected & flag == 0) continue;
-        var dayOfWeek = FlagToDayOfWeekMap[flag]!;
+        final dayOfWeek = flagToDayOfWeekMap[flag]!;
 
         configs.add(HeaterConfig(dayOfWeek, tod, _value));
       }
-      Navigator.of(context).pop(Tuple(true, configs));
+      Navigator.of(context).pop(Tuple2(true, configs));
     }
     return true;
   }
 
-  void handlePointerValueChanged(double value) {
+  void handlePointerValueChanged(final double value) {
     _setPointerValue(value);
     _saveNeeded = true;
   }
 
-  void handlePointerValueChangedEnd(double value) {
+  void handlePointerValueChangedEnd(final double value) {
     handlePointerValueChanged(value);
     _saveNeeded = true;
   }
 
-  void handlePointerValueChanging(ValueChangingArgs args) {
+  void handlePointerValueChanging(final ValueChangingArgs args) {
     _value = _value.clamp(5, 35);
     _setPointerValue(_value);
     _saveNeeded = true;
   }
 
   /// method to set the pointer value
-  void _setPointerValue(double value) {
+  void _setPointerValue(final double value) {
     setState(() {
       _value = (value.clamp(5, 35) * 10).roundToDouble() / 10;
-      _annotationValue = '${_value.toStringAsFixed(1)}';
+      _annotationValue = _value.toStringAsFixed(1);
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
+  Widget build(final BuildContext context) {
+    return Scaffold(
       key: _scaffoldKey,
-      appBar: new AppBar(
-        title: new Text("Temperatur Einstellungen"),
+      appBar: AppBar(
+        title: const Text("Temperatur Einstellungen"),
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.save),
+        child: const Icon(Icons.save),
         onPressed: () => _handleSubmitted(),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
-        child: new Form(
+        child: Form(
           key: _formKey,
           onWillPop: _onWillPop,
           // autovalidate: _autovalidate,
-          child: new ListView(
+          child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: //heaterConfigs!.map((x) => heaterConfigToWidget(x)).toList()
                 <Widget>[
@@ -149,36 +148,32 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                 initialValue: initialDate,
                 type: DateTimePickerType.time,
                 textAlign: TextAlign.center,
-                onChanged: (val) {
+                onChanged: (final val) {
                   initialDate = val;
                   _saveNeeded = true;
                 },
-                style: TextStyle(fontSize: 24),
+                style: const TextStyle(fontSize: 24),
               ),
               Container(
-                margin: EdgeInsets.only(top: 16.0),
+                margin: const EdgeInsets.only(top: 16.0),
                 child: Stack(
                   children: [
                     SfRadialGauge(
                       axes: <RadialAxis>[
                         RadialAxis(
-                          showFirstLabel: true,
                           startAngle: 150,
                           endAngle: 30,
                           radiusFactor: 0.9,
                           minimum: 5,
                           maximum: 35,
                           interval: 1,
-                          canScaleToFit: false,
                           axisLineStyle: const AxisLineStyle(
                               gradient:
                                   SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
                               color: Colors.red,
                               thickness: 0.04,
-                              thicknessUnit: GaugeSizeUnit.factor,
-                              cornerStyle: CornerStyle.bothFlat),
+                              thicknessUnit: GaugeSizeUnit.factor),
                           tickOffset: 0.02,
-                          showTicks: true,
                           ticksPosition: ElementsPosition.outside,
                           labelOffset: 0.05,
                           offsetUnit: GaugeSizeUnit.factor,
@@ -186,35 +181,30 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           showLabels: false,
                           labelsPosition: ElementsPosition.outside,
                           minorTicksPerInterval: 10,
-                          minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
+                          minorTickStyle: const MinorTickStyle(length: 0.1),
                           majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                         ),
                         RadialAxis(
-                          showFirstLabel: true,
                           startAngle: 150,
                           endAngle: 30,
                           radiusFactor: 1,
                           minimum: 5,
                           maximum: 35,
                           interval: 5,
-                          canScaleToFit: false,
                           axisLineStyle: const AxisLineStyle(
                               gradient:
                                   SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
                               color: Colors.red,
                               thickness: 0.04,
-                              thicknessUnit: GaugeSizeUnit.factor,
-                              cornerStyle: CornerStyle.bothFlat),
+                              thicknessUnit: GaugeSizeUnit.factor),
                           tickOffset: 0.02,
-                          showTicks: true,
                           ticksPosition: ElementsPosition.outside,
                           labelOffset: 0.05,
                           offsetUnit: GaugeSizeUnit.factor,
                           onAxisTapped: handlePointerValueChangedEnd,
-                          showAxisLine: true,
                           labelsPosition: ElementsPosition.outside,
                           minorTicksPerInterval: 0,
-                          minorTickStyle: const MinorTickStyle(length: 0.1, lengthUnit: GaugeSizeUnit.logicalPixel),
+                          minorTickStyle: const MinorTickStyle(length: 0.1),
                           majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                           pointers: <GaugePointer>[
                             // RangePointer(
@@ -231,7 +221,6 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                               value: _value,
                               elevation: 1,
                               markerOffset: -20,
-                              markerType: MarkerType.invertedTriangle,
                               markerHeight: 25,
                               markerWidth: 20,
                               enableDragging: true,
@@ -245,20 +234,17 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           ],
                           annotations: [
                             GaugeAnnotation(
-                              widget: Container(
-                                child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-                                  Text(
-                                    _annotationValue,
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 56),
-                                  ),
-                                  Text(
-                                    ' °C',
-                                    style: TextStyle(fontSize: 56),
-                                  ),
-                                ]),
-                              ),
+                              widget: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+                                Text(
+                                  _annotationValue,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 56),
+                                ),
+                                const Text(
+                                  ' °C',
+                                  style: TextStyle(fontSize: 56),
+                                ),
+                              ]),
                               verticalAlignment: GaugeAlignment.far,
-                              horizontalAlignment: GaugeAlignment.center,
                               angle: 90,
                               positionFactor: 0.1,
                             ),
@@ -267,13 +253,13 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                       ],
                     ),
                     Container(
-                      margin: EdgeInsets.only(top: 200),
+                      margin: const EdgeInsets.only(top: 200),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           MaterialButton(
                             onPressed: () => handlePointerValueChanged(_value - 0.1),
-                            child: Text(
+                            child: const Text(
                               "−",
                               style: TextStyle(
                                 fontSize: 42,
@@ -283,7 +269,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           ),
                           MaterialButton(
                             onPressed: () => handlePointerValueChanged(_value + 0.1),
-                            child: Text(
+                            child: const Text(
                               "+",
                               style: TextStyle(
                                 fontSize: 42,
@@ -305,27 +291,28 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   }
 
   List<Widget> weekdayChips() {
-    return DayOfWeekToStringMap.values
+    return dayOfWeekToStringMap.values
         .map(
-          (value) => Container(
-            margin: EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+          (final value) => Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
             child: FilterChip(
-              onSelected: (a) {
-                if (a)
-                  selected |= DayOfWeekStringToFlagMap[value] ?? 0;
-                else
-                  selected &= ~(DayOfWeekStringToFlagMap[value] ?? 0);
+              onSelected: (final a) {
+                if (a) {
+                  selected |= dayOfWeekStringToFlagMap[value] ?? 0;
+                } else {
+                  selected &= ~(dayOfWeekStringToFlagMap[value] ?? 0);
+                }
                 _saveNeeded = true;
                 setState(() {});
               },
-              selected: selected & (DayOfWeekStringToFlagMap[value] ?? 0) > 0,
+              selected: selected & (dayOfWeekStringToFlagMap[value] ?? 0) > 0,
               showCheckmark: false,
               labelStyle: TextStyle(
-                color: (selected & (DayOfWeekStringToFlagMap[value] ?? 0) < 1
+                color: (selected & (dayOfWeekStringToFlagMap[value] ?? 0) < 1
                     ? Theme.of(context).textTheme.bodyText1!.color
                     : (Theme.of(context).colorScheme.secondary.computeLuminance() > 0.5 ? Colors.black : Colors.white)),
               ),
-              padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
               selectedColor: Theme.of(context).colorScheme.secondary,
               label: Text(value),
             ),
@@ -339,7 +326,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   final List<DropdownMenuItem> itemsForDropdown = buildItems();
 
   static List<DropdownMenuItem> buildItems() {
-    var menuItems = <DropdownMenuItem>[];
+    final menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
       menuItems.add(DropdownMenuItem(child: Text(d.toStringAsFixed(1)), value: (d * 10).round()));
     }

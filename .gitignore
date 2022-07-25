@@ -74,3 +74,4 @@ lib/syncfusion.dart
 ios/Flutter/flutter_export_environment.sh
 .flutter-plugins-dependencies
 *.g.dart
+**/.vs/*

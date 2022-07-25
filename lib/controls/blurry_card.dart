@@ -19,24 +19,28 @@ class BlurryCard extends StatelessWidget {
   final Color lightShadowColor;
   final Color darkShadowColor;
   final EdgeInsets margin;
-  BlurryCard(
-      {this.child,
+  const BlurryCard(
+      {final Key? key,
+      this.child,
       this.borderRadius = defaultBorderRadius,
       this.blur = 5,
       this.lightColor = defaultLightColor,
       this.darkColor = defaultBlackColor,
       this.lightShadowColor = defaultLightShadowColor,
       this.darkShadowColor = defaultDarkShadowColor,
-      this.margin = defaultMargin});
+      this.margin = defaultMargin})
+      : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return ClipRRect(
       borderRadius: borderRadius,
       child: Container(
         margin: margin,
         child: BlurryContainer(
-          color: AdaptiveTheme.of(context).mode.isLight ? defaultLightShadowColor : defaultDarkShadowColor,
+          color: AdaptiveTheme.of(context).brightness == Brightness.light
+              ? defaultLightShadowColor
+              : defaultDarkShadowColor,
           blur: blur,
           child: Card(
             color: Colors.transparent,

@@ -7,7 +7,7 @@ class IoBrokerHistoryModel {
   String? propertyName;
 
   IoBrokerHistoryModel();
-   factory IoBrokerHistoryModel.fromJson(Map<String, dynamic> json) => _$IoBrokerHistoryModelFromJson(json);
+   factory IoBrokerHistoryModel.fromJson(final Map<String, dynamic> json) => _$IoBrokerHistoryModelFromJson(json);
 
    Map<String, dynamic> toJson() => _$IoBrokerHistoryModelToJson(this);
 }
@@ -20,7 +20,7 @@ class HistoryRecord {
   late int timeStamp;
   
   HistoryRecord();
-   factory HistoryRecord.fromJson(Map<String, dynamic> json) => _$HistoryRecordFromJson(json);
+   factory HistoryRecord.fromJson(final Map<String, dynamic> json) => _$HistoryRecordFromJson(json);
 
    Map<String, dynamic> toJson() => _$HistoryRecordToJson(this);
 }

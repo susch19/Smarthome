@@ -1,20 +1,75 @@
+import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 import '../../device_exporter.dart';
+import 'package:riverpod/riverpod.dart';
 
 part 'zigbee_lamp_model.g.dart';
 
 @JsonSerializable()
+@immutable
 class ZigbeeLampModel extends ZigbeeModel {
-  late int brightness;
-  late bool state;
-  late int colorTemp;
+  final int brightness;
+  final bool state;
+  final int colorTemp;
   @JsonKey(name: 'transition_Time')
-  late double transitionTime;
+  final double transitionTime;
 
-  ZigbeeLampModel(int id, String friendlyName, bool isConnected) : super(id, friendlyName, isConnected);
+  static final transitionTimeProvider = Provider.family<double, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).transitionTime;
+  });
+  static final brightnessProvider = Provider.family<int, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).brightness;
+  });
+  static final colorTempProvider = Provider.family<int, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).colorTemp;
+  });
+  static final stateProvider = Provider.family<bool, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    return (baseModel as ZigbeeLampModel).state;
+  });
 
-  factory ZigbeeLampModel.fromJson(Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
+  const ZigbeeLampModel(
+      final int id,
+      final String friendlyName,
+      final bool isConnected,
+      final bool available,
+      final DateTime lastReceived,
+      final int linkQuality,
+      this.brightness,
+      this.state,
+      this.colorTemp,
+      this.transitionTime)
+      : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
 
+  factory ZigbeeLampModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
+
+  @override
+  BaseModel getModelFromJson(final Map<String, dynamic> json) {
+    return ZigbeeLampModel.fromJson(json);
+  }
+
+  @override
   Map<String, dynamic> toJson() => _$ZigbeeLampModelToJson(this);
+
+  @override
+  int get hashCode => Object.hash(
+        super.hashCode,
+        brightness,
+        state,
+        colorTemp,
+        transitionTime,
+      );
+
+  @override
+  bool operator ==(final Object other) =>
+      other is ZigbeeLampModel &&
+      super == other &&
+      brightness == other.brightness &&
+      state == other.state &&
+      colorTemp == other.colorTemp &&
+      transitionTime == other.transitionTime;
 }

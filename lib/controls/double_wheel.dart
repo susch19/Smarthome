@@ -20,99 +20,115 @@ class WheelChooser extends StatefulWidget {
   final double diameter;
   static const double _defaultItemSize = 48.0;
 
-  WheelChooser({
-    required this.onValueChanged,
-    required this.datas,
-    this.selectTextStyle,
-    this.unSelectTextStyle,
-    this.startPosition = 0,
-    this.squeeze = 1.0,
-    this.itemSize = _defaultItemSize,
-    this.magnification = 1,
-    this.perspective = 0.01,
-    this.listWidth,
-    this.listHeight,
-    this.horizontal = false,
-    this.diameter = 10000
-  })  : assert(perspective <= 0.01),
-        children = null;
+  const WheelChooser(
+      {required this.onValueChanged,
+      required this.datas,
+      this.selectTextStyle,
+      this.unSelectTextStyle,
+      this.startPosition = 0,
+      this.squeeze = 1.0,
+      this.itemSize = _defaultItemSize,
+      this.magnification = 1,
+      this.perspective = 0.01,
+      this.listWidth,
+      this.listHeight,
+      this.horizontal = false,
+      this.diameter = 10000,
+      final Key? key})
+      : assert(perspective <= 0.01),
+        children = null,
+        super(key: key);
 
-  WheelChooser.custom({
-    required this.onValueChanged,
-    required this.children,
-    this.datas,
-    this.startPosition = 0,
-    this.squeeze = 1.0,
-    this.itemSize = _defaultItemSize,
-    this.magnification = 1,
-    this.perspective = 0.01,
-    this.diameter=10000,
-    this.listWidth,
-    this.listHeight,
-    this.horizontal = false,
-  })  : assert(perspective <= 0.01),
+  WheelChooser.custom(
+      {required this.onValueChanged,
+      required this.children,
+      this.datas,
+      this.startPosition = 0,
+      this.squeeze = 1.0,
+      this.itemSize = _defaultItemSize,
+      this.magnification = 1,
+      this.perspective = 0.01,
+      this.diameter = 10000,
+      this.listWidth,
+      this.listHeight,
+      this.horizontal = false,
+      final Key? key})
+      : assert(perspective <= 0.01),
         assert(datas == null || datas.length == children!.length),
         selectTextStyle = null,
-        unSelectTextStyle = null;
-    
+        unSelectTextStyle = null,
+        super(key: key);
 
-  WheelChooser.integer({
-    required this.onValueChanged,
-    required int maxValue,
-    required int minValue,
-    int? initValue,
-    int step = 1,
-    this.selectTextStyle,
-    this.unSelectTextStyle,
-    this.squeeze = 1.0,
-    this.itemSize = _defaultItemSize,
-    this.magnification = 1,
-    this.perspective = 0.01,
-    this.diameter=10000,
-    this.listWidth,
-    this.listHeight,
-    this.horizontal = false,
-    bool reverse = false,
-  })  : assert(perspective <= 0.01),
+  WheelChooser.integer(
+      {required this.onValueChanged,
+      required final int maxValue,
+      required final int minValue,
+      final int? initValue,
+      final int step = 1,
+      this.selectTextStyle,
+      this.unSelectTextStyle,
+      this.squeeze = 1.0,
+      this.itemSize = _defaultItemSize,
+      this.magnification = 1,
+      this.perspective = 0.01,
+      this.diameter = 10000,
+      this.listWidth,
+      this.listHeight,
+      this.horizontal = false,
+      final bool reverse = false,
+      final Key? key})
+      : assert(perspective <= 0.01),
         assert(minValue < maxValue),
         assert(initValue == null || initValue >= minValue),
         assert(initValue == null || maxValue >= initValue),
         assert(step > 0),
         children = null,
         datas = _createIntegerList(minValue, maxValue, step, reverse),
-        startPosition = initValue == null ? 0 : reverse ? (maxValue - initValue) ~/ step : (initValue - minValue) ~/ step;
+        startPosition = initValue == null
+            ? 0
+            : reverse
+                ? (maxValue - initValue) ~/ step
+                : (initValue - minValue) ~/ step,
+        super(key: key);
 
-  WheelChooser.double({
-    required this.onValueChanged,
-    required double maxValue,
-    required double minValue,
-    double? initValue,
-    double step = 0.1,
-    this.selectTextStyle,
-    this.unSelectTextStyle,
-    this.squeeze = 1.0,
-    this.itemSize = _defaultItemSize,
-    this.magnification = 1,
-    this.perspective = 0.01,
-    this.diameter=10000,
-    this.listWidth,
-    this.listHeight,
-    this.horizontal = false,
-    bool reverse = false,
-  })  : assert(perspective <= 0.01),
+  WheelChooser.double(
+      {required this.onValueChanged,
+      required final double maxValue,
+      required final double minValue,
+      final double? initValue,
+      final double step = 0.1,
+      this.selectTextStyle,
+      this.unSelectTextStyle,
+      this.squeeze = 1.0,
+      this.itemSize = _defaultItemSize,
+      this.magnification = 1,
+      this.perspective = 0.01,
+      this.diameter = 10000,
+      this.listWidth,
+      this.listHeight,
+      this.horizontal = false,
+      final bool reverse = false,
+      final Key? key})
+      : assert(perspective <= 0.01),
         assert(minValue < maxValue),
         assert(initValue == null || initValue >= minValue),
         assert(initValue == null || maxValue >= initValue),
         assert(step > 0),
         children = null,
         datas = _createDoubleList(minValue, maxValue, step, reverse),
-        startPosition = initValue == null ? 0 : reverse ? (maxValue - initValue) ~/ step : (initValue - minValue) ~/ step;
+        startPosition = initValue == null
+            ? 0
+            : reverse
+                ? (maxValue - initValue) ~/ step
+                : (initValue - minValue) ~/ step,
+        super(key: key);
 
-  static List<double> _createDoubleList(double minValue, double maxValue, double step, bool reverse){
-    List<double> result = [];
-      if (reverse) {
+  static List<double> _createDoubleList(
+      final double minValue, final double maxValue, final double step, final bool reverse) {
+    final List<double> result = [];
+    if (reverse) {
       for (double i = maxValue; i >= minValue; i -= step) {
-        result.add( i);
+        result.add(i);
       }
     } else {
       for (double i = minValue; i <= maxValue; i += step) {
@@ -122,8 +138,8 @@ class WheelChooser extends StatefulWidget {
     return result;
   }
 
-  static List<int> _createIntegerList(int minValue, int maxValue, int step, bool reverse) {
-    List<int> result = [];
+  static List<int> _createIntegerList(final int minValue, final int maxValue, final int step, final bool reverse) {
+    final List<int> result = [];
     if (reverse) {
       for (int i = maxValue; i >= minValue; i -= step) {
         result.add(i);
@@ -152,7 +168,7 @@ class _WheelChooserState extends State<WheelChooser> {
     fixedExtentScrollController = FixedExtentScrollController(initialItem: currentPosition!);
   }
 
-  void _listener(int position) {
+  void _listener(final int position) {
     setState(() {
       currentPosition = position;
     });
@@ -164,10 +180,10 @@ class _WheelChooserState extends State<WheelChooser> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return RotatedBox(
         quarterTurns: widget.horizontal ? 3 : 0,
-        child: Container(
+        child: SizedBox(
             height: widget.listHeight ?? double.infinity,
             width: widget.listWidth ?? double.infinity,
             child: ListWheelScrollView(
@@ -176,7 +192,7 @@ class _WheelChooserState extends State<WheelChooser> {
               squeeze: widget.squeeze,
               diameterRatio: widget.diameter,
               controller: fixedExtentScrollController,
-              physics: FixedExtentScrollPhysics(),
+              physics: const FixedExtentScrollPhysics(),
               children: _convertListItems() ?? _buildListItems(),
               useMagnifier: true,
               magnification: widget.magnification,
@@ -185,7 +201,7 @@ class _WheelChooserState extends State<WheelChooser> {
   }
 
   List<Widget> _buildListItems() {
-    List<Widget> result = [];
+    final List<Widget> result = [];
     for (int i = 0; i < widget.datas!.length; i++) {
       result.add(
         RotatedBox(
@@ -194,7 +210,7 @@ class _WheelChooserState extends State<WheelChooser> {
             widget.datas![i] is double ? widget.datas![i].toStringAsFixed(1) : widget.datas![i].toString(),
             textAlign: TextAlign.center,
             textScaleFactor: 1.5,
-            style: i == currentPosition ? widget.selectTextStyle ?? null : widget.unSelectTextStyle ?? null,
+            style: i == currentPosition ? widget.selectTextStyle : widget.unSelectTextStyle,
           ),
         ),
       );
@@ -207,7 +223,7 @@ class _WheelChooserState extends State<WheelChooser> {
       return null;
     }
     if (widget.horizontal) {
-      List<Widget> result = [];
+      final List<Widget> result = [];
       for (int i = 0; i < widget.children!.length; i++) {
         result.add(RotatedBox(
           quarterTurns: 1,
@@ -221,8 +237,6 @@ class _WheelChooserState extends State<WheelChooser> {
   }
 }
 
-
-
 class ListWheelScrollViewX extends StatelessWidget {
   final Widget Function(BuildContext, int) builder;
   final Axis scrollDirection;
@@ -231,7 +245,7 @@ class ListWheelScrollViewX extends StatelessWidget {
   final double diameterRatio;
   final void Function(int)? onSelectedItemChanged;
   const ListWheelScrollViewX({
-    Key? key,
+    final Key? key,
     required this.builder,
     required this.itemExtent,
     this.controller,
@@ -241,7 +255,7 @@ class ListWheelScrollViewX extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return RotatedBox(
       quarterTurns: scrollDirection == Axis.horizontal ? 0 : 0,
       child: ListWheelScrollView.useDelegate(
@@ -249,9 +263,9 @@ class ListWheelScrollViewX extends StatelessWidget {
         controller: controller,
         itemExtent: itemExtent,
         diameterRatio: diameterRatio,
-        physics: FixedExtentScrollPhysics(),
+        physics: const FixedExtentScrollPhysics(),
         childDelegate: ListWheelChildBuilderDelegate(
-          builder: (context, index) {
+          builder: (final context, final index) {
             return RotatedBox(
               quarterTurns: scrollDirection == Axis.horizontal ? 1 : 0,
               child: builder(context, index),

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:multicast_dns/multicast_dns.dart';
-import 'package:smarthome/helper/iterable_extensions.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/models/server_record.dart';
 import 'package:version/version.dart';
@@ -10,21 +10,20 @@ import 'package:version/version.dart';
 class MdnsManager {
   static const String name = '_smarthome._tcp';
 
-  static final MDnsClient _client =
-      MDnsClient(rawDatagramSocketFactory: (dynamic host, int port, {bool? reuseAddress, bool? reusePort, int? ttl}) {
-    return RawDatagramSocket.bind(host, port, reuseAddress: reuseAddress ?? true, reusePort: false, ttl: ttl ?? 255);
+  static final MDnsClient _client = MDnsClient(rawDatagramSocketFactory: (final dynamic host, final int port,
+      {final bool? reuseAddress, final bool? reusePort, final int? ttl}) {
+    return RawDatagramSocket.bind(host, port, reuseAddress: reuseAddress ?? true, ttl: ttl ?? 255);
   });
+  static bool get initialized => _isInitialized;
   static bool _isInitialized = false;
-  static Map<String, ServerRecord> _founded = Map<String, ServerRecord>();
+  static final Map<String, ServerRecord> _founded = <String, ServerRecord>{};
   static late List<NetworkInterface> _interfaces;
-  static List<LastCheckCacheItem> _checkCache = [];
   static DateTime _lastSearched = DateTime.fromMillisecondsSinceEpoch(0);
 
-  static void initialize() {
+  static Future initialize() async {
     if (kIsWeb || _isInitialized) return;
-    _client.start(interfacesFactory: getInterfaces).then((value) {
-      _isInitialized = true;
-    });
+    await _client.start(interfacesFactory: getInterfaces);
+    _isInitialized = true;
   }
 
   static void stop() {
@@ -32,18 +31,16 @@ class MdnsManager {
     _isInitialized = false;
   }
 
-  static Future<Iterable<NetworkInterface>> getInterfaces(InternetAddressType type) async {
+  static Future<Iterable<NetworkInterface>> getInterfaces(final InternetAddressType type) async {
     _interfaces = await NetworkInterface.list(
-      includeLinkLocal: false,
       type: type,
-      includeLoopback: false,
     );
     return _interfaces;
   }
 
-  static Stream<ServerRecord> getRecords({Duration timeToLive = const Duration(minutes: 5)}) async* {
+  static Stream<ServerRecord> getRecords({final Duration timeToLive = const Duration(minutes: 5)}) async* {
     if (_lastSearched.difference(DateTime.now()).abs() < timeToLive) {
-      for (var cached in _founded.values) {
+      for (final cached in _founded.values) {
         if (cached.lastChecked.add(timeToLive).isAfter(DateTime.now())) yield cached;
       }
       return;
@@ -53,30 +50,32 @@ class MdnsManager {
         in _client.lookup<PtrResourceRecord>(ResourceRecordQuery.serverPointer(name))) {
       await for (final SrvResourceRecord srv
           in _client.lookup<SrvResourceRecord>(ResourceRecordQuery.service(ptr.domainName))) {
-        var instanceNameEndIndex = srv.name.indexOf(name);
-        var instanceName = srv.name.substring(0, instanceNameEndIndex - 1);
-        List<IpPort> ipPorts = [];
+        final instanceNameEndIndex = srv.name.indexOf(name);
+        final instanceName = srv.name.substring(0, instanceNameEndIndex - 1);
+        final List<IpPort> ipPorts = [];
         Version ver = Version(0, 0, 1);
         bool debug = false;
         String clusterId = instanceName;
 
         await for (final IPAddressResourceRecord ipAddr
             in _client.lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv4(srv.target))) {
-          if (await checkConnection(ipAddr, srv))
+          if (await checkConnection(ipAddr, srv)) {
             ipPorts.add(IpPort(ipAddr.address.address, srv.port, ipAddr.address.type));
+          }
         }
 
         await for (final IPAddressResourceRecord ipAddr
             in _client.lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv6(srv.target))) {
-          if (await checkConnection(ipAddr, srv))
+          if (await checkConnection(ipAddr, srv)) {
             ipPorts.add(IpPort(ipAddr.address.address, srv.port, ipAddr.address.type));
+          }
         }
 
         await for (final TxtResourceRecord txtRecord
             in _client.lookup<TxtResourceRecord>(ResourceRecordQuery.text(srv.name))) {
-          var keyValues = txtRecord.text.split("\n");
-          for (var kv in keyValues) {
-            var keyValue = kv.split("=");
+          final keyValues = txtRecord.text.split("\n");
+          for (final kv in keyValues) {
+            final keyValue = kv.split("=");
             switch (keyValue[0]) {
               case "Min App Version":
                 ver = Version.parse(keyValue[1]);
@@ -91,7 +90,7 @@ class MdnsManager {
             }
           }
           if (_founded.containsKey(srv.name)) {
-            var sr = _founded[srv.name]!;
+            final sr = _founded[srv.name]!;
             if (sr.lastChecked.difference(DateTime.now()).abs() > const Duration(seconds: 2)) {
               sr.debug = debug;
               sr.reachableAddresses = ipPorts;
@@ -102,7 +101,7 @@ class MdnsManager {
               yield sr;
             }
           } else {
-            var sr = ServerRecord(instanceName, clusterId, srv.name, ipPorts, ver, debug, DateTime.now());
+            final sr = ServerRecord(instanceName, clusterId, srv.name, ipPorts, ver, debug, DateTime.now());
             _founded[srv.name] = sr;
             yield sr;
           }
@@ -118,29 +117,33 @@ class MdnsManager {
     // }
   }
 
-  static Future<bool> checkConnection(IPAddressResourceRecord ipAddr, SrvResourceRecord srv) async {
-    var item =
-        _checkCache.firstOrNull((element) => element.address == ipAddr.address.toString() && element.port == srv.port);
-    if (item != null && item.nextCheck.isAfter(DateTime.now())) {
-      return item.result;
-    } else if (item == null) {
-      item = LastCheckCacheItem(
-          ipAddr.address.toString(), srv.port, DateTime.now().add(const Duration(minutes: 1)), false);
-      _checkCache.add(item);
-    }
-
+  static Future<bool> checkConnection(final IPAddressResourceRecord ipAddr, final SrvResourceRecord srv) async {
     try {
-      final Socket s = await Socket.connect(ipAddr.address, srv.port, timeout: Duration(milliseconds: 500));
-      s.destroy();
-      item.result = true;
-      item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+      final isIpv6 = ipAddr.address.type.name == "IPv6";
+      // if (isIpv6) {
+      //   item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+      //   return item.result = false;
+      // }
+      final hc = HubConnectionBuilder()
+          .withUrl(
+              "http://${isIpv6 ? "[" : ""}${ipAddr.address.address}${isIpv6 ? "]" : ""}:${srv.port}/SmartHome",
+              HttpConnectionOptions(
+                  //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
+                  logging: (final level, final message) => print('$level: $message')))
+          .build();
+      await hc.start();
+
+      // item.result = hc.state == HubConnectionState.connected;
+      // item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+      await hc.stop();
+
       return true;
     } catch (e) {
       print(e);
     }
 
-    item.result = false;
-    item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
+    // item.result = false;
+    // item.nextCheck = DateTime.now().add(const Duration(minutes: 1));
     return false;
   }
 }

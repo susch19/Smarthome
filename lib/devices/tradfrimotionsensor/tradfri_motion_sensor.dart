@@ -1,69 +1,88 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:signalr_core/signalr_core.dart';
-import 'package:smarthome/devices/device.dart';
+import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/icons.dart';
 import '../device_manager.dart';
-import 'tradfri_motion_sensor_model.dart';
 import '../../helper/datetime_helper.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
-  TradfriMotionSensor(int? id, String typeName, TradfriMotionSensorModel model, HubConnection connection, IconData icon)
-      : super(id, typeName, model, connection, icon);
+  TradfriMotionSensor(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
   @override
-  void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => TradfriMotionSensorScreen(this)));
+  void navigateToDevice(final BuildContext context) {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (final BuildContext context) => TradfriMotionSensorScreen(this)));
   }
 
   @override
-  Widget? lowerLeftWidget() {
-    return Icon(
-      (baseModel.battery > 80
-          ? SmarthomeIcons.bat4
-          : (baseModel.battery > 60
-              ? SmarthomeIcons.bat3
-              : (baseModel.battery > 40
-                  ? SmarthomeIcons.bat2
-                  : (baseModel.battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))),
-      size: 20,
+  Widget getRightWidgets() {
+    return Consumer(
+      builder: (final context, final ref, final child) {
+        final battery = ref.watch(TradfriMotionSensorModel.batteryProvider(id));
+        return Icon(
+          (battery > 80
+              ? SmarthomeIcons.bat4
+              : (battery > 60
+                  ? SmarthomeIcons.bat3
+                  : (battery > 40
+                      ? SmarthomeIcons.bat2
+                      : (battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))),
+          size: 20,
+        );
+      },
     );
   }
 
   @override
   Widget dashboardCardBody() {
     return Column(
-        children: (<Widget>[
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text((baseModel.occupancy ? "Blockiert" : "Frei"),
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-              ]),
-              Container(
-                height: 2,
-              ),
-              Wrap(
-                alignment: WrapAlignment.center,
-                runAlignment: WrapAlignment.spaceEvenly,
-                children: [
-                  Text(
-                      (baseModel.lastReceived.millisecondsSinceEpoch == -62135600400000
-                          ? ""
-                          : baseModel.lastReceived.subtract(Duration(seconds: baseModel.noMotion)).toDate()),
-                      style: TextStyle()),
-                ],
-              ),
-            ] +
-            (DeviceManager.showDebugInformation
-                ? <Widget>[
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(baseModel.lastReceived.toDate()),
-                    ]),
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text(baseModel.id.toRadixString(16))]),
-                  ]
-                : <Widget>[])));
+      children: (<Widget>[
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Consumer(
+                builder: (final context, final ref, final child) {
+                  return Text((ref.watch(TradfriMotionSensorModel.occupancyProvider(id)) ? "Blockiert" : "Frei"),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24));
+                },
+              )
+            ]),
+            Container(
+              height: 2,
+            ),
+            Wrap(
+              alignment: WrapAlignment.center,
+              runAlignment: WrapAlignment.spaceEvenly,
+              children: [
+                Consumer(
+                  builder: (final context, final ref, final child) {
+                    final lastReceived = ref.watch(ZigbeeModel.lastReceivedProvider(id));
+
+                    return Text(
+                        (lastReceived.millisecondsSinceEpoch == -62135600400000
+                            ? ""
+                            : lastReceived
+                                .subtract(Duration(seconds: ref.watch(TradfriMotionSensorModel.noMotionProvider(id))))
+                                .toDate()),
+                        style: const TextStyle());
+                  },
+                ),
+              ],
+            ),
+          ] +
+          (DeviceManager.showDebugInformation
+              ? <Widget>[
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Consumer(
+                      builder: (final context, final ref, final child) {
+                        return Text(ref.watch(ZigbeeModel.lastReceivedProvider(id)).toDate());
+                      },
+                    ),
+                  ]),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text(id.toRadixString(16))]),
+                ]
+              : <Widget>[])),
+    );
   }
 
   @override
@@ -72,46 +91,36 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
   }
 }
 
-class TradfriMotionSensorScreen extends DeviceScreen {
-  final TradfriMotionSensor tradfriMotionSensor;
-  TradfriMotionSensorScreen(this.tradfriMotionSensor);
+class TradfriMotionSensorScreen extends ConsumerStatefulWidget {
+  final TradfriMotionSensor device;
+  const TradfriMotionSensorScreen(this.device, {final Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _TradfriMotionSensorScreenState();
+  _TradfriMotionSensorScreenState createState() => _TradfriMotionSensorScreenState();
 }
 
-class _TradfriMotionSensorScreenState extends State<TradfriMotionSensorScreen> {
+class _TradfriMotionSensorScreenState extends ConsumerState<TradfriMotionSensorScreen> {
   DateTime dateTime = DateTime.now();
-  late StreamSubscription sub;
 
   @override
-  void initState() {
-    super.initState();
-    sub = this.widget.tradfriMotionSensor.listenOnUpdateFromServer((p0) {
-      setState(() {});
-    });
-  }
-
-  @override
-  void deactivate() {
-    super.deactivate();
-    sub.cancel();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
+  Widget build(final BuildContext context) {
+    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(widget.device.id));
+    return Scaffold(
       appBar: AppBar(
-        title: new Text(this.widget.tradfriMotionSensor.baseModel.friendlyName),
+        title: Text(friendlyName),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
-        child: buildBody(this.widget.tradfriMotionSensor.baseModel),
+        child: buildBody(),
       ),
     );
   }
 
-  Widget buildBody(TradfriMotionSensorModel model) {
+  Widget buildBody() {
+    final model = ref.watch(widget.device.baseModelTProvider(widget.device.id));
+
+    if (model is! TradfriMotionSensorModel) return Container();
+
     return ListView(
       children: <Widget>[
         ListTile(

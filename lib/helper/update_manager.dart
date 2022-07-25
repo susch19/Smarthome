@@ -4,10 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:github/github.dart';
 import 'package:smarthome/helper/helper_methods.dart';
 import 'package:smarthome/helper/preference_manager.dart';
-import 'package:smarthome/helper/simple_dialog.dart' as simpleDialog;
-import 'package:smarthome/models/versionAndUrl.dart';
+import 'package:smarthome/helper/simple_dialog.dart' as simple_dialog;
+import 'package:smarthome/models/version_and_url.dart';
 import 'package:version/version.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final versionAndUrlProvider = StateProvider<VersionAndUrl?>((final ref) {
+  UpdateManager(ref);
+  UpdateManager.checkForNewestVersion();
+  return null;
+});
 
 class UpdateManager {
   static final Version version = Version(1, 1, 5);
@@ -25,23 +32,29 @@ class UpdateManager {
 
   static int notificationId = 0;
 
+  static late Ref _ref;
+  UpdateManager(final StateProviderRef<VersionAndUrl?> ref) {
+    _ref = ref;
+  }
+
   static Future<void> initialize() async {
     lastChecked = PreferencesManager.instance.getDateTime("lastChecked");
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final InitializationSettings initializationSettings =
+    const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings, onSelectNotification: (String? payload) {
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: (final String? payload) {
       if (payload != null) {
         HelperMethods.openUrl(payload);
       }
     });
   }
 
-  static Future<void> showUpdateNotification(BuildContext context) async {
+  static Future<void> checkForNewestVersion() async {
     print("showUpdateNotification called " + (lastChecked?.toString() ?? "lastChecked is null"));
     // TODO: at a later point maybe schedule this notification to be shown every x hours
     // TODO: maybe also put the check every x hours in the settings
@@ -51,26 +64,31 @@ class UpdateManager {
 
       final versionAndUrl = await getVersionAndUrl();
       if (versionAndUrl?.url != null && await _isNewVersionAvailable(versionAndUrl?.version)) {
-        if (Platform.isAndroid) {
-          // Show notification
-          await _showNotification(versionAndUrl!);
-        } else {
-          // Show dialog
-          showDialog(
-              context: context,
-              builder: (BuildContext c) => simpleDialog.SimpleDialog.create(
-                  context: c,
-                  title: updateNotificationTitle,
-                  content: updateNotificationBody + versionAndUrl!.version.toString(),
-                  okButtonText: "Aktualisieren",
-                  cancelButtonText: "Später",
-                  onSubmitted: () => HelperMethods.openUrl(versionAndUrl.url!)));
-        }
+        _ref.read(versionAndUrlProvider.notifier).state = versionAndUrl;
       }
     }
   }
 
-  static Future<void> _showNotification(VersionAndUrl versionAndUrl) async {
+  static Future<void> displayNotificationDialog(final BuildContext context, final VersionAndUrl versionAndUrl) async {
+    _ref.read(versionAndUrlProvider.notifier).state = null;
+    if (Platform.isAndroid) {
+      // Show notification
+      await _showNotification(versionAndUrl);
+    } else {
+      // Show dialog
+      showDialog(
+          context: context,
+          builder: (final BuildContext c) => simple_dialog.SimpleDialog.create(
+              context: c,
+              title: updateNotificationTitle,
+              content: updateNotificationBody + versionAndUrl.version.toString(),
+              okButtonText: "Aktualisieren",
+              cancelButtonText: "Später",
+              onSubmitted: () => HelperMethods.openUrl(versionAndUrl.url!)));
+    }
+  }
+
+  static Future<void> _showNotification(final VersionAndUrl versionAndUrl) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
         'updateNotifications', 'Update Benachrichtigungen',
         channelDescription: 'Benachrichtigungen über neue Updates',
@@ -83,7 +101,7 @@ class UpdateManager {
         payload: versionAndUrl.url);
   }
 
-  static String getVersionString(Version? newVersion) {
+  static String getVersionString(final Version? newVersion) {
     var v = version.toString();
 
     if (newVersion != null) {
@@ -98,7 +116,7 @@ class UpdateManager {
     return _isNewVersionAvailable(newVersion);
   }
 
-  static Future<bool> _isNewVersionAvailable(Version? newVersion) async {
+  static Future<bool> _isNewVersionAvailable(final Version? newVersion) async {
     return newVersion != null && newVersion > version;
   }
 
@@ -112,19 +130,19 @@ class UpdateManager {
   }
 
   static Future<Version?> _getNewVersion() {
-    return gitHub.repositories.listTags(repositorySlug).asyncMap((element) {
+    return gitHub.repositories.listTags(repositorySlug).asyncMap((final element) {
       try {
         return Version.parse(element.name.replaceFirst(versionRegExp, ''));
       } catch (e) {
         // TODO: log
         return null;
       }
-    }).firstWhere((element) => (element ?? Version(0, 0, 0)) > version, orElse: () => null);
+    }).firstWhere((final element) => (element ?? Version(0, 0, 0)) > version, orElse: () => null);
   }
 
   static Future<String?> _newVersionUrl() async {
     final release = await gitHub.repositories.getLatestRelease(repositorySlug);
-    return release.assets?.firstWhere((element) {
+    return release.assets?.firstWhere((final element) {
       if (Platform.isAndroid) {
         return element.contentType == "application/vnd.android.package-archive";
       } else if (Platform.isWindows) {

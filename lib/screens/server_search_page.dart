@@ -1,139 +1,149 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:multicast_dns/multicast_dns.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/mdns_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/server_record.dart';
-import 'package:version/version.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ServerSearchScreen extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() => ServerSearchScreenState();
-}
+final _currentAppVersionProvider = FutureProvider<PackageInfo>((final ref) async {
+  return await PackageInfo.fromPlatform();
+});
 
-class ServerSearchScreenState extends State<ServerSearchScreen> {
-  late Timer timer;
-  late Version currentAppVersion = Version(0,0,1);
+final serverRecordsProvider = FutureProvider.autoDispose<List<ServerRecord>>((final ref) async {
+  final records = ServerSearchScreen.refresh(force: true);
+  return records;
+});
 
-  Map<String, String> _chosenValue = Map();
-  static List<ServerRecord> servers = [];
+final _chosenValueProvider = StateProvider.family<String, String>((final ref, final value) {
+  return "";
+});
 
-  late Stream<PtrResourceRecord> sub;
-  @override
-  void dispose() {
-    super.dispose();
-    timer.cancel();
-  }
+class ServerSearchScreen extends ConsumerWidget {
+  const ServerSearchScreen({final Key? key}) : super(key: key);
 
   @override
-  void initState() {
-    super.initState();
-    MdnsManager.initialize();
-    timer = Timer.periodic(Duration(seconds: 30), (t) => refresh());
-    PackageInfo.fromPlatform().then((value) => currentAppVersion = Version.parse(value.version));
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Serversuche"),
+        title: const Text("Serversuche"),
       ),
-      body: buildBody(context),
+      body: buildBody(context, ref),
     );
   }
 
-  Widget buildBody(BuildContext context) {
+  Widget buildBody(final BuildContext context, final WidgetRef ref) {
+    final serverRecordsFinal = ref.watch(serverRecordsProvider);
+    final appVersion = ref.watch(_currentAppVersionProvider);
     return RefreshIndicator(
-        child: Container(
-          decoration: ThemeManager.getBackgroundDecoration(context),
-          child: ListView(
-            children: <Widget>[
-                  servers.length < 1
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              child: SizedBox(
-                                width: 40.0,
-                                height: 40.0,
-                                child: CircularProgressIndicator(),
-                              ),
-                              padding: const EdgeInsets.only(top: 16.0),
-                            )
-                          ],
+      child: Container(
+        decoration: ThemeManager.getBackgroundDecoration(context),
+        child: ListView(
+          children: serverRecordsFinal.when(
+              data: (final data) => data
+                  .map((final e) => mapServerValue(e, context, appVersion))
+                  .toList()
+                  .injectForIndex((final i) => i < 1 ? null : const Divider())
+                  .toList(),
+              error: (final _, final __) => [Container()],
+              loading: () => [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          child: const SizedBox(
+                            width: 40.0,
+                            height: 40.0,
+                            child: CircularProgressIndicator(),
+                          ),
+                          padding: const EdgeInsets.only(top: 16.0),
                         )
-                      : Container()
-                ] +
-                servers
-                    .map<Widget>((e) {
-                      var menuItems = e.reachableAddresses
-                          .map((a) => DropdownMenuItem(
-                                value: a.ipAddress,
-                                child: Text(a.ipAddress.toString()),
-                              ))
-                          .toList();
-                      if (menuItems.length < 1) return Container();
-                      if (!_chosenValue.containsKey(e.fqdn)) _chosenValue[e.fqdn] = e.reachableAddresses[0].ipAddress;
-
-                      return ListTile(
-                        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Row(
-                            children: [
-                              Text(
-                                e.name,
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Icon(e.minAppVersion < currentAppVersion ? Icons.check : Icons.warning),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Text("Adresse (optional): "),
-                              DropdownButton(
-                                value: _chosenValue[e.fqdn] ?? e.reachableAddresses[0].ipAddress,
-                                items: menuItems,
-                                onChanged: (value) {
-                                  setState(() {
-                                    if (value is String) _chosenValue[e.fqdn] = value;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                          Container(
-                            child: e.debug ? Text("❗ Testserver, betreten eigene Gefahr") : Container(),
-                            margin: EdgeInsets.symmetric(vertical: 8.0),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(
-                                  context,
-                                  e.reachableAddresses
-                                      .firstWhere((element) => element.ipAddress == _chosenValue[e.fqdn]));
-                            },
-                            child: Text("Verbinden"),
-                          ),
-                        ]),
-                      );
-                    })
-                    .injectForIndex((i) => i < 1 ? null : Divider())
-                    .toList(),
-          ),
+                      ],
+                    )
+                  ]),
         ),
-        onRefresh: () async => await refresh(force: true));
+      ),
+      onRefresh: () async => ref.refresh(serverRecordsProvider),
+    );
   }
 
-  Future<void> refresh({bool force = false}) async {
-    List<ServerRecord> records = [];
-    await for (var record
+  StatelessWidget mapServerValue(
+      final ServerRecord e, final BuildContext context, final AsyncValue<PackageInfo> appVersion) {
+    final menuItems = e.reachableAddresses
+        .map((final a) => DropdownMenuItem(
+              value: a.ipAddress,
+              child: Text(a.ipAddress.toString()),
+            ))
+        .toList();
+    if (menuItems.isEmpty) return Container();
+
+    return ListTile(
+      title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(
+          children: [
+            Text(
+              e.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            appVersion.when(
+                data: (final data) => Icon(e.minAppVersion < data ? Icons.check : Icons.warning),
+                error: (final error, final stackTrace) => Text(error.toString()),
+                loading: () => const Text("Loading...")),
+          ],
+        ),
+        Row(
+          children: [
+            const Text("Adresse (optional): "),
+            Consumer(
+              builder: (final context, final ref, final child) {
+                final value = ref.watch(_chosenValueProvider(e.fqdn));
+
+                return DropdownButton(
+                  value: value == "" ? e.reachableAddresses[0].ipAddress : value,
+                  items: menuItems,
+                  onChanged: (final value) {
+                    if (value is! String) return;
+                    ref.read(_chosenValueProvider(e.fqdn).notifier).state = value;
+                  },
+                );
+              },
+            )
+          ],
+        ),
+        Container(
+          child: e.debug ? const Text("❗ Testserver, betreten auf eigene Gefahr") : Container(),
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+        ),
+        Consumer(
+          builder: (final context, final ref, final child) {
+            return ElevatedButton(
+              onPressed: () {
+                final value = ref.read(_chosenValueProvider(e.fqdn));
+                Navigator.pop(
+                    context,
+                    e.reachableAddresses.firstWhere(
+                      (final element) => element.ipAddress == value,
+                      orElse: () => e.reachableAddresses.first,
+                    ));
+              },
+              child: const Text("Verbinden"),
+            );
+          },
+        )
+      ]),
+    );
+  }
+
+  static Future<List<ServerRecord>> refresh({final bool force = false}) async {
+    final List<ServerRecord> records = [];
+    if (!MdnsManager.initialized) await MdnsManager.initialize();
+
+    await for (final record
         in MdnsManager.getRecords(timeToLive: force ? const Duration(milliseconds: 1) : const Duration(minutes: 5))) {
       records.add(record);
     }
-    servers = records;
-    setState(() {});
+    return records;
   }
 }

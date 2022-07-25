@@ -1,22 +1,21 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:signalr_core/signalr_core.dart';
+import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/devices/zigbee/zigbee_model.dart';
+import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../device_manager.dart';
-import 'osram_plug_model.dart';
 
-class OsramPlug extends Device<OsramPlugModel> {
-  OsramPlug(int? id, String typeName, OsramPlugModel model, HubConnection connection, IconData icon)
-      : super(id, typeName, model, connection, icon);
+class OsramPlug extends Device<ZigbeeSwitchModel> {
+  OsramPlug(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
   @override
-  void navigateToDevice(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => OsramPlugScreen(this)));
+  void navigateToDevice(final BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => OsramPlugScreen(this)));
   }
 
   @override
@@ -26,16 +25,26 @@ class OsramPlug extends Device<OsramPlugModel> {
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
         MaterialButton(
-          child: Text(
-            "An",
-            style: baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+              return Text(
+                "An",
+                style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
           onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
         ),
         MaterialButton(
-          child: Text(
-            "Aus",
-            style: !baseModel.state ? TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : TextStyle(),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+              return Text(
+                "Aus",
+                style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+              );
+            },
           ),
           onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
         ),
@@ -49,60 +58,43 @@ class OsramPlug extends Device<OsramPlugModel> {
   }
 }
 
-class OsramPlugScreen extends DeviceScreen {
-  final OsramPlug osramPlug;
-  OsramPlugScreen(this.osramPlug);
+class OsramPlugScreen extends ConsumerWidget {
+  final OsramPlug device;
+  const OsramPlugScreen(this.device, {final Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _OsramPlugScreenState();
-}
-
-class _OsramPlugScreenState extends State<OsramPlugScreen> {
-  DateTime dateTime = DateTime.now();
-  late StreamSubscription sub;
-
-  @override
-  void initState() {
-    super.initState();
-    sub = this.widget.osramPlug.listenOnUpdateFromServer((p0) {
-      setState(() {});
-    });
-  }
-
-  @override
-  void deactivate() {
-    super.deactivate();
-    sub.cancel();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(device.id));
+    return Scaffold(
       appBar: AppBar(
-        title: new Text(this.widget.osramPlug.baseModel.friendlyName),
+        title: Text(friendlyName),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
-        child: buildBody(this.widget.osramPlug.baseModel),
+        child: buildBody(ref),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => this.widget.osramPlug.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () => device.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
       ),
     );
   }
 
-  Widget buildBody(OsramPlugModel model) {
+  Widget buildBody(final WidgetRef ref) {
+    final state = ref.watch(ZigbeeSwitchModel.stateProvider(device.id));
+    final available = ref.watch(ZigbeeModel.availableProvider(device.id));
+    final linkQuality = ref.watch(ZigbeeModel.linkQualityProvider(device.id));
+
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Angeschaltet: " + (model.state ? "Ja" : "Nein")),
+          title: Text("Angeschaltet: " + (state ? "Ja" : "Nein")),
         ),
         ListTile(
-          title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
+          title: Text("Verfügbar: " + (available ? "Ja" : "Nein")),
         ),
         ListTile(
-          title: Text("Verbindungsqualität: " + (model.linkQuality.toString())),
+          title: Text("Verbindungsqualität: " + (linkQuality.toString())),
         ),
       ],
     );

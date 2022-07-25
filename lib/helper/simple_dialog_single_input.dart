@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 
 class SimpleDialogSingleInput {
   static AlertDialog create(
-      {String? hintText,
-      String? labelText,
-      String cancelButtonText = "Cancel",
-      String acceptButtonText = "Accept",
-      required String title,
-      String defaultText = "",
-      int maxLines = 1,
-      ValueChanged<String>? onSubmitted,
-      BuildContext? context}) {
-    var tec = TextEditingController();
+      {final String? hintText,
+      final String? labelText,
+      final String cancelButtonText = "Cancel",
+      final String acceptButtonText = "Accept",
+      required final String title,
+      final String defaultText = "",
+      final int maxLines = 1,
+      final ValueChanged<String>? onSubmitted,
+      final BuildContext? context}) {
+    final tec = TextEditingController();
     tec.text = defaultText;
 
     return AlertDialog(
@@ -24,7 +24,7 @@ class SimpleDialogSingleInput {
                   controller: tec,
                   maxLines: maxLines,
                   autofocus: true,
-                  onSubmitted: (s) {
+                  onSubmitted: (final s) {
                     Navigator.pop(context!);
                     onSubmitted!(s);
                   }),

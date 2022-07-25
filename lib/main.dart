@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -11,6 +10,7 @@ import 'package:smarthome/dashboard/group_devices.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
 import 'package:smarthome/devices/device_manager.dart';
+import 'package:smarthome/devices/device_overview_model.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
@@ -20,11 +20,11 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
 import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/screens/settings_page.dart';
-import 'package:smarthome/session/cert_file.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'controls/expandable_fab.dart';
 import 'helper/connection_manager.dart';
@@ -40,305 +40,295 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  var prefs = await SharedPreferences.getInstance();
+  final prefs = await SharedPreferences.getInstance();
   // prefs.clear();
 
   PreferencesManager.instance = PreferencesManager(prefs);
 
   final savedThemeMode = await AdaptiveTheme.getThemeMode() ?? AdaptiveThemeMode.system;
   DeviceManager.init();
-  SettingsManager.initialize();
   Intl.defaultLocale = "de-DE";
-  initializeDateFormatting("de-DE", null).then((_) => runApp(MyApp(savedThemeMode)));
+  initializeDateFormatting("de-DE").then((final _) {
+    // ConnectionManager.startConnection();
+    runApp(ProviderScope(
+      child: MyApp(savedThemeMode),
+    ));
+  });
   UpdateManager.initialize();
 }
 
+final _brightnessChangeProvider =
+    ChangeNotifierProvider.autoDispose.family<AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
+  return AdaptiveThemeModeWatcher(b);
+});
+
+final brightnessProvider = Provider.autoDispose.family<Brightness, AdaptiveThemeManager>((final ref, final b) {
+  return ref.watch(_brightnessChangeProvider(b)).brightness;
+});
+
+class AdaptiveThemeModeWatcher extends ChangeNotifier {
+  late Brightness brightness;
+
+  final AdaptiveThemeManager _themeManager;
+  AdaptiveThemeModeWatcher(this._themeManager) {
+    _themeManager.modeChangeNotifier.addListener(modeChanged);
+    brightness = _themeManager.brightness;
+  }
+
+  void modeChanged() {
+    final newBrightness = _themeManager.brightness;
+    if (newBrightness != brightness) {
+      brightness = newBrightness;
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _themeManager.modeChangeNotifier.removeListener(modeChanged);
+    super.dispose();
+  }
+}
+
 class MyApp extends StatelessWidget {
-  MyApp(this.savedThemeMode);
+  const MyApp(this.savedThemeMode, {final Key? key}) : super(key: key);
 
   static late PreferencesManager prefManager;
   final AdaptiveThemeMode savedThemeMode;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return AdaptiveTheme(
         light: ThemeManager.getLightTheme(),
         dark: ThemeManager.getDarkTheme(),
         initial: savedThemeMode,
-        builder: (theme, darkTheme) => MaterialApp(
+        builder: (final theme, final darkTheme) => MaterialApp(
               scrollBehavior: CustomScrollBehavior(),
               title: 'Smarthome',
               theme: theme,
               darkTheme: darkTheme,
-              home: MyHomePage(title: 'Smarthome Home Page'),
+              home: const MyHomePage(title: 'Smarthome Home Page'),
             ));
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, this.title}) : super(key: key);
+class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserver {
+  final Ref ref;
+  InfoIconProvider(this.ref) : super(Icons.refresh) {
+    final connection = ref.watch(hubConnectionStateProvider);
 
-  final String? title;
+    if (connection == HubConnectionState.disconnected) {
+      state = Icons.warning;
+    } else if (connection == HubConnectionState.connected) {
+      state = Icons.check;
+    }
+
+    WidgetsBinding.instance.addObserver(this);
+    ConnectionManager.connectionIconChanged.addListener(() {
+      if (!mounted) return;
+      state = ConnectionManager.connectionIconChanged.value;
+    });
+  }
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  IconData? infoIcon;
-  CertFile? certFile;
-
-  @override
-  void initState() {
-    infoIcon = Icons.refresh;
-    super.initState();
-    UpdateManager.showUpdateNotification(context);
-
-    WidgetsBinding.instance!.addObserver(this);
-    doStuff();
-    Timer.periodic(Duration(milliseconds: 500), (timer) async {
-      setState(() {
-        if (ConnectionManager.hubConnection.state == HubConnectionState.disconnected)
-          infoIcon = Icons.warning;
-        else if (ConnectionManager.hubConnection.state == HubConnectionState.connected) infoIcon = Icons.check;
-      });
-    });
-    SettingsManager.serverUrlChanged.addListener(ConnectionManager.newHubConnection);
-    DeviceManager.deviceStateChanged.addListener(() {
-      setState(() {});
-    });
+  void didChangeAppLifecycleState(final AppLifecycleState state) {
+    if (state.index == 0) {
+      ConnectionManager.newHubConnection(ref: ref);
+    } else if (state.index == 2) {
+      this.state = Icons.error_outline;
+      final connectionState = ref.watch(hubConnectionStateProvider);
+      if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
+    }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
+}
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    //resumed: 0, inactive: 1, paused: 2
-    if (state.index == 0)
-      ConnectionManager.newHubConnection();
-    else if (state.index == 2) {
-      infoIcon = Icons.error_outline;
-      if (ConnectionManager.hubConnection.state == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
+final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
+  (final ref) => InfoIconProvider(ref),
+);
+
+final maxCrossAxisExtentProvider = StateProvider<double>((final _) =>
+    PreferencesManager.instance.getDouble("DashboardCardSize") ?? (!kIsWeb && Platform.isAndroid ? 370 : 300));
+
+class MyHomePage extends ConsumerWidget {
+  const MyHomePage({final Key? key, this.title}) : super(key: key);
+
+  final String? title;
+
+  Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
+    final deviceGroupsRaw = ref.watch(sortedDeviceProvider);
+    final deviceGroups = deviceGroupsRaw.groupManyBy((final x) => ref.watch(Device.groupsByIdProvider(x.id)));
+    final versionAndUrl = ref.watch(versionAndUrlProvider);
+    if (versionAndUrl != null) {
+      WidgetsBinding.instance.addPostFrameCallback((final _) async {
+        await UpdateManager.displayNotificationDialog(context, versionAndUrl);
+      });
     }
-  }
 
-  Future doStuff() async {
-    setState(() {
-      infoIcon = Icons.refresh;
-    });
-    // certFile = await loadCertFile(PreferencesManager.instance);
-    certFile = null;
-
-    ConnectionManager.startConnection();
-    setState(() {});
-  }
-
-  Widget buildBodyGrouped() {
-    var deviceGroups = DeviceManager.devices.groupManyBy((x) => x.groups);
     return Container(
       decoration: ThemeManager.getBackgroundDecoration(context),
       child: RefreshIndicator(
         child: ConstrainedBox(
           child: OrientationBuilder(
-            builder: (context, orientation) {
-              return StaggeredGridView.extentBuilder(
-                  maxCrossAxisExtent: !kIsWeb && Platform.isAndroid ? 370 : 300,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  itemCount: deviceGroups.length,
-                  itemBuilder: (context, i) {
-                    var deviceGroup = deviceGroups.elementAt(i);
-                    if (deviceGroup == null) return Text("Empty Entry");
-                    return Container(
-                      margin: EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                      child: getDashboardCard(deviceGroup, context),
-                    );
-                    // var device = DeviceManager.devices[i];
-                    // return device.dashboardView(
-                    //   () {
-                    //     deviceAction(device);
-                    //     setState(() {});
-                    //   },
-                    // );
-                  },
-                  staggeredTileBuilder: (int index) => new StaggeredTile.fit(1));
+            builder: (final context, final orientation) {
+              return Consumer(
+                builder: (final context, final ref, final child) {
+                  return MasonryGridView.extent(
+                    maxCrossAxisExtent:
+                        ref.watch(maxCrossAxisExtentProvider), //!kIsWeb && Platform.isAndroid ? 370 : 300,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    itemCount: deviceGroups.length,
+                    itemBuilder: (final context, final i) {
+                      final deviceGroup = deviceGroups.elementAt(i);
+                      if (deviceGroup == null) return const Text("Empty Entry");
+                      return Container(
+                        margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+                        child: getDashboardCard(context, deviceGroup),
+                      );
+                    },
+
+                    // staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1)
+                  );
+                },
+              );
             },
           ),
           constraints: BoxConstraints.tight(Size.infinite),
         ),
-        onRefresh: () async => refresh(),
-        triggerMode: RefreshIndicatorTriggerMode.onEdge,
+        onRefresh: () async => refresh(ref),
       ),
     );
   }
 
-  Widget buildBody() {
+  Widget buildBody(final BuildContext context, final WidgetRef ref) {
+    final devices = ref.watch(sortedDeviceProvider);
     return Container(
       decoration: ThemeManager.getBackgroundDecoration(context),
       child: RefreshIndicator(
         child: ConstrainedBox(
           child: OrientationBuilder(
-            builder: (context, orientation) {
-              return StaggeredGridView.extentBuilder(
-                  maxCrossAxisExtent: !kIsWeb && Platform.isAndroid ? 370 : 300,
-                  mainAxisSpacing: 0,
-                  crossAxisSpacing: 0,
-                  itemCount: DeviceManager.devices.length,
-                  itemBuilder: (context, i) {
-                    var device = DeviceManager.devices[i];
-                    return Container(
-                      margin: EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                      child: device.dashboardView(
-                        () {
-                          deviceAction(device);
-                          setState(() {});
-                        },
-                      ),
-                    );
-                    // var device = DeviceManager.devices[i];
-                    // return device.dashboardView(
-                    //   () {
-                    //     deviceAction(device);
-                    //     setState(() {});
-                    //   },
-                    // );
-                  },
-                  staggeredTileBuilder: (int index) => new StaggeredTile.fit(1));
-            },
-          ),
-          constraints: BoxConstraints.tight(Size.infinite),
-        ),
-        onRefresh: () async => refresh(),
-        triggerMode: RefreshIndicatorTriggerMode.onEdge,
-      ),
-    );
-  }
-
-  Widget getDashboardCard(MapEntry<String, List<Device<BaseModel>>> deviceGroup, BuildContext context) {
-    return
-        // ClipRRect(
-        //   borderRadius: BorderRadius.circular(10),
-        //   child:
-        Container(
-      // color: (ThemeManager.isLightTheme ? Colors.blue.shade300.withOpacity(0.1) : Colors.blue.shade800).withAlpha(75),
-      child: Container(
-        // blur: 5,
-        child: Column(
-            children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.only(left: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            DeviceManager.getGroupName(
-                              deviceGroup.key,
-                            ),
-                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                        PopupMenuButton<String>(
-                          onSelected: (o) => groupOption(o, deviceGroup),
-                          itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-                            PopupMenuItem<String>(value: 'Rename', child: Text("Umbenennen")),
-                            PopupMenuItem<String>(value: 'Delete', child: Text("Entfernen")),
-                            PopupMenuItem<String>(value: 'Edit', child: Text("Geräte zuordnen")),
-                          ],
-                        )
-                        // IconButton(
-                        //   icon: Icon(Icons.edit),
-                        //   onPressed: () {
-
-                        //   },
-                        // ),
-                      ],
-                    ),
-                  ),
-                ] +
-                deviceGroup.value
-                    .map<Widget>(
-                      (e) => Container(
-                        margin: EdgeInsets.only(bottom: 0),
-                        child: e.dashboardView(
+            builder: (final context, final orientation) {
+              return Consumer(
+                builder: (final context, final ref, final child) {
+                  return MasonryGridView.extent(
+                    maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
+                    itemCount: devices.length,
+                    itemBuilder: (final context, final i) {
+                      final device = devices[i];
+                      return Container(
+                        margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+                        child: device.dashboardView(
                           () {
-                            deviceAction(e);
-                            setState(() {});
+                            deviceAction(context, ref, device);
                           },
                         ),
-                      ),
-                    )
-                    .toList()),
+                      );
+                    },
+                    // staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1)
+                  );
+                },
+              );
+            },
+          ),
+          constraints: BoxConstraints.tight(Size.infinite),
+        ),
+        onRefresh: () async => refresh(ref),
       ),
-      // ),
     );
   }
 
-  void groupOption(String value, MapEntry<String, List<Device<BaseModel>>> deviceGroup) {
+  Widget getDashboardCard(
+    final BuildContext context,
+    final MapEntry<String, List<Device<BaseModel>>> deviceGroup,
+  ) {
+    return Column(
+        children: <Widget>[
+              Container(
+                margin: const EdgeInsets.only(left: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(child: Consumer(
+                      builder: (final context, final ref, final child) {
+                        final groupName = ref.watch(DeviceManager.customGroupNameProvider(deviceGroup.key));
+                        return Text(
+                          groupName,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        );
+                      },
+                    )),
+                    Consumer(
+                      builder: (final context, final ref, final child) {
+                        return PopupMenuButton<String>(
+                          onSelected: (final o) => groupOption(context, ref, o, deviceGroup),
+                          itemBuilder: (final BuildContext context) => <PopupMenuItem<String>>[
+                            const PopupMenuItem<String>(value: 'Rename', child: Text("Umbenennen")),
+                            const PopupMenuItem<String>(value: 'Delete', child: Text("Entfernen")),
+                            const PopupMenuItem<String>(value: 'Edit', child: Text("Geräte zuordnen")),
+                          ],
+                        );
+                      },
+                    )
+                  ],
+                ),
+              ),
+            ] +
+            deviceGroup.value
+                .map<Widget>((final e) => Consumer(
+                      builder: (final context, final ref, final child) {
+                        return Container(
+                          margin: const EdgeInsets.only(),
+                          child: e.dashboardView(
+                            () {
+                              deviceAction(context, ref, e);
+                            },
+                          ),
+                        );
+                      },
+                    ))
+                .toList());
+  }
+
+  void groupOption(final BuildContext context, final WidgetRef ref, final String value,
+      final MapEntry<String, List<Device<BaseModel>>> deviceGroup) {
     switch (value) {
       case 'Rename':
-        var sd = SimpleDialogSingleInput.create(
+        final sd = SimpleDialogSingleInput.create(
             hintText: "Name der Gruppe",
             labelText: "Name",
             acceptButtonText: "Umbenennen",
             cancelButtonText: "Abbrechen",
-            defaultText: DeviceManager.getGroupName(
-              deviceGroup.key,
-            ),
-            onSubmitted: (s) {
+            defaultText: ref.read(DeviceManager.customGroupNameProvider(deviceGroup.key)),
+            onSubmitted: (final s) {
               DeviceManager.changeGroupName(deviceGroup.key, s);
             },
             title: "Gruppenname ändern",
             context: context);
-        showDialog(builder: (BuildContext context) => sd, context: context);
+        showDialog(builder: (final BuildContext context) => sd, context: context);
         break;
       case 'Delete':
-        deviceGroup.value.forEach((element) {
-          element.groups.remove(deviceGroup.key);
-          if (element.groups.length == 0) removeDevice(element, pop: false);
-        });
+        for (final element in deviceGroup.value) {
+          final groupsState = ref.read(Device.groupsByIdProvider(element.id).notifier);
+          final groups = groupsState.state.toList();
+
+          groups.remove(deviceGroup.key);
+          if (groups.isEmpty) removeDevice(context, ref, element.id, pop: false);
+          groupsState.state = groups;
+        }
         DeviceManager.saveDeviceGroups();
 
         break;
       case 'Edit':
-        Navigator.push(context, MaterialPageRoute(builder: (c) => GroupDevices(deviceGroup)));
-        // var devicesToSelect = <Widget>[];
-        // var t = true;
-        // for (var i in DeviceManager.devices) {
-        //   if (deviceGroup.value.any((element) => element.id == i.id)) continue;
-        //   devicesToSelect.add(
-        //     SimpleDialogOption(
-        //       child: Row(
-        //         children: [
-        //           Checkbox(
-        //               value: t,
-        //               onChanged: (v) => setState(() {
-        //                     t = !t;
-        //                   })),
-        //           Icon(i.icon),
-        //           Text(i.baseModel.friendlyName + " : " + i.typeName),
-        //         ],
-        //       ),
-        //       onPressed: () async {
-        //         // Navigator.pop(context);
-        //       },
-        //     ),
-        //   );
-        // }
+        Navigator.push(context, MaterialPageRoute(builder: (final c) => GroupDevices(deviceGroup.key, false)));
 
-        // var dialog = SimpleDialog(
-        //   children: devicesToSelect,
-        //   title: Text((devicesToSelect.length == 0 ? "No new Devices found" : "Add new Smarthome Device")),
-        // );
-        // showDialog(context: context, builder: (b) => dialog);
-        // setState(() {});
         break;
 
       default:
@@ -346,297 +336,219 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
-  Future addDevice(int? id, dynamic device) async {
-    if (!device.containsKey("typeNames")) {
-      tryCreateDevice(id, device, device["typeName"]);
-      return;
-    }
-
-    var typeNames = device["typeNames"];
-
-    for (var item in typeNames) {
-      if (await tryCreateDevice(id, device, item)) return;
+  Future addDevice(final DeviceOverviewModel device) async {
+    for (final item in device.typeNames) {
+      if (await tryCreateDevice(device, item)) return;
     }
   }
 
-  Future<bool> tryCreateDevice(int? id, dynamic device, String item) async {
+  Future<bool> tryCreateDevice(final DeviceOverviewModel device, final String item) async {
     if (!DeviceManager.ctorFactory.containsKey(item) || !DeviceManager.stringNameJsonFactory.containsKey(item)) {
       return false;
     }
-    DeviceManager.devices.add(
-        DeviceManager.ctorFactory[item]!(device["id"], DeviceManager.stringNameJsonFactory[item]!(device))
-            as Device<BaseModel>);
-    PreferencesManager.instance.setInt("SHD" + device["id"].toString(), device["id"]);
-    PreferencesManager.instance.setString("Json" + device["id"].toString(), jsonEncode(device));
-    PreferencesManager.instance.setString("Type" + device["id"].toString(), item);
-    if (device["typeNames"] != null) {
-      List<String> typeNames = <String>[];
-      for (var item in device["typeNames"]) {
-        typeNames.add(item.toString());
-      }
 
-      PreferencesManager.instance.setStringList("Types" + device["id"].toString(), typeNames);
-    }
-
-    await DeviceManager.subscribeToDevice([device["id"]]);
-    DeviceManager.sortDevices();
-    setState(() {});
+    DeviceManager.subscribeToDevice(device.id);
     return true;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final _ = ref.watch(brightnessProvider(AdaptiveTheme.of(context)));
+    final settings = ref.watch(groupingEnabledProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Smart Home App"),
-        leading: IconButton(icon: Icon(infoIcon), onPressed: refresh),
-        // backgroundColor: Colors.blue.shade800.withAlpha(128),
-        // gradient: LinearGradient(
-        //   colors: [Colors.blue.shade900, Colors.deepPurple.shade900],
-        //   begin: Alignment(-2.0, -1.0),
-        //   end: Alignment(2.0, 1.0),
-        //   // tileMode: TileMode.clamp,
-        //   // begin: Alignment(-1.0, 0.0),
-        //   // end: Alignment(1.0, 30.0),
-        // ),
+        title: const Text("Smart Home App"),
+        leading: IconButton(icon: Icon(ref.watch(infoIconProvider)), onPressed: () => refresh(ref)),
         actions: <Widget>[
           PopupMenuButton<String>(
-            child: Icon(Icons.sort),
-            onSelected: selectedSort,
-            itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-              PopupMenuItem<String>(value: 'Name', child: Text("Name")),
-              PopupMenuItem<String>(value: 'Typ', child: Text("Gerätetyp")),
-              PopupMenuItem<String>(value: 'Id', child: Text("Id")),
+            child: const Icon(Icons.sort),
+            onSelected: (final v) => selectedSort(ref, v),
+            itemBuilder: (final BuildContext context) => <PopupMenuItem<String>>[
+              const PopupMenuItem<String>(value: 'Name', child: Text("Name")),
+              const PopupMenuItem<String>(value: 'Typ', child: Text("Gerätetyp")),
+              const PopupMenuItem<String>(value: 'Id', child: Text("Id")),
             ],
           ),
           PopupMenuButton<String>(
-            onSelected: selectedOption,
-            itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-              // PopupMenuItem<String>(value: 'URL', child: Text("Ändere Server Url")),
-              // PopupMenuItem<String>(value: 'Time', child: Text("Zeit Update")),
-              // PopupMenuItem<String>(value: 'Theme', child: Text("Theme umstellen")),
-              // PopupMenuItem<String>(value: 'Groups', child: Text("Gruppierungen ein/-ausblenden")),
-              // PopupMenuItem<String>(value: 'Debug', child: Text("Toggle Debug")),
-              PopupMenuItem<String>(value: 'RemoveAll', child: Text("Entferne alle Geräte")),
-              // PopupMenuItem<String>(value: 'Info', child: Text("Information")),
-              // PopupMenuItem<String>(value: 'ServerSearch', child: Text("Serversuche")),
-              PopupMenuItem<String>(value: 'Settings', child: Text("Einstellungen")),
+            onSelected: (final v) => selectedOption(context, v),
+            itemBuilder: (final BuildContext context) => <PopupMenuItem<String>>[
+              const PopupMenuItem<String>(value: 'RemoveAll', child: Text("Entferne alle Geräte")),
+              const PopupMenuItem<String>(value: 'Settings', child: Text("Einstellungen")),
             ],
           ),
         ],
       ),
-      body: SettingsManager.groupingEnabled ? buildBodyGrouped() : buildBody(),
+      body: settings ? buildBodyGrouped(context, ref) : buildBody(context, ref),
       floatingActionButton: ExpandableFab(
         distance: 64.0,
         children: [
           ActionButton(
-            onPressed: addNewDevice,
+            onPressed: () => addNewDevice(context, ref),
             icon: const Icon(Icons.add),
           ),
           ActionButton(
-            onPressed: addGroup,
+            onPressed: () => addGroup(context),
             icon: const Icon(Icons.group_rounded),
           ),
         ],
       ),
-
-      // FloatingActionButton(
-      //   onPressed: addNewDevice,
-
-      //   child: Icon(Icons.add),
-      // ),
     );
   }
 
-  void selectedOption(String value) {
+  void selectedOption(final BuildContext context, final String value) {
     switch (value) {
-      // case "ServerSearch":
-      //   Navigator.push(context, MaterialPageRoute(builder: (c) => ServerSearchScreen())).then((value) {
-      //     if (value is IpPort) {
-      //       var uri = Uri.parse("http://" + value.ipAddress);
-      //       uri = Uri(host: uri.host, port: value.port, scheme: uri.scheme, path: "SmartHome");
-      //       serverUrl = uri.toString();
-      //       PreferencesManager.instance.setString("mainserverurl", serverUrl);
-      //       newHubConnection();
-      //     }
-      //   });
-      //   break;
-      // case "URL":
-      //   var sd = SimpleDialogSingleInput.create(
-      //       hintText: "URL of Smarthome Server",
-      //       labelText: "URL",
-      //       defaultText: serverUrl,
-      //       onSubmitted: (s) {
-      //         serverUrl = s;
-      //         PreferencesManager.instance.setString("mainserverurl", s);
-      //         newHubConnection();
-      //       },
-      //       title: "Change URL",
-      //       context: context);
-      //   showDialog(builder: (BuildContext context) => sd, context: context);
-      //   break;
       case "Debug":
         DeviceManager.showDebugInformation = !DeviceManager.showDebugInformation;
-        setState(() {});
         break;
       case "Theme":
         AdaptiveTheme.of(context).toggleThemeMode();
         break;
-      // case "Groups":
-      //   setState(() {
-      //     isGrouped = !isGrouped;
-      //   });
-      //   PreferencesManager.instance.setBool("Groupings", isGrouped);
-
-      //   break;
       case "RemoveAll":
-        for (int i = DeviceManager.devices.length - 1; i >= 0; i--) {
-          var d = DeviceManager.devices.removeAt(i);
-          PreferencesManager.instance.remove("SHD" + d.id!.toString());
-          PreferencesManager.instance.remove("Json" + d.id!.toString());
-          PreferencesManager.instance.remove("Type" + d.id!.toString());
-        }
-        DeviceManager.saveDeviceGroups();
-        setState(() {});
+        DeviceManager.removeAllDevices();
         break;
       case "Info":
-        Navigator.push(context, MaterialPageRoute(builder: (c) => AboutScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (final c) => const AboutScreen()));
         break;
       case 'Settings':
-        Navigator.push(context, MaterialPageRoute(builder: (c) => SettingsPage()));
+        Navigator.push(context, MaterialPageRoute(builder: (final c) => const SettingsPage()));
         break;
     }
   }
 
-  void deviceAction(Device d) {
-    var actions = <Widget>[];
+  void deviceAction(final BuildContext context, final WidgetRef ref, final Device d) {
+    final actions = <Widget>[];
 
     actions.add(
       SimpleDialogOption(
-        child: Text("Umbenennen"),
-        onPressed: () => renameDevice(d),
+        child: const Text("Umbenennen"),
+        onPressed: () => renameDevice(context, ref, d),
       ),
     );
     actions.add(
       SimpleDialogOption(
-        child: Text("Entfernen"),
-        onPressed: () => removeDevice(d),
+        child: const Text("Entfernen"),
+        onPressed: () => removeDevice(context, ref, d.id),
       ),
     );
 
-    var dialog = SimpleDialog(
+    final dialog = SimpleDialog(
       children: actions,
-      title: Text("Gerät " + (d.baseModel.friendlyName)),
+      title: Consumer(
+        builder: (final context, final ref, final child) {
+          return Text("Gerät " + (ref.watch(BaseModel.friendlyNameProvider(d.id))));
+        },
+      ),
     );
-    showDialog(context: context, builder: (b) => dialog);
+    showDialog(context: context, builder: (final b) => dialog);
   }
 
-  void removeDevice(Device d, {bool pop = true}) {
-    DeviceManager.devices.remove(d);
-    PreferencesManager.instance.remove("SHD" + d.id.toString());
-    PreferencesManager.instance.remove("Json" + d.id.toString());
-    PreferencesManager.instance.remove("Type" + d.id.toString());
+  void removeDevice(final BuildContext context, final WidgetRef ref, final int id, {final bool pop = true}) {
+    final deviceId = ref.read(deviceIdProvider.notifier);
+    final list = deviceId.state.toList();
+    list.remove(id);
+    deviceId.state = list;
     if (pop) Navigator.pop(context);
-    setState(() {});
   }
 
-  renameDevice(Device x) {
+  renameDevice(final BuildContext context, final WidgetRef ref, final Device x) {
     showDialog(
         context: context,
-        builder: (BuildContext context) => SimpleDialogSingleInput.create(
+        builder: (final BuildContext context) => SimpleDialogSingleInput.create(
             context: context,
             title: "Gerät benennen",
             hintText: "Name für das Gerät",
             labelText: "Name",
-            defaultText: x.baseModel.friendlyName,
+            defaultText: ref.read(BaseModel.friendlyNameProvider(x.id)),
             maxLines: 2,
-            onSubmitted: (s) async {
-              x.baseModel.friendlyName = s;
-              x.updateDeviceOnServer();
-              setState(() {});
-            })).then((x) => Navigator.of(context).pop());
+            onSubmitted: (final s) async {
+              x.updateDeviceOnServer(x.id, s);
+            })).then((final x) => Navigator.of(context).pop());
   }
 
-  void selectedSort(String value) {
+  void selectedSort(final WidgetRef ref, final String value) {
+    final currentSortState = ref.watch(deviceSortProvider.notifier);
+    SortTypes newSort = currentSortState.state;
     switch (value) {
       case "Name":
-        DeviceManager.currentSort =
-            DeviceManager.currentSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
+        newSort = newSort == SortTypes.NameAsc ? SortTypes.NameDesc : SortTypes.NameAsc;
         break;
       case "Typ":
-        DeviceManager.currentSort =
-            DeviceManager.currentSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
+        newSort = newSort == SortTypes.TypeAsc ? SortTypes.TypeDesc : SortTypes.TypeAsc;
         break;
       case "Id":
-        DeviceManager.currentSort = DeviceManager.currentSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
+        newSort = newSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
         break;
     }
-
-    setState(() => DeviceManager.sortDevices());
+    currentSortState.state = newSort;
+    PreferencesManager.instance.setInt("SortOrder", newSort.index);
   }
 
-  Future addNewDevice() async {
+  Future addNewDevice(final BuildContext context, final WidgetRef ref) async {
     if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
       await ConnectionManager.hubConnection.start();
     }
 
-    var s = ConnectionManager.hubConnection.invoke("GetAllDevices", args: []);
+    final serverDevices =
+        (await ConnectionManager.hubConnection.invoke("GetDeviceOverview", args: [])) as List<dynamic>;
+    final serverDevicesList = serverDevices.map((final e) => DeviceOverviewModel.fromJson(e)).toList();
 
-    List<dynamic> serverDevices = await s;
-
-    var devicesToSelect = <Widget>[];
-    serverDevices.sort((x, y) => x["typeName"].compareTo(y["typeName"]));
-    for (var i in serverDevices) {
-      if (!DeviceManager.devices.any((x) => x.id == i["id"]))
+    final devices = ref.read(deviceProvider);
+    final devicesToSelect = <Widget>[];
+    for (final dev in serverDevicesList) {
+      if (!devices.any((final x) => x.id == dev.id)) {
         devicesToSelect.add(
           SimpleDialogOption(
-            child: Text((i["friendlyName"] ?? i["id"].toString()) + ": " + i["typeName"].toString()),
+            child: Text((dev.friendlyName ?? dev.id.toString()) + ": " + dev.typeNames[0]),
             onPressed: () async {
-              await addDevice(i["Id"], i);
+              await addDevice(dev);
               Navigator.pop(context);
             },
           ),
         );
+      }
     }
     if (devicesToSelect.length > 1) {
       devicesToSelect.insert(
         0,
         SimpleDialogOption(
-          child: Text("Subscribe to all"),
+          child: const Text("Subscribe to all"),
           onPressed: () async {
-            for (var dev in serverDevices) {
-              if (!DeviceManager.devices.any((x) => x.id == dev["id"])) await addDevice(dev["Id"], dev);
-            }
+            DeviceManager.subscribeToDevices(serverDevicesList
+                .map((final e) => e.id)
+                .where((final element) => !devices.any((final x) => x.id == element))
+                .toList());
+            // }
             Navigator.pop(context);
           },
         ),
       );
     }
 
-    var dialog = SimpleDialog(
+    final dialog = SimpleDialog(
       children: devicesToSelect,
-      title: Text((devicesToSelect.length == 0 ? "No new Devices found" : "Add new Smarthome Device")),
+      title: Text((devicesToSelect.isEmpty ? "No new Devices found" : "Add new Smarthome Device")),
     );
-    showDialog(context: context, builder: (b) => dialog);
-    setState(() {});
+    showDialog(context: context, builder: (final b) => dialog);
   }
 
-  void refresh() {
-    ConnectionManager.newHubConnection();
-    setState(() {});
+  void refresh(final WidgetRef ref) {
+    ConnectionManager.newHubConnection(widgetRef: ref).then((final value) async {
+      await DeviceManager.reloadCurrentDevices();
+    });
   }
 
-  void addGroup() {
-    var sd = SimpleDialogSingleInput.create(
+  void addGroup(final BuildContext context) {
+    final sd = SimpleDialogSingleInput.create(
         hintText: "Name der neuen Gruppe",
         labelText: "Name",
         acceptButtonText: "Erstellen",
         cancelButtonText: "Abbrechen",
-        onSubmitted: (s) {
-          Navigator.push(context, MaterialPageRoute(builder: (c) => GroupDevices(MapEntry(s, []))));
+        onSubmitted: (final s) {
+          Navigator.push(context, MaterialPageRoute(builder: (final c) => GroupDevices(s, true)));
         },
         title: "Neue Gruppe",
         context: context);
-    showDialog(builder: (BuildContext context) => sd, context: context);
+    showDialog(builder: (final BuildContext context) => sd, context: context);
   }
 }

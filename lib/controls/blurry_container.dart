@@ -4,7 +4,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-
 const double kBlur = 1.0;
 const EdgeInsetsGeometry kDefaultPadding = EdgeInsets.all(0);
 const EdgeInsetsGeometry kDefaultMargin = EdgeInsets.all(0);
@@ -21,19 +20,19 @@ class BlurryContainer extends StatelessWidget {
   final BorderRadius borderRadius;
   final BlendMode blendMode;
 
-
-  BlurryContainer(
+  const BlurryContainer(
       {this.child,
       this.blur = 5,
       this.padding = kDefaultPadding,
       this.color = kDefaultColor,
       this.borderRadius = kBorderRadius,
       this.margin = kDefaultMargin,
-      this.blendMode = kblendMode
-      });
+      this.blendMode = kblendMode,
+      final Key? key})
+      : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return ClipRRect(
       borderRadius: borderRadius,
       child: BackdropFilter(
