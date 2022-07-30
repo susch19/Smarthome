@@ -5,7 +5,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
+// import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
@@ -22,25 +23,26 @@ import 'device_exporter.dart';
 
 final deviceIdProvider = StateProvider<List<int>>((final _) => []);
 
-final deviceProvider = StateNotifierProvider<DeviceManager, List<Device>>((final ref) {
+final deviceProvider = StateNotifierProvider.autoDispose<DeviceManager, List<Device>>((final ref) {
   final deviceIds = ref.watch(deviceIdProvider);
   final dm = DeviceManager(ref, deviceIds);
   return dm;
 });
 
-final deviceByIdProvider = Provider.family<Device?, int>((final ref, final id) {
+final deviceByIdProvider = Provider.autoDispose.family<Device?, int>((final ref, final id) {
   final dm = ref.watch(deviceProvider);
   return dm.firstOrNull((final e) => e.id == id);
 });
 
-final deviceByIdValueStoreKeyProvider = Provider.family<Device?, Tuple2<int, String>>((final ref, final key) {
+final deviceByIdValueStoreKeyProvider =
+    Provider.autoDispose.family<Device?, Tuple2<int, String>>((final ref, final key) {
   final dm = ref.watch(deviceByIdProvider(key.item1));
   final valueStores = ref.watch(valueStorePerIdAndNameProvider(key));
   if (valueStores != null) return dm;
   return null;
 });
 
-final devicesByValueStoreKeyProvider = Provider.family<List<Device>, String>((final ref, final key) {
+final devicesByValueStoreKeyProvider = Provider.autoDispose.family<List<Device>, String>((final ref, final key) {
   final dm = ref.watch(deviceProvider);
   final List<Device> devices = [];
   for (final device in dm) {
@@ -50,7 +52,7 @@ final devicesByValueStoreKeyProvider = Provider.family<List<Device>, String>((fi
   return devices;
 });
 
-final sortedDeviceProvider = Provider<List<Device>>((final ref) {
+final sortedDeviceProvider = Provider.autoDispose<List<Device>>((final ref) {
   final sort = ref.watch(deviceSortProvider);
   final devices = ref.watch(deviceProvider);
   final baseModels = ref.watch(baseModelFriendlyNamesMapProvider);
@@ -91,7 +93,7 @@ class DiffIdModel {
 }
 
 class DeviceManager extends StateNotifier<List<Device>> {
-  DeviceManager(final Ref providerRef, final List<int> deviceIds) : super(_devices) {
+  DeviceManager(final AutoDisposeRef providerRef, final List<int> deviceIds) : super(_devices) {
     _ref = providerRef;
     _instance = this;
 
@@ -301,7 +303,9 @@ class DeviceManager extends StateNotifier<List<Device>> {
 
     final s = ConnectionManager.hubConnection.invoke("GetAllDevices", args: []);
 
-    final List<dynamic> serverDevices = await s;
+    final serverDevices = await s;
+    if (serverDevices is! List<dynamic>) return;
+
     final baseModelState = _ref!.read(baseModelProvider.notifier);
     final baseModels = baseModelState.state.toList();
     for (int i = baseModels.length - 1; i >= 0; i--) {
@@ -330,7 +334,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     DeviceManager.saveDeviceGroups();
   }
 
-  void _syncDevices(final Ref ref) {
+  void _syncDevices(final AutoDisposeRef ref) {
     final connection = ref.watch(hubConnectionConnectedProvider);
 
     if (connection == null || _diffIds.isEmpty) {
@@ -367,9 +371,9 @@ class DeviceManager extends StateNotifier<List<Device>> {
     }
   }
 
-  void _clearDevicesCacheOnConnectionLost(final Ref providerRef) {
+  void _clearDevicesCacheOnConnectionLost(final AutoDisposeRef providerRef) {
     final state = providerRef.watch(hubConnectionStateProvider);
-    if (state != HubConnectionState.connected) {
+    if (state != HubConnectionState.Connected) {
       _devices = [];
     }
   }

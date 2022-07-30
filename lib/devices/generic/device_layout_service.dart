@@ -120,10 +120,10 @@ class DeviceLayoutService {
   static Future<void> loadFromServer(final int id) async {
     if (_instance == null) return;
 
-    final bestFit = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutHashByDeviceId", args: [id])
-        as Map<String, dynamic>?;
-    if (bestFit == null) return;
     await lock.synchronized(() async {
+      final bestFit = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutHashByDeviceId", args: [id])
+          as Map<String, dynamic>?;
+      if (bestFit == null) return;
       final hash = bestFit["hash"] as String;
       final localHash = await _cacheFileManager.readHashCode(bestFit["name"]);
       if (localHash == hash) {

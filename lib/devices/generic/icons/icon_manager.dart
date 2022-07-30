@@ -3,7 +3,8 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as path;
 
 import 'package:flutter/foundation.dart';
-import 'package:signalr_core/signalr_core.dart';
+// import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/devices/generic/icons/svg_icon.dart';
@@ -15,7 +16,7 @@ final _iconProvider = StateProvider<Map<String, Uint8List>>((final ref) {
   return {};
 });
 
-final iconByTypeNameProvider = Provider.family<Uint8List?, String>((final ref, final name) {
+final iconByTypeNameProvider = Provider.autoDispose.family<Uint8List?, String>((final ref, final name) {
   final iconCache = ref.watch(_iconProvider);
   final result = iconCache[name];
   if (result == null) {
@@ -25,7 +26,7 @@ final iconByTypeNameProvider = Provider.family<Uint8List?, String>((final ref, f
   return result;
 });
 
-final iconByNameProvider = Provider.family<Uint8List?, String>((final ref, final name) {
+final iconByNameProvider = Provider.autoDispose.family<Uint8List?, String>((final ref, final name) {
   final iconCache = ref.watch(_iconProvider);
   final result = iconCache[name];
   if (result == null) {
@@ -35,7 +36,7 @@ final iconByNameProvider = Provider.family<Uint8List?, String>((final ref, final
   return result;
 });
 
-final iconByTypeNamesProvider = Provider.family<Uint8List?, List<String>>((final ref, final names) {
+final iconByTypeNamesProvider = Provider.autoDispose.family<Uint8List?, List<String>>((final ref, final names) {
   final iconCache = ref.watch(_iconProvider);
   for (final name in names) {
     if (iconCache.containsKey(name)) return iconCache[name];

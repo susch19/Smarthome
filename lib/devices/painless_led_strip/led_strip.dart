@@ -322,17 +322,23 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                 );
               },
             ),
-            ListTile(
-              title: Center(
-                child: model.reverse
-                    ? const Text(
-                        'Reverse',
-                        style: selectedTextStyle,
-                      )
-                    : const Text("Reverse"),
-              ),
-              onTap: () => widget.device.sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
-              trailing: const Text(""),
+            Consumer(
+              builder: (final context, final ref, final child) {
+                final reversed = ref
+                    .watch(widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.reverse));
+                return ListTile(
+                  title: Center(
+                    child: reversed
+                        ? const Text(
+                            'Reverse',
+                            style: selectedTextStyle,
+                          )
+                        : const Text("Reverse"),
+                  ),
+                  onTap: () => widget.device.sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
+                  trailing: const Text(""),
+                );
+              },
             ),
             Consumer(
               builder: (final context, final ref, final child) {

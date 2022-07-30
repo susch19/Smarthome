@@ -5,7 +5,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
+// import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 import 'package:smarthome/dashboard/group_devices.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
@@ -113,13 +114,15 @@ class MyApp extends StatelessWidget {
 }
 
 class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserver {
-  final Ref ref;
+  final AutoDisposeRef ref;
   InfoIconProvider(this.ref) : super(Icons.refresh) {
     final connection = ref.watch(hubConnectionStateProvider);
 
-    if (connection == HubConnectionState.disconnected) {
+    // if (connection == HubConnectionState.disconnected) {
+    if (connection == HubConnectionState.Disconnected) {
       state = Icons.warning;
-    } else if (connection == HubConnectionState.connected) {
+      // } else if (connection == HubConnectionState.connected) {
+    } else if (connection == HubConnectionState.Connected) {
       state = Icons.check;
     }
 
@@ -137,7 +140,8 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
     } else if (state.index == 2) {
       this.state = Icons.error_outline;
       final connectionState = ref.watch(hubConnectionStateProvider);
-      if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
+      // if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
+      if (connectionState == HubConnectionState.Connected) ConnectionManager.hubConnection.stop();
     }
   }
 
@@ -148,7 +152,7 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
   }
 }
 
-final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
+final infoIconProvider = StateNotifierProvider.autoDispose<InfoIconProvider, IconData>(
   (final ref) => InfoIconProvider(ref),
 );
 
@@ -485,7 +489,8 @@ class MyHomePage extends ConsumerWidget {
   }
 
   Future addNewDevice(final BuildContext context, final WidgetRef ref) async {
-    if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
+    // if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
+    if (ConnectionManager.hubConnection.state != HubConnectionState.Connected) {
       await ConnectionManager.hubConnection.start();
     }
 

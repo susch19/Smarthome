@@ -2,7 +2,7 @@ import 'package:smarthome/helper/preference_manager.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const fallbackServerUrl = "http://192.168.49.56:5055/SmartHome";
+const fallbackServerUrl = "http://localhost:5056/SmartHome";
 
 final settingsProvider = StateProvider<Settings>((final ref) {
   SettingsManager(ref);

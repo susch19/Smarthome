@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:quiver/core.dart';
 // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
+// import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 import 'package:smarthome/controls/dashboard_card.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_manager.dart';
@@ -21,7 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
 final historyPropertyProvider =
-    FutureProvider.family<List<IoBrokerHistoryModel>, Tuple2<int, String>>((final ref, final id) async {
+    FutureProvider.autoDispose.family<List<IoBrokerHistoryModel>, Tuple2<int, String>>((final ref, final id) async {
   final hubConnection = ref.watch(hubConnectionConnectedProvider);
 
   if (hubConnection != null) {
@@ -33,7 +34,7 @@ final historyPropertyProvider =
 });
 
 final historyPropertyNameProvider =
-    Provider.family<AsyncValue<IoBrokerHistoryModel?>, Tuple3<int, String, String>>((final ref, final id) {
+    Provider.autoDispose.family<AsyncValue<IoBrokerHistoryModel?>, Tuple3<int, String, String>>((final ref, final id) {
   final historyData = ref.watch(historyPropertyProvider(Tuple2(id.item1, id.item2)));
 
   return historyData.whenData((final value) => value.firstOrNull((final element) => element.propertyName == id.item3));
@@ -125,8 +126,8 @@ abstract class Device<T extends BaseModel> {
   //   return baseModel.updateFromJson(message);
   // }
 
-  Future<dynamic> getFromServer(final String methodName, final List<Object?> args) async {
-    if (ConnectionManager.hubConnection.state == HubConnectionState.disconnected) {
+  Future<dynamic> getFromServer(final String methodName, final List<Object>? args) async {
+    if (ConnectionManager.hubConnection.state == HubConnectionState.Disconnected) {
       await ConnectionManager.hubConnection.start();
     }
 
@@ -142,7 +143,7 @@ abstract class Device<T extends BaseModel> {
   @mustCallSuper
   Future sendToServer(
       final sm.MessageType messageType, final sm.Command command, final List<String>? parameters) async {
-    if (ConnectionManager.hubConnection.state == HubConnectionState.disconnected) {
+    if (ConnectionManager.hubConnection.state == HubConnectionState.Disconnected) {
       await ConnectionManager.hubConnection.start();
     }
     final message = sm.Message(id, messageType, command, parameters);
@@ -151,7 +152,7 @@ abstract class Device<T extends BaseModel> {
   }
 
   Future updateDeviceOnServer(final int id, final String friendlyName) async {
-    if (ConnectionManager.hubConnection.state == HubConnectionState.disconnected) {
+    if (ConnectionManager.hubConnection.state == HubConnectionState.Disconnecting) {
       await ConnectionManager.hubConnection.start();
     }
     return await ConnectionManager.hubConnection.invoke("UpdateDevice", args: [id, friendlyName]);
