@@ -59,11 +59,11 @@ void main() async {
 }
 
 final _brightnessChangeProvider =
-    ChangeNotifierProvider.autoDispose.family<AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
+    ChangeNotifierProvider.family<AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
   return AdaptiveThemeModeWatcher(b);
 });
 
-final brightnessProvider = Provider.autoDispose.family<Brightness, AdaptiveThemeManager>((final ref, final b) {
+final brightnessProvider = Provider.family<Brightness, AdaptiveThemeManager>((final ref, final b) {
   return ref.watch(_brightnessChangeProvider(b)).brightness;
 });
 
@@ -73,13 +73,13 @@ class AdaptiveThemeModeWatcher extends ChangeNotifier {
   final AdaptiveThemeManager _themeManager;
   AdaptiveThemeModeWatcher(this._themeManager) {
     _themeManager.modeChangeNotifier.addListener(modeChanged);
-    brightness = _themeManager.brightness;
+    brightness = _themeManager.brightness!;
   }
 
   void modeChanged() {
     final newBrightness = _themeManager.brightness;
     if (newBrightness != brightness) {
-      brightness = newBrightness;
+      brightness = newBrightness!;
       notifyListeners();
     }
   }
@@ -114,7 +114,7 @@ class MyApp extends StatelessWidget {
 }
 
 class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserver {
-  final AutoDisposeRef ref;
+  final Ref ref;
   InfoIconProvider(this.ref) : super(Icons.refresh) {
     final connection = ref.watch(hubConnectionStateProvider);
 
@@ -152,7 +152,7 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
   }
 }
 
-final infoIconProvider = StateNotifierProvider.autoDispose<InfoIconProvider, IconData>(
+final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
   (final ref) => InfoIconProvider(ref),
 );
 

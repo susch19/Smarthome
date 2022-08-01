@@ -295,13 +295,10 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
       direction: Axis.vertical,
       children: <Widget>[
         Expanded(
-            child: Text("Daten werden geladen oder sind nicht vorhanden für " +
-                currentShownTime.day.toString() +
-                "." +
-                currentShownTime.month.toString() +
-                "." +
-                currentShownTime.year.toString())),
+            child: Text(
+                "Daten werden geladen oder sind nicht vorhanden für ${currentShownTime.day}.${currentShownTime.month}.${currentShownTime.year}")),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Expanded(
                 child: MaterialButton(
@@ -318,7 +315,6 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
               },
             )),
           ],
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         )
       ],
     );
@@ -358,6 +354,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
           ),
         ),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Expanded(
                 child: MaterialButton(
@@ -378,7 +375,6 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                     },
                   )),
           ],
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         )
       ],
     );
@@ -442,7 +438,7 @@ class HistorySeriesAnnotationChart extends StatelessWidget {
             maximum: (max + (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
             interval: (((max - min) < 10 ? 10 : (max - min)) / 10).roundToDouble(),
             axisLine: const AxisLine(width: 0),
-            labelFormat: '{value}' + unit,
+            labelFormat: '{value}$unit',
             majorTickLines: const MajorTickLines(size: 0),
             title: AxisTitle(text: valueName)),
         series: seriesList,

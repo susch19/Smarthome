@@ -22,7 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
 final historyPropertyProvider =
-    FutureProvider.autoDispose.family<List<IoBrokerHistoryModel>, Tuple2<int, String>>((final ref, final id) async {
+    FutureProvider.family<List<IoBrokerHistoryModel>, Tuple2<int, String>>((final ref, final id) async {
   final hubConnection = ref.watch(hubConnectionConnectedProvider);
 
   if (hubConnection != null) {
@@ -34,28 +34,28 @@ final historyPropertyProvider =
 });
 
 final historyPropertyNameProvider =
-    Provider.autoDispose.family<AsyncValue<IoBrokerHistoryModel?>, Tuple3<int, String, String>>((final ref, final id) {
+    Provider.family<AsyncValue<IoBrokerHistoryModel?>, Tuple3<int, String, String>>((final ref, final id) {
   final historyData = ref.watch(historyPropertyProvider(Tuple2(id.item1, id.item2)));
 
   return historyData.whenData((final value) => value.firstOrNull((final element) => element.propertyName == id.item3));
 });
 
 final _iconWidgetProvider =
-    Provider.autoDispose.family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final id) {
+    Provider.family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final id) {
   final brightness = ref.watch(brightnessProvider(id.item3));
   final iconByName = ref.watch(iconByTypeNamesProvider(id.item1));
 
   return id.item2._createIcon(brightness, iconByName);
 });
 
-final iconWidgetProvider = Provider.autoDispose
-    .family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
+final iconWidgetProvider =
+    Provider.family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
   final iconByName = ref.watch(_iconWidgetProvider(deviveTypeName));
   return iconByName;
 });
 
-final iconWidgetSingleProvider = Provider.autoDispose
-    .family<Widget, Tuple3<String, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
+final iconWidgetSingleProvider =
+    Provider.family<Widget, Tuple3<String, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
   final iconByName =
       ref.watch(_iconWidgetProvider(Tuple3([deviveTypeName.item1], deviveTypeName.item2, deviveTypeName.item3)));
   return iconByName;

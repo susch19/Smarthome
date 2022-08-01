@@ -17,13 +17,13 @@ enum DismissDialogAction {
   save,
 }
 
-final heaterConfigProvider = StateProvider.autoDispose.family<List<HeaterConfig>, int>((final ref, final id) {
+final heaterConfigProvider = StateProvider.family<List<HeaterConfig>, int>((final ref, final id) {
   HeaterConfigLoader(ref, id);
   return [];
 });
 
 final _groupedHeaterConfigProvider =
-    Provider.autoDispose.family<Map<Tuple2<TimeOfDay?, double?>, List<HeaterConfig>>, int>((final ref, final id) {
+    Provider.family<Map<Tuple2<TimeOfDay?, double?>, List<HeaterConfig>>, int>((final ref, final id) {
   final configs = ref.watch(heaterConfigProvider(id));
 
   if (configs.isEmpty) {
@@ -35,10 +35,10 @@ final _groupedHeaterConfigProvider =
 });
 
 class HeaterConfigLoader {
-  static late AutoDisposeStateProviderRef<List<HeaterConfig>> _ref;
+  static late StateProviderRef<List<HeaterConfig>> _ref;
   static late int _id;
 
-  HeaterConfigLoader(final AutoDisposeStateProviderRef<List<HeaterConfig>> ref, final int id) {
+  HeaterConfigLoader(final StateProviderRef<List<HeaterConfig>> ref, final int id) {
     _ref = ref;
     _id = id;
   }

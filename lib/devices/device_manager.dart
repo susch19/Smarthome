@@ -23,26 +23,25 @@ import 'device_exporter.dart';
 
 final deviceIdProvider = StateProvider<List<int>>((final _) => []);
 
-final deviceProvider = StateNotifierProvider.autoDispose<DeviceManager, List<Device>>((final ref) {
+final deviceProvider = StateNotifierProvider<DeviceManager, List<Device>>((final ref) {
   final deviceIds = ref.watch(deviceIdProvider);
   final dm = DeviceManager(ref, deviceIds);
   return dm;
 });
 
-final deviceByIdProvider = Provider.autoDispose.family<Device?, int>((final ref, final id) {
+final deviceByIdProvider = Provider.family<Device?, int>((final ref, final id) {
   final dm = ref.watch(deviceProvider);
   return dm.firstOrNull((final e) => e.id == id);
 });
 
-final deviceByIdValueStoreKeyProvider =
-    Provider.autoDispose.family<Device?, Tuple2<int, String>>((final ref, final key) {
+final deviceByIdValueStoreKeyProvider = Provider.family<Device?, Tuple2<int, String>>((final ref, final key) {
   final dm = ref.watch(deviceByIdProvider(key.item1));
   final valueStores = ref.watch(valueStorePerIdAndNameProvider(key));
   if (valueStores != null) return dm;
   return null;
 });
 
-final devicesByValueStoreKeyProvider = Provider.autoDispose.family<List<Device>, String>((final ref, final key) {
+final devicesByValueStoreKeyProvider = Provider.family<List<Device>, String>((final ref, final key) {
   final dm = ref.watch(deviceProvider);
   final List<Device> devices = [];
   for (final device in dm) {
@@ -52,7 +51,7 @@ final devicesByValueStoreKeyProvider = Provider.autoDispose.family<List<Device>,
   return devices;
 });
 
-final sortedDeviceProvider = Provider.autoDispose<List<Device>>((final ref) {
+final sortedDeviceProvider = Provider<List<Device>>((final ref) {
   final sort = ref.watch(deviceSortProvider);
   final devices = ref.watch(deviceProvider);
   final baseModels = ref.watch(baseModelFriendlyNamesMapProvider);
@@ -93,7 +92,7 @@ class DiffIdModel {
 }
 
 class DeviceManager extends StateNotifier<List<Device>> {
-  DeviceManager(final AutoDisposeRef providerRef, final List<int> deviceIds) : super(_devices) {
+  DeviceManager(final Ref providerRef, final List<int> deviceIds) : super(_devices) {
     _ref = providerRef;
     _instance = this;
 
@@ -171,7 +170,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     if (_ref == null) return;
 
     final deviceGroups = _instance.state
-        .map((final e) => e.id.toString() + "\u0002" + _ref!.read(Device.groupsByIdProvider(e.id)).join("\u0003"))
+        .map((final e) => "${e.id}\u0002${_ref!.read(Device.groupsByIdProvider(e.id)).join("\u0003")}")
         .join("\u0001");
     PreferencesManager.instance.setString("deviceGroups", deviceGroups);
   }
@@ -185,7 +184,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     _ref!.read(customGroupNameProvider(key).notifier).state = newName;
     _groupNames[key] = newName;
 
-    final strs = _groupNames.select((final key, final value) => key + "\u0001" + value);
+    final strs = _groupNames.select((final key, final value) => "$key\u0001$value");
     PreferencesManager.instance.setStringList("customGroupNames", strs);
   }
 
@@ -236,7 +235,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     for (final id in ids) {
       final sub = subs.firstWhere((final x) => x["id"] == id, orElse: () => null);
       if (sub == null) continue;
-      final types = PreferencesManager.instance.getStringList("Types" + id.toString()) ?? <String>[];
+      final types = PreferencesManager.instance.getStringList("Types$id") ?? <String>[];
       BaseModel? model;
       String? type;
       if (types.isEmpty) {
@@ -244,13 +243,13 @@ class DeviceManager extends StateNotifier<List<Device>> {
           types.add(item.toString());
         }
       }
-      final preferenceId = "Types" + id.toString();
+      final preferenceId = "Types$id";
       if (!PreferencesManager.instance.containsKey(preferenceId)) {
         PreferencesManager.instance.setStringList(preferenceId, types);
       }
 
       if (types.isEmpty) {
-        type = PreferencesManager.instance.getString("Type" + id.toString());
+        type = PreferencesManager.instance.getString("Type$id");
       } else {
         for (final item in types) {
           if (!stringNameJsonFactory.containsKey(item)) continue;
@@ -323,9 +322,9 @@ class DeviceManager extends StateNotifier<List<Device>> {
   static void removeAllDevices() {
     for (int i = _instance.state.length - 1; i >= 0; i--) {
       final d = _instance.state.elementAt(i);
-      PreferencesManager.instance.remove("SHD" + d.id.toString());
-      PreferencesManager.instance.remove("Json" + d.id.toString());
-      PreferencesManager.instance.remove("Type" + d.id.toString());
+      PreferencesManager.instance.remove("SHD${d.id}");
+      PreferencesManager.instance.remove("Json${d.id}");
+      PreferencesManager.instance.remove("Type${d.id}");
     }
 
     final ids = _ref?.read(deviceIdProvider.notifier);
@@ -334,7 +333,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     DeviceManager.saveDeviceGroups();
   }
 
-  void _syncDevices(final AutoDisposeRef ref) {
+  void _syncDevices(final Ref ref) {
     final connection = ref.watch(hubConnectionConnectedProvider);
 
     if (connection == null || _diffIds.isEmpty) {
@@ -348,8 +347,8 @@ class DeviceManager extends StateNotifier<List<Device>> {
       connection.invoke("Subscribe", args: [deviceIds]).then((final subs) {
         _loadDevices(subs, deviceIds, ref);
         for (final id in deviceIds) {
-          if (PreferencesManager.instance.containsKey("SHD" + id.toString())) continue;
-          PreferencesManager.instance.setInt("SHD" + id.toString(), id);
+          if (PreferencesManager.instance.containsKey("SHD$id")) continue;
+          PreferencesManager.instance.setInt("SHD$id", id);
         }
       });
     } else if (_diffIds.any((final element) => element.action == Action.removed)) {
@@ -363,15 +362,15 @@ class DeviceManager extends StateNotifier<List<Device>> {
         deviceIdState.state = devices.map((final e) => e.id).toList();
       });
       for (final id in deviceIds) {
-        PreferencesManager.instance.remove("SHD" + id.toString());
-        PreferencesManager.instance.remove("Json" + id.toString());
-        PreferencesManager.instance.remove("Type" + id.toString());
-        PreferencesManager.instance.remove("Types" + id.toString());
+        PreferencesManager.instance.remove("SHD$id");
+        PreferencesManager.instance.remove("Json$id");
+        PreferencesManager.instance.remove("Type$id");
+        PreferencesManager.instance.remove("Types$id");
       }
     }
   }
 
-  void _clearDevicesCacheOnConnectionLost(final AutoDisposeRef providerRef) {
+  void _clearDevicesCacheOnConnectionLost(final Ref providerRef) {
     final state = providerRef.watch(hubConnectionStateProvider);
     if (state != HubConnectionState.Connected) {
       _devices = [];

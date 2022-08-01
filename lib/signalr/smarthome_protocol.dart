@@ -339,9 +339,14 @@ import 'package:signalr_netcore/itransport.dart';
 import 'package:signalr_netcore/text_message_format.dart';
 import 'package:signalr_netcore/utils.dart';
 import 'package:encrypt/encrypt.dart';
+import 'package:smarthome/cloud/app_cloud_configuration.dart';
 
 class SmarthomeProtocol implements IHubProtocol {
   // Properties
+
+  static AppCloudConfiguration? cloudConfig;
+
+  Key get _key => Key(cloudConfig!.keyBytes);
 
   @override
   String get name => "smarthome";
@@ -367,9 +372,8 @@ class SmarthomeProtocol implements IHubProtocol {
     }
 
     final List<HubMessageBase> hubMessages = [];
-    final key = Key.fromUtf8('my 32 length key................');
 
-    final encrypter = Encrypter(AES(key, mode: AESMode.cbc));
+    final encrypter = Encrypter(AES(_key, mode: AESMode.cbc));
     int lastIndex = 0;
     while (lastIndex < input.length) {
       final len = _getLengthOfBytes(input);
@@ -516,8 +520,7 @@ class SmarthomeProtocol implements IHubProtocol {
   Uint8List encrypt(final String input, final IV iv) {
     if (!enableEncSnd) return Uint8List.fromList(utf8.encode(input));
 
-    final key = Key.fromUtf8('my 32 length key................');
-    final encrypter = Encrypter(AES(key, mode: AESMode.cbc));
+    final encrypter = Encrypter(AES(_key, mode: AESMode.cbc));
     return encrypter.encrypt(input, iv: iv).bytes;
   }
 
