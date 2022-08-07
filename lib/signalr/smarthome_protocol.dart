@@ -430,9 +430,9 @@ class SmarthomeProtocol implements IHubProtocol {
     if (jsonData == null) {
       return null;
     } else {
-      final _headers1 = Map<String, String>.from(jsonData);
+      final headers1 = Map<String, String>.from(jsonData);
       final headers = MessageHeaders();
-      _headers1.forEach((final key, final value) {
+      headers1.forEach((final key, final value) {
         headers.setHeaderValue(key, value);
       });
       return headers;

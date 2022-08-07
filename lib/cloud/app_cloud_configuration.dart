@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'app_cloud_configuration.g.dart';
