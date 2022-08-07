@@ -12,9 +12,8 @@ import 'generic_device_exporter.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final _layoutProvider = StateProvider<List<DeviceLayout>>((final ref) {
-  DeviceLayoutService(ref);
-  return [];
+final _layoutProvider = StateNotifierProvider<DeviceLayoutService, List<DeviceLayout>>((final ref) {
+  return DeviceLayoutService();
 });
 
 final _idLayoutProvider = Provider.family<DeviceLayout?, int>((final ref, final id) {
@@ -65,7 +64,14 @@ final detailDeviceLayoutProvider = Provider.family<DetailDeviceLayout?, Tuple2<i
 final detailPropertyInfoLayoutProvider =
     Provider.family<List<DetailPropertyInfo>?, Tuple2<int, String>>((final ref, final device) {
   final layoutProvider = ref.watch(detailDeviceLayoutProvider(device));
-  return layoutProvider?.propertyInfos;
+  final props = layoutProvider?.propertyInfos;
+  return props;
+});
+
+final fabLayoutProvider = Provider.family<DetailPropertyInfo?, Tuple2<int, String>>((final ref, final device) {
+  final layoutProvider = ref.watch(detailDeviceLayoutProvider(device));
+  final props = layoutProvider?.propertyInfos;
+  return props?.firstOrNull((final element) => element.editInfo?.editType == EditType.floatingActionButton);
 });
 
 final detailTabInfoLayoutProvider =
@@ -80,12 +86,11 @@ final detailHistoryLayoutProvider =
   return layoutProvider?.historyProperties;
 });
 
-class DeviceLayoutService {
-  DeviceLayoutService(this._ref) {
+class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
+  DeviceLayoutService() : super([]) {
     _instance = this;
   }
 
-  final Ref _ref;
   static DeviceLayoutService? _instance;
   static final CacheFileManager _cacheFileManager =
       CacheFileManager(path.join(Directory.systemTemp.path, "smarthome_layout_cache"), "json");
@@ -99,11 +104,11 @@ class DeviceLayoutService {
 
   static Future _updateFromServer(final Map<String, dynamic> deviceLayoutJson, final String hash,
       {final bool updateStorage = false}) async {
-    if (_instance == null) return;
-    final layoutProvider = _instance!._ref.read(_layoutProvider.notifier);
+    final instance = _instance;
+    if (instance == null) return;
     final deviceLayout = DeviceLayout.fromJson(deviceLayoutJson);
 
-    final currentList = layoutProvider.state.toList();
+    final currentList = instance.state.toList();
     final existingLayout = currentList.firstOrNull((final e) => e.uniqueName == deviceLayout.uniqueName);
     if (existingLayout.hashCode == deviceLayout.hashCode) return;
     if (existingLayout != null) currentList.remove(existingLayout);
@@ -114,7 +119,7 @@ class DeviceLayoutService {
       await _cacheFileManager.writeHashCode(deviceLayout.uniqueName, hash);
       await _cacheFileManager.writeContentAsString(deviceLayout.uniqueName, jsonEncode(deviceLayoutJson));
     }
-    layoutProvider.state = currentList;
+    instance.state = currentList;
   }
 
   static Future<void> loadFromServer(final int id) async {

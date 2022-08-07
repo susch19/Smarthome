@@ -41,7 +41,7 @@ class Message {
   @JsonKey(name: "c")
   Command command;
   @JsonKey(name: "p")
-  List<String>? parameters;
+  List<Object?>? parameters;
 
   Message(this.id, this.messageType, this.command, [this.parameters]);
 

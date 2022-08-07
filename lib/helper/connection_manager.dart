@@ -8,6 +8,7 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import 'package:logging/logging.dart';
 import 'package:smarthome/cloud/app_cloud_configuration.dart';
+import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/helper/preference_manager.dart';
@@ -41,7 +42,7 @@ final hubConnectionProvider = StateNotifierProvider<ConnectionManager, HubConnec
   ref.onDispose(() => _emptyHubConnection.stop());
   return ConnectionManager(ref, _emptyHubConnection);
 });
-final apiProvider = Provider<ApiService>((ref) => ApiService());
+final apiProvider = Provider<ApiService>((final ref) => ApiService());
 
 final cloudConfigProvider = FutureProvider<AppCloudConfiguration?>((final ref) async {
   final api = ref.watch(apiProvider);
@@ -78,19 +79,20 @@ class ConnectionManager extends StateNotifier<HubConnection> {
   static late HubConnection hubConnection;
 
   static late ConnectionManager _instance;
+  Ref ref;
 
-  ConnectionManager(final Ref ref, final HubConnection state) : super(state) {
+  ConnectionManager(this.ref, final HubConnection state) : super(state) {
     hubConnection = state;
     _instance = this;
 
-    ConnectionManager.startConnection(ref);
+    startConnection();
   }
 
-  static Future<void> startConnection(final Ref ref) async {
+  Future<void> startConnection() async {
     if (hubConnection.state == HubConnectionState.Connected) hubConnection.stop();
     final cloudConfig = await ref.watch(cloudConfigProvider.future);
     SmarthomeProtocol.cloudConfig = cloudConfig;
-    hubConnection = createHubConnection(cloudConfig, ref: ref);
+    hubConnection = createHubConnection(cloudConfig);
     hubConnection.serverTimeoutInMilliseconds = 30000;
 
     onReconnecting({final Exception? error}) {
@@ -113,7 +115,7 @@ class ConnectionManager extends StateNotifier<HubConnection> {
 
           try {
             hubConnection.stop();
-            hubConnection = createHubConnection(cloudConfig, ref: ref);
+            hubConnection = createHubConnection(cloudConfig);
             await hubConnection.start();
           } catch (e) {}
           sleep(const Duration(seconds: 1));
@@ -130,24 +132,17 @@ class ConnectionManager extends StateNotifier<HubConnection> {
         break;
       }
     });
-    hubConnection.on("Update", DeviceManager.updateMethod);
+    hubConnection.on("Update", update);
     hubConnection.on("UpdateUi", DeviceLayoutService.updateFromServer);
     final serverUrl = ref.read(serverUrlProvider);
     if (serverUrl != "") {
       await hubConnection.start();
       _instance.state = hubConnection;
       connectionIconChanged.value = Icons.check;
-      final ids = <int>[];
-      for (final key in PreferencesManager.instance.getKeys().where((final x) => x.startsWith("SHD"))) {
-        final id = PreferencesManager.instance.getInt(key);
-        if (id == null) continue;
-        ids.add(id);
-      }
-      DeviceManager.subscribeToDevices(ids);
     }
   }
 
-  static Future newHubConnection({final Ref? ref, final WidgetRef? widgetRef}) async {
+  Future newHubConnection() async {
     connectionIconChanged.value = Icons.refresh;
 
     hubConnection = _instance.state;
@@ -155,8 +150,8 @@ class ConnectionManager extends StateNotifier<HubConnection> {
     hubConnection.off("UpdateUi");
     hubConnection.stop();
     _instance.state = _emptyHubConnection;
-    hubConnection = createHubConnection(SmarthomeProtocol.cloudConfig, ref: ref, widgetRef: widgetRef);
-    hubConnection.on("Update", DeviceManager.updateMethod);
+    hubConnection = createHubConnection(SmarthomeProtocol.cloudConfig);
+    hubConnection.on("Update", update);
     hubConnection.on("UpdateUi", DeviceLayoutService.updateFromServer);
 
     await hubConnection.start();
@@ -164,14 +159,13 @@ class ConnectionManager extends StateNotifier<HubConnection> {
     connectionIconChanged.value = Icons.check;
   }
 
-  static HubConnection createHubConnection(final AppCloudConfiguration? cloudConfig,
-      {final Ref? ref, final WidgetRef? widgetRef}) {
+  HubConnection createHubConnection(final AppCloudConfiguration? cloudConfig) {
     Logger.root.level = Level.ALL;
 // Writes the log messages to the console
-    Logger.root.onRecord.listen((LogRecord rec) {
+    Logger.root.onRecord.listen((final LogRecord rec) {
       print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
-    final serverUrl = ref?.watch(serverUrlProvider) ?? widgetRef?.watch(serverUrlProvider) ?? fallbackServerUrl;
+    final serverUrl = ref.watch(serverUrlProvider);
     final serverUri = Uri.parse(serverUrl);
     return HubConnectionBuilder()
         .withUrl(
@@ -181,7 +175,7 @@ class ConnectionManager extends StateNotifier<HubConnection> {
                         port: cloudConfig.port,
                         pathSegments: [
                           ...serverUri.pathSegments,
-                          ...(serverUri.pathSegments.any((element) => element == cloudConfig.id)
+                          ...(serverUri.pathSegments.any((final element) => element == cloudConfig.id)
                               ? []
                               : [cloudConfig.id])
                         ],
@@ -194,12 +188,30 @@ class ConnectionManager extends StateNotifier<HubConnection> {
             options: HttpConnectionOptions(
                 logger: Logger("SignalR - transport"), requestTimeout: 30000, transport: HttpTransportType.WebSockets))
         .configureLogging(Logger("SignalR - hub"))
-        .withHubProtocol(JsonHubProtocol())
-        // .withHubProtocol(SmarthomeProtocol())
+        // .withHubProtocol(JsonHubProtocol())
+        .withHubProtocol(SmarthomeProtocol())
 
         // .withHubProtocol(MessagePackHubProtocol())
         // .withAutomaticReconnect(PermanentRetryPolicy())
         .withAutomaticReconnect(
             retryDelays: [0, 100, 200, 500, 1000, 2500, 5000, 7500, 10000, 15000, 20000, 25000, 30000]).build();
+  }
+
+  void update(final List<Object>? arguments) {
+    final baseModels = ref.read(baseModelProvider.notifier);
+    final oldState = baseModels.state.toList();
+    bool hasChanges = false;
+    for (final a in arguments!) {
+      final updateMap = a as Map;
+      for (var i = 0; i < oldState.length; i++) {
+        final oldModel = oldState[i];
+        if (oldModel.id != updateMap["id"]) continue;
+        final newModel = oldModel.updateFromJson(updateMap as Map<String, dynamic>);
+        if (oldState[i] == newModel) continue;
+        oldState[i] = newModel;
+        hasChanges = true;
+      }
+    }
+    if (hasChanges) baseModels.state = oldState;
   }
 }

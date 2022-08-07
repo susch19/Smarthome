@@ -6,17 +6,21 @@ import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:tuple/tuple.dart';
 
 // final valueStoreProvider = StateNotifierProvider<StoreService, List<ValueStore>>((final ref) => StoreService());
 
-final _valueStoreProvider = StateProvider<Map<int, List<ValueStore>>>((final ref) {
-  StoreService(ref);
-  return StoreService._stores;
+// final _valueStoreProvider = StateProvider<Map<int, List<ValueStore>>>((final ref) {
+//   StoreService(ref);
+//   return StoreService._stores;
+// });
+final valueStoreProvider = StateNotifierProvider<StoreService, Map<int, List<ValueStore>>>((final ref) {
+  return StoreService();
 });
 
 final valueStoresPerIdProvider = Provider.family<List<ValueStore>?, int>((final ref, final id) {
-  final stores = ref.watch(_valueStoreProvider);
+  final stores = ref.watch(valueStoreProvider);
   return stores[id];
 });
 
@@ -31,14 +35,12 @@ final valueStorePerIdAndNameProvider = Provider.family<ValueStore?, Tuple2<int, 
   return stores?.firstOrNull((final e) => e.key == key.item2);
 });
 
-class StoreService {
-  StoreService(this._ref) {
+class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
+  StoreService() : super({}) {
     _instance = this;
   }
 
-  final StateProviderRef<Map<int, List<ValueStore>>> _ref;
-  static final Map<int, List<ValueStore>> _stores = {};
-  static StoreService? _instance;
+  static late StoreService _instance;
 
   // static final Map<Type, Widget Function(ValueProvider provider)> getWidgetFor = {
   //   TemperatureStore: (vp) {
@@ -64,8 +66,10 @@ class StoreService {
   //       ),
   // };
 
+  static final lock = Lock();
   static bool updateAndGetStores(final int deviceId, final Map<String, dynamic> json) {
-    final Map<String, ValueStore> stores = (_stores[deviceId] ?? []).toMap((final e) => e.key, (final e) => e);
+    print("$deviceId updateAndGetStores");
+    final Map<String, ValueStore> stores = (_instance.state[deviceId] ?? []).toMap((final e) => e.key, (final e) => e);
     bool changed = false;
     for (final item in json.keys) {
       if (!stores.containsKey(item)) {
@@ -83,11 +87,14 @@ class StoreService {
         changed = true;
       }
     }
-    _stores[deviceId] = stores.values.toList();
 
     if (changed) {
-      final notifier = _instance?._ref.read(_valueStoreProvider.notifier);
-      notifier?.state = _stores;
+      lock.synchronized(() {
+        _instance.state[deviceId] = stores.values.toList();
+        print("$deviceId: ${_instance.state.length}");
+
+        _instance.state = {..._instance.state};
+      });
     }
     return changed;
   }

@@ -1,5 +1,8 @@
+import 'dart:collection';
+
 import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:quiver/core.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 
@@ -14,7 +17,7 @@ class DashboardDeviceLayout {
       other is DashboardDeviceLayout && other.dashboardProperties.sequenceEquals(dashboardProperties);
 
   @override
-  int get hashCode => hashList(dashboardProperties);
+  int get hashCode => hashObjects(dashboardProperties);
 
   DashboardDeviceLayout(this.dashboardProperties);
 

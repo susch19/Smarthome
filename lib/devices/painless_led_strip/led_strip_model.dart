@@ -33,6 +33,16 @@ class LedStripModel extends BaseModel {
   }
 
   @override
+  BaseModel updateFromJson(final Map<String, dynamic> json) {
+    final updatedModel = getModelFromJson(json);
+    bool updated = false;
+    if (updatedModel != this) {
+      updated = true;
+    }
+    return updated ? updatedModel : this;
+  }
+
+  @override
   int get hashCode =>
       Object.hash(super.hashCode, colorMode, delay, numberOfLeds, brightness, step, reverse, colorNumber, version);
 

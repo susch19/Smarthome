@@ -37,6 +37,16 @@ class ZigbeeModel extends BaseModel {
   Map<String, dynamic> toJson() => _$ZigbeeModelToJson(this);
 
   @override
+  BaseModel updateFromJson(final Map<String, dynamic> json) {
+    final updatedModel = getModelFromJson(json);
+    bool updated = false;
+    if (updatedModel != this) {
+      updated = true;
+    }
+    return updated ? updatedModel : this;
+  }
+
+  @override
   BaseModel getModelFromJson(final Map<String, dynamic> json) {
     return ZigbeeModel.fromJson(json);
   }

@@ -329,6 +329,7 @@
 // ignore_for_file: prefer_is_not_operator
 
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:logging/logging.dart';
@@ -340,6 +341,7 @@ import 'package:signalr_netcore/text_message_format.dart';
 import 'package:signalr_netcore/utils.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:smarthome/cloud/app_cloud_configuration.dart';
+import 'package:archive/archive_io.dart';
 
 class SmarthomeProtocol implements IHubProtocol {
   // Properties
@@ -376,11 +378,15 @@ class SmarthomeProtocol implements IHubProtocol {
     final encrypter = Encrypter(AES(_key, mode: AESMode.cbc));
     int lastIndex = 0;
     while (lastIndex < input.length) {
-      final len = _getLengthOfBytes(input);
+      final len = _getLengthOfBytes(input.sublist(lastIndex, 4));
       final iv = IV(input.sublist(lastIndex + 4, 20));
-      final inputWithoutLen = input.sublist(lastIndex + 20, len + 20);
+
+      final inputWithoutLen = input.sublist(lastIndex + 20, lastIndex + len + 20);
       lastIndex = len + 20;
-      final jsonInput = encrypter.decrypt(Encrypted(inputWithoutLen), iv: iv);
+      final decrypted = encrypter.decryptBytes(Encrypted(inputWithoutLen), iv: iv);
+
+      final jsonInput = utf8.decode(gzip.decode(decrypted));
+
       // Parse the messages
       final messages = TextMessageFormat.parse(jsonInput);
       for (final message in messages) {
@@ -498,8 +504,12 @@ class SmarthomeProtocol implements IHubProtocol {
   Object writeMessage(final HubMessageBase message) {
     final jsonObj = _messageAsMap(message);
     final iv = IV.fromSecureRandom(16);
-    final res = encrypt(TextMessageFormat.write(json.encode(jsonObj)), iv);
+    final compressed = gzip.encode(utf8.encode(TextMessageFormat.write(json.encode(jsonObj))));
+    final res = encrypt(compressed, iv);
 
+    // final compressed = gzip.encode(Uint8List.fromList([...iv.bytes, ...res]));
+
+    // return GZipCodec().encode(Uint8List.fromList([..._getBytesOfInt(res.length), ...iv.bytes, ...res]));
     return Uint8List.fromList([..._getBytesOfInt(res.length), ...iv.bytes, ...res]);
   }
 
@@ -517,11 +527,11 @@ class SmarthomeProtocol implements IHubProtocol {
 
   final enableEncSnd = true;
 
-  Uint8List encrypt(final String input, final IV iv) {
-    if (!enableEncSnd) return Uint8List.fromList(utf8.encode(input));
+  Uint8List encrypt(final List<int> input, final IV iv) {
+    if (!enableEncSnd) return Uint8List.fromList(input);
 
     final encrypter = Encrypter(AES(_key, mode: AESMode.cbc));
-    return encrypter.encrypt(input, iv: iv).bytes;
+    return encrypter.encryptBytes(input, iv: iv).bytes;
   }
 
   static dynamic _messageAsMap(final dynamic message) {

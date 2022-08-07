@@ -6,16 +6,21 @@ import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
+import 'package:smarthome/devices/generic/edit_parameter.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
+import 'package:smarthome/devices/generic/layout_base_property_info.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
+import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/settings_manager.dart';
-import 'package:smarthome/icons/smarthome_icons.dart';
+import 'package:smarthome/icons/icons.dart';
+import 'package:smarthome/models/message.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import '../helper/theme_manager.dart';
 
@@ -43,7 +48,7 @@ class GenericDevice extends Device<BaseModel> {
             ref.watch(dashboardNoSpecialTypeLayoutProvider(Tuple2(id, baseModel.typeNames.first)));
         if (dashboardDeviceLayout?.isEmpty ?? true) return Container();
 
-        return DashboardLayoutWidget(id, dashboardDeviceLayout!);
+        return DashboardLayoutWidget(this, dashboardDeviceLayout!);
       },
     );
   }
@@ -62,119 +67,189 @@ class GenericDevice extends Device<BaseModel> {
         properties!.sort((final a, final b) => a.order.compareTo(b.order));
 
         return Column(
-          children: properties.map((final e) => DashboardRightValueStoreWidget(e, id)).toList(),
+          children: properties.map((final e) => DashboardRightValueStoreWidget(e, this)).toList(),
         );
       },
     );
   }
-}
 
-class DashboardLayoutWidget extends ConsumerWidget {
-  final List<DashboardPropertyInfo> layout;
-  final int id;
-
-  const DashboardLayoutWidget(this.id, this.layout, {final Key? key}) : super(key: key);
-
-  @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    if (layout.isEmpty) return Container();
-
-    return Column(
-      children: [
-        Wrap(
-          alignment: WrapAlignment.center,
-          runAlignment: WrapAlignment.spaceEvenly,
-          children: layout
-              .groupBy((final g) => g.rowNr)
-              .map((final row, final elements) {
-                return MapEntry(
-                  row,
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        runAlignment: WrapAlignment.spaceBetween,
-                        spacing: 16,
-                        children: elements.map((final e) {
-                          return DashboardValueStoreWidget(e, id);
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                );
-              })
-              // .select((p0, p1) => Row(
-              //       mainAxisAlignment: MainAxisAlignment.center,
-              //       children: [p1],
-              //     ))
-              .values
-              .toList(),
-        ),
-      ],
-    );
-  }
-}
-
-class DashboardValueStoreWidget extends ConsumerWidget {
-  final DashboardPropertyInfo e;
-  final int deviceId;
-  const DashboardValueStoreWidget(this.e, this.deviceId, {final Key? key}) : super(key: key);
-
-  @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, deviceId)));
-    final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-
-    if (valueModel == null ||
-        e.specialType != SpecialType.none ||
-        ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)) {
-      return Container();
+  Widget getEditWidget(final LayoutBasePropertyInfo e, final ValueStore valueModel, final WidgetRef ref) {
+    switch (e.editInfo?.editType) {
+      case EditType.button:
+      case EditType.raisedButton:
+        return _buildButton(valueModel, e, ref, e.editInfo!.editType == EditType.raisedButton);
+      case EditType.toggle:
+        return _buildToggle(valueModel, e, ref);
+      case EditType.dropdown:
+        return _buildDropdown(valueModel, e, ref);
+      case EditType.slider:
+        return _buildSlider(valueModel, e, ref);
+      case EditType.iconButton:
+        return _iconButton(valueModel, e, ref);
+      case EditType.icon:
+        return _icon(valueModel, e, ref);
+      // case EditType.input:
+      //   return _buildInput(valueModel, e, ref);
+      //https://github.com/mchome/flutter_colorpicker
+      //FAB
+      case EditType.floatingActionButton:
+        return Container();
+      default:
+        return Text(
+          valueModel.getValueAsString(format: e.format) + (e.unitOfMeasurement ?? ""),
+          style: e.textStyle?.toTextStyle(),
+        );
     }
-
-    return Text(
-      valueModel.getValueAsString(format: e.format) + (e.unitOfMeasurement ?? ""),
-      style: e.textStyle?.toTextStyle(),
-    );
   }
-}
 
-class DashboardRightValueStoreWidget extends ConsumerWidget {
-  final DashboardPropertyInfo e;
-  final int deviceId;
-  const DashboardRightValueStoreWidget(this.e, this.deviceId, {final Key? key}) : super(key: key);
-
-  @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, deviceId)));
-    if (valueModel == null) return Container();
-
-    final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-    if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) return Container();
-    if (e.specialType == SpecialType.none) return Container();
-
-    if (e.specialType == SpecialType.battery) {
-      if (valueModel.currentValue.runtimeType != (int)) return Container();
-      final currentValue = valueModel.currentValue as int;
-      return Icon(
-        (currentValue > 80
-            ? SmarthomeIcons.bat4
-            : (currentValue > 60
-                ? SmarthomeIcons.bat3
-                : (currentValue > 40
-                    ? SmarthomeIcons.bat2
-                    : (currentValue > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))),
-        size: 20,
-      );
-    } else if (e.specialType == SpecialType.disabled) {
-      if (valueModel.currentValue.runtimeType != (bool)) return Container();
-      final currentValue = valueModel.currentValue as bool;
-      return Icon(
-        currentValue ? Icons.power_off_outlined : Icons.power_outlined,
-        size: 20,
+  Widget _buildButton(
+      final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref, final bool raisedButton) {
+    final info = e.editInfo!;
+    final edit = info.editParameter.first;
+    final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
+    if (raisedButton) {
+      return ElevatedButton(
+        onPressed: (() async {
+          await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        }),
+        child: Text(info.display!,
+            style: TextStyle(
+                fontWeight: valueModel.currentValue == info.activeValue ? FontWeight.bold : FontWeight.normal)),
       );
     }
-    return Container();
+
+    return MaterialButton(
+      onPressed: (() async {
+        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+      }),
+      child: Text(info.display!,
+          style:
+              TextStyle(fontWeight: valueModel.currentValue == info.activeValue ? FontWeight.bold : FontWeight.normal)),
+    );
+  }
+
+  Widget _icon(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+    final info = e.editInfo!;
+    EditParameter edit;
+    if (valueModel.currentValue is double) {
+      final val = (valueModel.currentValue as double);
+      edit = info.editParameter.firstWhere((final element) {
+        final lower = element.raw["Min"] as double?;
+        final upper = element.raw["Max"] as double?;
+        if (lower != null && upper != null) {
+          return val >= lower && val < upper;
+        }
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else if (valueModel.currentValue is int) {
+      final val = (valueModel.currentValue as int);
+      edit = info.editParameter.firstWhere((final element) {
+        final lower = element.raw["Min"] as int?;
+        final upper = element.raw["Max"] as int?;
+        if (lower != null && upper != null) {
+          return val >= lower && val < upper;
+        }
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else {
+      edit = info.editParameter.first;
+    }
+
+    return Icon(
+      IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+    );
+  }
+
+  Widget _iconButton(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+    final info = e.editInfo!;
+    final edit = info.editParameter.firstWhere((final element) => element.value == valueModel.currentValue,
+        orElse: () => info.editParameter.first);
+    final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
+
+    return IconButton(
+      onPressed: (() async {
+        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+      }),
+      icon: Icon(IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons')),
+    );
+  }
+
+  Widget _buildToggle(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+    final info = e.editInfo!;
+    final edit = info.editParameter.firstWhere((final element) => element.value != valueModel.currentValue);
+    final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
+    return Switch(
+      onChanged: ((final _) async {
+        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+      }),
+      value: valueModel.currentValue == info.activeValue,
+    );
+  }
+
+  Widget _buildDropdown(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+    final info = e.editInfo!;
+    return DropdownButton(
+      items: info.editParameter
+          .map((final e) => DropdownMenuItem(
+                value: e.value,
+                child: Text(e.displayName ?? e.value.toString()),
+              ))
+          .toList(),
+      onChanged: (final value) async {
+        final edit = info.editParameter.firstWhere((final element) => element.value == value);
+        final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
+        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+      },
+      value: valueModel.currentValue,
+    );
+  }
+
+  static final _sliderValueProvider = StateProvider.family<double, Tuple2<String, int>>((final _, final __) {
+    return 0.0;
+  });
+
+  Widget _buildSlider(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+    final info = e.editInfo!;
+    final edit = info.editParameter.first;
+    final json = edit.value;
+    if (json is! Map<String, dynamic>) return Container();
+    if (json.containsKey("Divisions") && json.containsKey("Values")) {
+      final customLabels = (json["Values"]);
+      final currentValue = ref.watch(_sliderValueProvider(Tuple2(e.name, id)));
+      return Slider(
+        min: json["Min"] as double,
+        max: json["Max"] as double,
+        divisions: json["Divisions"],
+        onChanged: (final value) {
+          ref.read(_sliderValueProvider(Tuple2(e.name, id)).notifier).state = value;
+        },
+        onChangeEnd: (final value) async {
+          final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command,
+              [customLabels[value.round()].values.first, ...?edit.parameters]);
+          await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        },
+        value: currentValue,
+        label: customLabels[currentValue.round()].keys.first,
+      );
+    }
+
+    return Slider(
+      min: json["Min"] as double? ?? 0.0,
+      max: json["Max"] as double? ?? 1.0,
+      divisions: json["Divisions"] as int?,
+      onChanged: (final value) {
+        if (valueModel.currentValue is double)
+          valueModel.setValue(value);
+        else if (valueModel.currentValue is int) valueModel.setValue(value.toInt());
+      },
+      onChangeEnd: (final value) async {
+        final message =
+            Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, [value, ...?edit.parameters]);
+        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+      },
+      value: valueModel.currentValue is double ? valueModel.currentValue : valueModel.currentValue.toDouble(),
+      label: info.display ?? valueModel.getValueAsString(),
+    );
   }
 }
 
@@ -187,8 +262,14 @@ class GenericDeviceScreen extends ConsumerStatefulWidget {
 }
 
 class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
-  final currentShownTimeProvider = StateProvider<DateTime>((final _) => DateTime.now());
+  final _currentShownTimeProvider = StateProvider<DateTime>((final _) => DateTime.now());
 
+  final _currentShownTabProvider = StateProvider.family<bool, Tuple2<int, String>>((final ref, final _) {
+    return false;
+  });
+  final _tabKeyProvider = StateProvider.autoDispose.family<Key, Tuple2<int, String>>((final ref, final key) {
+    return Key(key.toString());
+  });
   GenericDeviceScreenState();
 
   @override
@@ -202,6 +283,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
   Widget buildWithoutHistory(final BuildContext context) {
     final friendlyName = ref.watch(BaseModel.friendlyNameProvider(widget.genericDevice.id));
     return Scaffold(
+        floatingActionButton: _buildFab(),
         appBar: AppBar(
           title: Text(friendlyName),
         ),
@@ -212,6 +294,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     return DefaultTabController(
       length: histProps.length + 1,
       child: Scaffold(
+        floatingActionButton: _buildFab(),
         appBar: AppBar(
           title: TabBar(
             tabs: histProps
@@ -237,57 +320,174 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     );
   }
 
+  Widget? _buildFab() {
+    final name = ref.watch(BaseModel.typeNameProvider(widget.genericDevice.id));
+    final fabLayout = ref.watch(fabLayoutProvider(Tuple2(widget.genericDevice.id, name)));
+    if (fabLayout == null) return null;
+
+    final valueModel =
+        ref.watch(valueStoreChangedProvider(Tuple2(fabLayout.name, fabLayout.deviceId ?? widget.genericDevice.id)));
+    if (valueModel == null) return null;
+    // final showDebugInformation = ref.watch(debugInformationEnabledProvider);
+
+    final info = fabLayout.editInfo!;
+    final EditParameter edit;
+    if (valueModel.currentValue is double) {
+      final val = (valueModel.currentValue as double);
+      edit = info.editParameter.firstWhere((final element) {
+        final lower = element.raw["Min"] as double?;
+        final upper = element.raw["Max"] as double?;
+        if (lower != null && upper != null) {
+          return val >= lower && val < upper;
+        }
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else if (valueModel.currentValue is int) {
+      final val = (valueModel.currentValue as int);
+      edit = info.editParameter.firstWhere((final element) {
+        final lower = element.raw["Min"] as int?;
+        final upper = element.raw["Max"] as int?;
+        if (lower != null && upper != null) {
+          return val >= lower && val < upper;
+        }
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else {
+      edit = info.editParameter.first;
+    }
+    final message = Message(
+        edit.id ?? widget.genericDevice.id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
+
+    return FloatingActionButton(
+      onPressed: (() async {
+        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+      }),
+      child: Icon(
+        IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+      ),
+    );
+  }
+
   Widget buildBody() {
     final name = ref.watch(BaseModel.typeNameProvider(widget.genericDevice.id));
     final detailProperties = ref.watch(detailPropertyInfoLayoutProvider(Tuple2(widget.genericDevice.id, name)));
     if (detailProperties == null || detailProperties.isEmpty) return Container();
-    final widgets = <Widget>[];
+    // final widgets = <Widget>[];
     detailProperties.sort((final a, final b) => a.order.compareTo(b.order));
 
-    for (final detProp in detailProperties) {
-      widgets.add(DetailValueStoreWidget(detProp, widget.genericDevice.id));
-    }
-    return Column(
-      children: widgets,
+    // for (final detProp in detailProperties) {
+    //   widgets.add(DetailValueStoreWidget(detProp, widget.genericDevice));
+    // }
+    // return ListView(
+    //   children: widgets,
+    // );
+    final props = detailProperties.groupBy((final g) => g.rowNr).map((final row, final elements) {
+      return MapEntry(
+        row,
+        ListTile(
+          leading: ref.watch(debugInformationEnabledProvider) ? Text("Row: $row") : null,
+          title: Row(
+            // runAlignment: WrapAlignment.spaceBetween,
+            // spacing: 8,
+            children: elements.map((final e) {
+              final exp = e.expanded;
+              if (exp == null || !exp) return DetailValueStoreWidget(e, widget.genericDevice);
+              return Expanded(child: DetailValueStoreWidget(e, widget.genericDevice));
+            }).toList(),
+          ),
+        ),
+        // ),
+      );
+    });
+
+    return ListView(
+      children: props.values.toList(),
     );
   }
 
   Widget buildGraph(final HistoryPropertyInfo info) {
-    final currentShownTime = ref.watch(currentShownTimeProvider);
-    final h = ref.watch(
-        historyPropertyNameProvider(Tuple3(widget.genericDevice.id, currentShownTime.toString(), info.propertyName)));
+    final currentShownTime = ref.watch(_currentShownTimeProvider);
+    final showBody = ref.watch(_currentShownTabProvider(Tuple2(widget.genericDevice.id, info.propertyName)));
+    return VisibilityDetector(
+        key: ref.watch(_tabKeyProvider(Tuple2(widget.genericDevice.id, info.propertyName))),
+        child: !showBody
+            ? Container()
+            : ref
+                .watch(historyPropertyNameProvider(
+                    Tuple3(widget.genericDevice.id, currentShownTime.toString(), info.propertyName)))
+                .when(
+                  data: (final data) {
+                    if (data != null && data.historyRecords.isNotEmpty) {
+                      return buildHistorySeriesAnnotationChart(
+                          data,
+                          info.unitOfMeasurement,
+                          info.xAxisName,
+                          AdaptiveTheme.of(context).brightness == Brightness.light
+                              ? Color(info.brightThemeColor)
+                              : Color(info.darkThemeColor),
+                          currentShownTime);
+                    }
+                    return buildDataMissing(currentShownTime);
+                  },
+                  error: (final e, final o) => Text(e.toString()),
+                  loading: () => Column(
+                    children: <Widget>[
+                      Container(
+                        margin: const EdgeInsets.only(top: 50),
+                        child: Text(
+                          'Lade weitere History Daten...',
+                          style: Theme.of(context).textTheme.headline6,
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 25),
+                        child: const CircularProgressIndicator(),
+                      ),
+                    ],
+                  ),
+                ),
+        onVisibilityChanged: (final i) {
+          try {
+            ref.read(_currentShownTabProvider(Tuple2(widget.genericDevice.id, info.propertyName)).notifier).state =
+                !i.visibleBounds.isEmpty;
+          } catch (e) {
+            //Happends in debug when exiting in the history tab
+          }
+        });
 
-    return h.when(
-      data: (final data) {
-        if (data != null) {
-          return buildHistorySeriesAnnotationChart(
-              data,
-              info.unitOfMeasurement,
-              info.xAxisName,
-              AdaptiveTheme.of(context).brightness == Brightness.light
-                  ? Color(info.brightThemeColor)
-                  : Color(info.darkThemeColor),
-              currentShownTime);
-        }
-        return buildDataMissing(currentShownTime);
-      },
-      error: (final e, final o) => Text(e.toString()),
-      loading: () => Column(
-        children: <Widget>[
-          Container(
-            margin: const EdgeInsets.only(top: 50),
-            child: Text(
-              'Lade weitere History Daten...',
-              style: Theme.of(context).textTheme.headline6,
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(top: 25),
-            child: const CircularProgressIndicator(),
-          ),
-        ],
-      ),
-    );
+    // final h = ;
+
+    // return h.when(
+    //   data: (final data) {
+    //     if (data != null && data.historyRecords.isNotEmpty) {
+    //       return buildHistorySeriesAnnotationChart(
+    //           data,
+    //           info.unitOfMeasurement,
+    //           info.xAxisName,
+    //           AdaptiveTheme.of(context).brightness == Brightness.light
+    //               ? Color(info.brightThemeColor)
+    //               : Color(info.darkThemeColor),
+    //           currentShownTime);
+    //     }
+    //     return buildDataMissing(currentShownTime);
+    //   },
+    //   error: (final e, final o) => Text(e.toString()),
+    //   loading: () => Column(
+    //     children: <Widget>[
+    //       Container(
+    //         margin: const EdgeInsets.only(top: 50),
+    //         child: Text(
+    //           'Lade weitere History Daten...',
+    //           style: Theme.of(context).textTheme.headline6,
+    //         ),
+    //       ),
+    //       Container(
+    //         margin: const EdgeInsets.only(top: 25),
+    //         child: const CircularProgressIndicator(),
+    //       ),
+    //     ],
+    //   ),
+    // );
   }
 
   Widget buildDataMissing(final DateTime currentShownTime) {
@@ -327,7 +527,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
       direction: Axis.vertical,
       children: <Widget>[
         Expanded(
-          child: HistorySeriesAnnotationChart(
+          child: HistorySeriesAnnotationChartWidget(
             [
               LineSeries<GraphTimeSeriesValue, DateTime>(
                   enableTooltip: true,
@@ -382,80 +582,6 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
 
   getNewData(final DateTime dt) {
     if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) return;
-    ref.read(currentShownTimeProvider.notifier).state = dt;
+    ref.read(_currentShownTimeProvider.notifier).state = dt;
   }
-}
-
-class DetailValueStoreWidget extends ConsumerWidget {
-  final DetailPropertyInfo e;
-  final int deviceId;
-  const DetailValueStoreWidget(this.e, this.deviceId, {final Key? key}) : super(key: key);
-
-  @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, deviceId)));
-    final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-
-    if (valueModel == null ||
-        e.specialType != SpecialDetailType.none ||
-        ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)) {
-      return Container();
-    }
-
-    return ListTile(
-      title: Text(
-        (e.displayName ?? "") + valueModel.getValueAsString(format: e.format) + (e.unitOfMeasurement ?? ""),
-        style: e.textStyle?.toTextStyle(),
-      ),
-    );
-  }
-}
-
-class HistorySeriesAnnotationChart extends StatelessWidget {
-  final List<LineSeries> seriesList;
-  final double min;
-  final double max;
-  final String unit;
-  final String valueName;
-  final DateTime shownDate;
-
-  const HistorySeriesAnnotationChart(this.seriesList, this.min, this.max, this.unit, this.valueName, this.shownDate,
-      {final Key? key})
-      : super(key: key);
-
-  @override
-  Widget build(final BuildContext context) {
-    return OrientationBuilder(builder: (final context, final orientation) {
-      return SfCartesianChart(
-        primaryXAxis: DateTimeAxis(
-            interval: orientation == Orientation.landscape ? 2 : 4,
-            intervalType: DateTimeIntervalType.hours,
-            dateFormat: DateFormat("HH:mm"),
-            majorGridLines: const MajorGridLines(width: 0),
-            title: AxisTitle(text: DateFormat("dd.MM.yyyy").format(shownDate))),
-        primaryYAxis: NumericAxis(
-            minimum: (min - (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
-            maximum: (max + (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
-            interval: (((max - min) < 10 ? 10 : (max - min)) / 10).roundToDouble(),
-            axisLine: const AxisLine(width: 0),
-            labelFormat: '{value}$unit',
-            majorTickLines: const MajorTickLines(size: 0),
-            title: AxisTitle(text: valueName)),
-        series: seriesList,
-        trackballBehavior: TrackballBehavior(
-            enable: true,
-            activationMode: ActivationMode.singleTap,
-            tooltipSettings: const InteractiveTooltip(format: '{point.x} : {point.y}')),
-      );
-    });
-  }
-}
-
-/// Sample time series data type.
-class GraphTimeSeriesValue {
-  final DateTime time;
-  final double? value;
-  final Color lineColor;
-
-  GraphTimeSeriesValue(this.time, this.value, this.lineColor);
 }

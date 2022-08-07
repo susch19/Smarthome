@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const fallbackServerUrl = "http://localhost:5056/SmartHome";
 
-final settingsProvider = StateProvider<Settings>((final ref) {
-  SettingsManager(ref);
-  return Settings();
+final settingsProvider = StateNotifierProvider<SettingsManager, Settings>((final ref) {
+  print("Creating new settingsmanager");
+  return SettingsManager();
 });
 
 final debugInformationEnabledProvider = Provider<bool>((final ref) {
@@ -40,35 +40,30 @@ class Settings {
   }
 }
 
-class SettingsManager {
-  static StateProviderRef<Settings>? _ref;
-
-  SettingsManager(final StateProviderRef<Settings> ref) {
-    _ref = ref;
+class SettingsManager extends StateNotifier<Settings> {
+  static late SettingsManager _instance;
+  SettingsManager() : super(Settings()) {
+    _instance = this;
   }
 
   static void setGroupingEnabled(final bool newState) {
-    if (_ref == null) return;
+    if (_instance == null) return;
 
-    final state = _ref!.read(settingsProvider.notifier);
+    final state = _instance;
 
     state.state = state.state.copyWith(groupingEnabled: newState);
     PreferencesManager.instance.setBool("Groupings", newState);
   }
 
   static void setShowDebugInformation(final bool showDebugInformation) {
-    if (_ref == null) return;
-
-    final state = _ref!.read(settingsProvider.notifier);
+    final state = _instance;
 
     state.state = state.state.copyWith(showDebugInformation: showDebugInformation);
     PreferencesManager.instance.setBool("ShowDebugInformation", showDebugInformation);
   }
 
   static void setServerUrl(final String newUrl) {
-    if (_ref == null) return;
-
-    final state = _ref!.read(settingsProvider.notifier);
+    final state = _instance;
 
     state.state = state.state.copyWith(serverUrl: newUrl);
     PreferencesManager.instance.setString("mainserverurl", newUrl);

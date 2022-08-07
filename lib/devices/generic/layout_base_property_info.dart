@@ -13,6 +13,10 @@ class LayoutBasePropertyInfo {
   String? unitOfMeasurement;
   String? format;
   bool? showOnlyInDeveloperMode;
+  int? deviceId;
+  bool? expanded;
+  @JsonKey(ignore: true)
+  late Map<String, dynamic> raw;
 
   LayoutBasePropertyInfo(this.name, this.order);
 
@@ -32,7 +36,8 @@ class LayoutBasePropertyInfo {
   int get hashCode =>
       Object.hash(name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format, showOnlyInDeveloperMode);
 
-  factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) => _$LayoutBasePropertyInfoFromJson(json);
+  factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) =>
+      _$LayoutBasePropertyInfoFromJson(json)..raw = json;
 
   Map<String, dynamic> toJson() => _$LayoutBasePropertyInfoToJson(this);
 }

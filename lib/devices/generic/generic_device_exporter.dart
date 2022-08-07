@@ -12,3 +12,8 @@ export 'icons/icon_manager.dart';
 export 'linked_device_tab.dart';
 export 'property_edit_information.dart';
 export 'device_layout.dart';
+export 'widgets/dashboard_layout_widget.dart';
+export 'widgets/dashboard_right_value_store_widget.dart';
+export 'widgets/dashboard_value_store_widget.dart';
+export 'widgets/detail_value_store_widget.dart';
+export 'widgets/history_series_annotation_chart_widget.dart';

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/datetime_helper.dart';
+import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart';
 
 class ValueStore<T> extends ChangeNotifier {
@@ -25,6 +26,14 @@ class ValueStore<T> extends ChangeNotifier {
   }
 
   setValue(final T newValue) {
+    switch (T) {
+      case List<String>:
+        (currentValue as List<String>).sequenceEquals(newValue as List<String>);
+        return;
+      default:
+        break;
+    }
+
     if (currentValue == newValue) return;
     currentValue = newValue;
     sendToServer = true;
@@ -32,6 +41,13 @@ class ValueStore<T> extends ChangeNotifier {
   }
 
   updateValue(final T newValue) {
+    switch (T) {
+      case List<String>:
+        (currentValue as List<String>).sequenceEquals(newValue as List<String>);
+        return;
+      default:
+        break;
+    }
     if (currentValue == newValue) return;
     currentValue = newValue;
     sendToServer = false;

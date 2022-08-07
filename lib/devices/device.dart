@@ -41,21 +41,21 @@ final historyPropertyNameProvider =
 });
 
 final _iconWidgetProvider =
-    Provider.family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final id) {
+    Provider.autoDispose.family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final id) {
   final brightness = ref.watch(brightnessProvider(id.item3));
   final iconByName = ref.watch(iconByTypeNamesProvider(id.item1));
 
   return id.item2._createIcon(brightness, iconByName);
 });
 
-final iconWidgetProvider =
-    Provider.family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
-  final iconByName = ref.watch(_iconWidgetProvider(deviveTypeName));
+final iconWidgetProvider = Provider.autoDispose
+    .family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final deviceTypeName) {
+  final iconByName = ref.watch(_iconWidgetProvider(deviceTypeName));
   return iconByName;
 });
 
-final iconWidgetSingleProvider =
-    Provider.family<Widget, Tuple3<String, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
+final iconWidgetSingleProvider = Provider.autoDispose
+    .family<Widget, Tuple3<String, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
   final iconByName =
       ref.watch(_iconWidgetProvider(Tuple3([deviveTypeName.item1], deviveTypeName.item2, deviveTypeName.item3)));
   return iconByName;
@@ -69,7 +69,7 @@ abstract class Device<T extends BaseModel> {
   });
 
   static final groupsByIdProvider = StateProvider.family<List<String>, int>((final ref, final id) {
-    final friendlyNameSplit = ref.read(BaseModel.friendlyNameProvider(id)).split(" ");
+    final friendlyNameSplit = ref.watch(BaseModel.friendlyNameProvider(id)).split(" ");
     return [friendlyNameSplit.first];
   });
 

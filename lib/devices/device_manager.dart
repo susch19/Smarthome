@@ -1,6 +1,7 @@
 // ignore_for_file: unused_import, constant_identifier_names
 
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,12 +22,23 @@ import 'package:tuple/tuple.dart';
 import '../icons/smarthome_icons.dart';
 import 'device_exporter.dart';
 
-final deviceIdProvider = StateProvider<List<int>>((final _) => []);
+// final deviceIdProvider = StateProvider<List<int>>((final _) => []);
+// final deviceIdProvider = StateNotifierProvider<DeviceIdManager, List<int>>((final _) => DeviceIdManager([]));
+
+// class DeviceIdManager extends StateNotifier<List<int>> {
+//   DeviceIdManager(super.state);
+
+//   void subscribeToDevice(final int device) {
+//     state = [...state, device];
+//   }
+
+//   void subscribeToDevices(final List<int> deviceIds) {
+//     state = [...state, ...deviceIds];
+//   }
+// }
 
 final deviceProvider = StateNotifierProvider<DeviceManager, List<Device>>((final ref) {
-  final deviceIds = ref.watch(deviceIdProvider);
-  final dm = DeviceManager(ref, deviceIds);
-  return dm;
+  return DeviceManager(ref);
 });
 
 final deviceByIdProvider = Provider.family<Device?, int>((final ref, final id) {
@@ -92,36 +104,48 @@ class DiffIdModel {
 }
 
 class DeviceManager extends StateNotifier<List<Device>> {
-  DeviceManager(final Ref providerRef, final List<int> deviceIds) : super(_devices) {
-    _ref = providerRef;
-    _instance = this;
+  List<int> _deviceIds = [];
 
-    final deviceIdsSet = deviceIds.toSet();
-    final existingDeviceIdsSet = _devices.map((final x) => x.id).toSet();
+  static DeviceManager? instance;
 
-    final newDevices = deviceIdsSet.difference(existingDeviceIdsSet);
-    final removedDevices = existingDeviceIdsSet.difference(deviceIdsSet);
+  late List<DiffIdModel> _diffIds = [];
 
-    _diffIds = [
-      for (var id in newDevices) DiffIdModel(id, Action.added),
-      for (var id in removedDevices) DiffIdModel(id, Action.removed),
-    ];
-    _syncDevices(providerRef);
-    _clearDevicesCacheOnConnectionLost(providerRef);
-  }
-
-  late final List<DiffIdModel> _diffIds;
-
-  static List<Device> _devices = <Device>[];
-  static late DeviceManager _instance;
-  static late Ref? _ref;
+  late Ref? _ref;
   static bool showDebugInformation = false;
+
+  DeviceManager(final Ref providerRef) : super([]) {
+    _ref = providerRef;
+    instance = this;
+    _fetchIds();
+  }
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   static final customGroupNameProvider = StateProvider.family<String, String>((final ref, final name) {
     return _groupNames[name] ?? name;
   });
 
   static final Map<String, String> _groupNames = <String, String>{};
+
+  void _fetchIds() {
+    final ref = _ref;
+    if (ref == null) return;
+    final connection = ref.watch(hubConnectionConnectedProvider);
+    if (connection == null) {
+      return;
+    }
+    final ids = <int>[];
+    for (final key in PreferencesManager.instance.getKeys().where((final x) => x.startsWith("SHD"))) {
+      final id = PreferencesManager.instance.getInt(key);
+      if (id == null) continue;
+      ids.add(id);
+    }
+    _deviceIds = ids;
+    _syncDevices();
+    // _clearDevicesCacheOnConnectionLost();
+  }
 
   static void init() {
     final names = PreferencesManager.instance.getStringList("customGroupNames");
@@ -135,41 +159,25 @@ class DeviceManager extends StateNotifier<List<Device>> {
     }
   }
 
-  static void updateMethod(final List<Object?>? arguments) {
-    if (_ref == null) return;
-    final baseModels = _ref!.read(baseModelProvider.notifier);
-    final oldState = baseModels.state.toList();
-    bool hasChanges = false;
-    for (final a in arguments!) {
-      final updateMap = a as Map;
-      for (var i = 0; i < oldState.length; i++) {
-        final oldModel = oldState[i];
-        if (oldModel.id != updateMap["id"]) continue;
-        final newModel = oldModel.updateFromJson(updateMap as Map<String, dynamic>);
-        if (newModel != newModel) continue;
-        oldState[i] = newModel;
-        hasChanges = true;
-      }
-    }
-    if (hasChanges) baseModels.state = oldState;
+  void subscribeToDevice(final int device) {
+    _deviceIds = [..._deviceIds, device];
+    _syncDevices();
   }
 
-  static void subscribeToDevice(final int device) {
-    final deviceIdsState = _ref?.read(deviceIdProvider.notifier);
-    if (deviceIdsState == null) return;
-    deviceIdsState.state = [...deviceIdsState.state, device];
+  void subscribeToDevices(final List<int> deviceIds) {
+    _deviceIds = [..._deviceIds, ...deviceIds];
+    _syncDevices();
   }
 
-  static void subscribeToDevices(final List<int> deviceIds) {
-    final deviceIdsState = _ref?.read(deviceIdProvider.notifier);
-    if (deviceIdsState == null) return;
-    deviceIdsState.state = [...deviceIdsState.state, ...deviceIds];
+  removeDevice(int id) {
+    _deviceIds.remove(id);
+    _syncDevices();
   }
 
-  static void saveDeviceGroups() {
+  void saveDeviceGroups() {
     if (_ref == null) return;
 
-    final deviceGroups = _instance.state
+    final deviceGroups = state
         .map((final e) => "${e.id}\u0002${_ref!.read(Device.groupsByIdProvider(e.id)).join("\u0003")}")
         .join("\u0001");
     PreferencesManager.instance.setString("deviceGroups", deviceGroups);
@@ -180,7 +188,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
   //   return name ?? key;
   // }
 
-  static void changeGroupName(final String key, final String newName) {
+  void changeGroupName(final String key, final String newName) {
     _ref!.read(customGroupNameProvider(key).notifier).state = newName;
     _groupNames[key] = newName;
 
@@ -189,11 +197,11 @@ class DeviceManager extends StateNotifier<List<Device>> {
   }
 
   static List<T> getDevicesOfType<T extends Device>() {
-    return _devices.whereType<T>().toList(); // where((x) => x.getDeviceType() == type).toList();
+    return instance!.state.whereType<T>().toList(); // where((x) => x.getDeviceType() == type).toList();
   }
 
   static Device getDeviceWithId(final int? id) {
-    return _devices.firstWhere((final x) => x.id == id);
+    return instance!.state.firstWhere((final x) => x.id == id);
   }
 
   static final ctorFactory = <String, Object Function(int id, String typeName)>{
@@ -227,14 +235,25 @@ class DeviceManager extends StateNotifier<List<Device>> {
     'Device': (final m, final t) => BaseModel.fromJson(m, t)
   };
 
-  void _loadDevices(final subs, final List<int> ids, final Ref ref) {
+  void _loadDevices(final subs, final List<int> ids) {
+    final ref = _ref;
+    if (ref == null) return;
     final devices = state.toList();
-    final baseModelState = ref.read(baseModelProvider.notifier);
+    final StateController<List<BaseModel>> baseModelState;
+    try {
+      baseModelState = ref.read(baseModelProvider.notifier);
+    } catch (e) {
+      print(e);
+      return;
+    }
+
     final baseModels = baseModelState.state.toList();
     // final futures = <Future>[];
     for (final id in ids) {
       final sub = subs.firstWhere((final x) => x["id"] == id, orElse: () => null);
-      if (sub == null) continue;
+      if (sub == null) {
+        continue;
+      }
       final types = PreferencesManager.instance.getStringList("Types$id") ?? <String>[];
       BaseModel? model;
       String? type;
@@ -252,14 +271,15 @@ class DeviceManager extends StateNotifier<List<Device>> {
         type = PreferencesManager.instance.getString("Type$id");
       } else {
         for (final item in types) {
-          if (!stringNameJsonFactory.containsKey(item)) continue;
+          if (!stringNameJsonFactory.containsKey(item)) {
+            continue;
+          }
           type = item;
           break;
         }
       }
 
       try {
-        if (sub == null) continue;
         model = stringNameJsonFactory[type]!(sub, types);
         final dev = ctorFactory[type]!(id, types.first);
         devices.add(dev as Device<BaseModel>);
@@ -285,19 +305,36 @@ class DeviceManager extends StateNotifier<List<Device>> {
         final groups = deviceGroup.last.split("\u0003");
         final dev = devices.firstOrNull((final element) => element.id.toString() == deviceId);
         if (dev != null) {
-          final groupings = ref.read(Device.groupsByIdProvider(dev.id).notifier);
+          try {
+            final groupings = ref.read(Device.groupsByIdProvider(dev.id).notifier);
 
-          groupings.state = groups;
+            groupings.state = groups;
+          } catch (ex) {
+            print(ex);
+            return;
+          }
         }
       }
     }
-    final deviceIdState = ref.read(deviceIdProvider.notifier);
+    // try {
+    //   final deviceIdState = ref.read(deviceIdProvider.notifier);
+    //   deviceIdState.state = devices.map((final e) => e.id).toList();
+    // } catch (ex) {
+    //   print(ex);
+    //   return;
+    // }
+
     baseModelState.state = baseModels;
-    _devices = devices;
-    deviceIdState.state = devices.map((final e) => e.id).toList();
+
+    try {
+      state = devices;
+    } catch (ex) {
+      print(ex);
+      return;
+    }
   }
 
-  static Future reloadCurrentDevices() async {
+  Future reloadCurrentDevices() async {
     if (_ref == null) return;
 
     final s = ConnectionManager.hubConnection.invoke("GetAllDevices", args: []);
@@ -319,47 +356,60 @@ class DeviceManager extends StateNotifier<List<Device>> {
     baseModelState.state = baseModels;
   }
 
-  static void removeAllDevices() {
-    for (int i = _instance.state.length - 1; i >= 0; i--) {
-      final d = _instance.state.elementAt(i);
+  void removeAllDevices() {
+    for (int i = state.length - 1; i >= 0; i--) {
+      final d = state.elementAt(i);
       PreferencesManager.instance.remove("SHD${d.id}");
       PreferencesManager.instance.remove("Json${d.id}");
       PreferencesManager.instance.remove("Type${d.id}");
     }
+    _deviceIds = [];
+    _syncDevices();
 
-    final ids = _ref?.read(deviceIdProvider.notifier);
-    ids?.state = [];
-
-    DeviceManager.saveDeviceGroups();
+    saveDeviceGroups();
   }
 
-  void _syncDevices(final Ref ref) {
-    final connection = ref.watch(hubConnectionConnectedProvider);
+  void _syncDevices() {
+    final ref = _ref;
+    if (ref == null) return;
+    List<int> deviceIds;
+    deviceIds = _deviceIds;
+    final deviceIdsSet = deviceIds.toSet();
+    final existingDeviceIdsSet = state.map((final x) => x.id).toSet();
 
+    final newDevices = deviceIdsSet.difference(existingDeviceIdsSet);
+    final removedDevices = existingDeviceIdsSet.difference(deviceIdsSet);
+
+    _diffIds = [
+      for (var id in newDevices) DiffIdModel(id, Action.added),
+      for (var id in removedDevices) DiffIdModel(id, Action.removed),
+    ];
+
+    final connection = ref.watch(hubConnectionConnectedProvider);
+    ref.watch(valueStoreProvider);
     if (connection == null || _diffIds.isEmpty) {
       return;
     }
 
-    final deviceIdState = ref.read(deviceIdProvider.notifier);
-
     if (_diffIds.any((final element) => element.action == Action.added)) {
       final deviceIds = _diffIds.where((final x) => x.action == Action.added).map((final x) => x.id).toList();
       connection.invoke("Subscribe", args: [deviceIds]).then((final subs) {
-        _loadDevices(subs, deviceIds, ref);
+        _loadDevices(subs, deviceIds);
         for (final id in deviceIds) {
           if (PreferencesManager.instance.containsKey("SHD$id")) continue;
           PreferencesManager.instance.setInt("SHD$id", id);
         }
       });
-    } else if (_diffIds.any((final element) => element.action == Action.removed)) {
+    }
+    if (_diffIds.any((final element) => element.action == Action.removed)) {
       final deviceIds = _diffIds.where((final x) => x.action == Action.removed).map((final x) => x.id).toList();
       connection.invoke("Unsubscribe", args: [deviceIds]).then((final value) {
         final devices = state.toList();
         for (final diffId in _diffIds) {
           devices.removeWhere((final d) => d.id == diffId.id);
         }
-        _devices = devices;
-        deviceIdState.state = devices.map((final e) => e.id).toList();
+        state = devices;
+        // deviceIdState.state = devices.map((final e) => e.id).toList();
       });
       for (final id in deviceIds) {
         PreferencesManager.instance.remove("SHD$id");
@@ -370,10 +420,10 @@ class DeviceManager extends StateNotifier<List<Device>> {
     }
   }
 
-  void _clearDevicesCacheOnConnectionLost(final Ref providerRef) {
-    final state = providerRef.watch(hubConnectionStateProvider);
-    if (state != HubConnectionState.Connected) {
-      _devices = [];
+  void _clearDevicesCacheOnConnectionLost() {
+    final connection = _ref!.watch(hubConnectionStateProvider);
+    if (connection != HubConnectionState.Connected) {
+      state = [];
     }
   }
 }

@@ -75,6 +75,16 @@ class HeaterModel extends BaseModel {
   }
 
   @override
+  BaseModel updateFromJson(final Map<String, dynamic> json) {
+    final updatedModel = getModelFromJson(json);
+    bool updated = false;
+    if (updatedModel != this) {
+      updated = true;
+    }
+    return updated ? updatedModel : this;
+  }
+
+  @override
   Map<String, dynamic> toJson() => _$HeaterModelToJson(this);
 
   @override

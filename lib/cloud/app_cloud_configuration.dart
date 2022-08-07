@@ -11,10 +11,18 @@ class AppCloudConfiguration {
   int port;
   String key;
   String id;
+
+  @JsonKey(ignore: true)
   bool loadedFromPersistentStorage = false;
+  @JsonKey(ignore: true)
   late Uint8List keyBytes;
 
-  AppCloudConfiguration(this.host, this.port, this.key, this.id);
+  AppCloudConfiguration(
+    this.host,
+    this.port,
+    this.key,
+    this.id,
+  );
   factory AppCloudConfiguration.fromJson(final Map<String, dynamic> json) {
     final res = _$AppCloudConfigurationFromJson(json);
     res.keyBytes = base64Decode(res.key);
