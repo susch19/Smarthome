@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:quiver/core.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 
@@ -31,7 +32,8 @@ class DeviceLayout {
       (other.ids ?? []).sequenceEquals(ids ?? []);
 
   @override
-  int get hashCode => Object.hash(uniqueName, typeName, dashboardDeviceLayout, detailDeviceLayout) ^ hashList(ids);
+  int get hashCode =>
+      Object.hash(uniqueName, typeName, dashboardDeviceLayout, detailDeviceLayout) ^ hashObjects(ids ?? []);
 
   factory DeviceLayout.fromJson(final Map<String, dynamic> json) => _$DeviceLayoutFromJson(json);
 

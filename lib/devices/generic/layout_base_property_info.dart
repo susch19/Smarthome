@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 
@@ -30,11 +32,13 @@ class LayoutBasePropertyInfo {
       rowNr == other.rowNr &&
       unitOfMeasurement == other.unitOfMeasurement &&
       format == other.format &&
-      showOnlyInDeveloperMode == other.showOnlyInDeveloperMode;
+      showOnlyInDeveloperMode == other.showOnlyInDeveloperMode &&
+      deviceId == other.deviceId &&
+      expanded == other.expanded;
 
   @override
-  int get hashCode =>
-      Object.hash(name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format, showOnlyInDeveloperMode);
+  int get hashCode => Object.hash(
+      name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format, showOnlyInDeveloperMode, deviceId, expanded);
 
   factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) =>
       _$LayoutBasePropertyInfoFromJson(json)..raw = json;

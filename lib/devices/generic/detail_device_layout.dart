@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:quiver/core.dart';
 import 'package:smarthome/devices/generic/detail_property_info.dart';
 import 'package:smarthome/devices/generic/detail_tab_info.dart';
 import 'package:smarthome/devices/generic/history_property_info.dart';
@@ -21,7 +22,7 @@ class DetailDeviceLayout {
       other.historyProperties.sequenceEquals(historyProperties);
 
   @override
-  int get hashCode => hashList(propertyInfos) ^ hashList(tabInfos) ^ hashList(historyProperties);
+  int get hashCode => hashObjects(propertyInfos) ^ hashObjects(tabInfos) ^ hashObjects(historyProperties);
 
   DetailDeviceLayout(this.propertyInfos, this.tabInfos, this.historyProperties);
 

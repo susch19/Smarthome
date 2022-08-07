@@ -1,7 +1,9 @@
 import 'package:flutter/rendering.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:quiver/core.dart';
 import 'package:smarthome/devices/generic/edit_parameter.dart';
 import 'package:smarthome/devices/generic/enums.dart';
+import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart';
 
 part 'property_edit_information.g.dart';
@@ -26,10 +28,12 @@ class PropertyEditInformation {
       other.editType == editType &&
       other.editCommand == editCommand &&
       other.display == display &&
-      other.activeValue == activeValue;
+      other.hubMethod == hubMethod &&
+      other.activeValue == activeValue &&
+      editParameter.sequenceEquals(other.editParameter);
 
   @override
-  int get hashCode => Object.hash(editType, editCommand, display, activeValue);
+  int get hashCode => Object.hash(editType, editCommand, display, activeValue) ^ hashObjects(editParameter);
 
   List<EditParameter> getEditParametersFor(final int id) {
     final ret = editParameter.map((final e) => e.clone()).toList();
