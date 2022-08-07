@@ -4,6 +4,7 @@ import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbee_model.dart';
 import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,29 +25,29 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "An",
                 style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
+              ),
+              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "Aus",
                 style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+              ),
+              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
       ],
     );
@@ -75,7 +76,8 @@ class OsramPlugScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
-        onPressed: () => device.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+        onPressed: () =>
+            device.sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
       ),
     );
   }

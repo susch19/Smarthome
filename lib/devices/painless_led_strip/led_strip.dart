@@ -5,6 +5,7 @@ import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,55 +33,56 @@ class LedStrip extends Device<LedStripModel> {
         runAlignment: WrapAlignment.spaceEvenly,
         alignment: WrapAlignment.center,
         children: [
-          MaterialButton(
-            child: Consumer(
-              builder: (final context, final ref, final child) {
-                final colorMode = ref.watch(colorModeProvider(id));
-                return Text(
+          Consumer(
+            builder: (final context, final ref, final child) {
+              final colorMode = ref.watch(colorModeProvider(id));
+              return MaterialButton(
+                child: Text(
                   "An",
                   textAlign: TextAlign.center,
                   style: colorMode != "Off" && colorMode != "Mode"
                       ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                       : const TextStyle(),
-                );
-              },
-            ),
-            onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]),
+                ),
+                onPressed: () => sendToServer(
+                    sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"], ref.read(hubConnectionProvider)),
+              );
+            },
           ),
-          MaterialButton(
-            child: Consumer(
-              builder: (final context, final ref, final child) {
-                final colorMode = ref.watch(colorModeProvider(id));
-                return Text(
+          Consumer(
+            builder: (final context, final ref, final child) {
+              final colorMode = ref.watch(colorModeProvider(id));
+              return MaterialButton(
+                child: Text(
                   "Aus",
                   textAlign: TextAlign.center,
                   style: colorMode == "Off"
                       ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                       : const TextStyle(),
-                );
-              },
-            ),
-            onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
-          ),
-        ],
-      ),
-      MaterialButton(
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 4.0),
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final colorMode = ref.watch(colorModeProvider(id));
-              return Text(
-                "Essen fertig",
-                textAlign: TextAlign.center,
-                style: colorMode == "Mode"
-                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
-                    : const TextStyle(),
+                ),
+                onPressed: () =>
+                    sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
               );
             },
           ),
-        ),
-        onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, []),
+        ],
+      ),
+      Consumer(
+        builder: (final context, final ref, final child) {
+          final colorMode = ref.watch(colorModeProvider(id));
+          return MaterialButton(
+            child: Container(
+                margin: const EdgeInsets.only(bottom: 4.0),
+                child: Text(
+                  "Essen fertig",
+                  textAlign: TextAlign.center,
+                  style: colorMode == "Mode"
+                      ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      : const TextStyle(),
+                )),
+            onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, [], ref.read(hubConnectionProvider)),
+          );
+        },
       ),
       (DeviceManager.showDebugInformation ? Text(id.toString()) : Container())
     ]);
@@ -155,21 +157,22 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
     final oldMode = ref.watch(_colorModeProvider(widget.device).notifier);
     oldMode.state = newMode.name;
 
-    if (sendToServer) widget.device.sendToServer(sm.MessageType.Update, newMode, []);
+    if (sendToServer) widget.device.sendToServer(sm.MessageType.Update, newMode, [], ref.read(hubConnectionProvider));
   }
 
   void _changeColor(final WidgetRef ref, final RGBW rgbw, [final bool sendToServer = true]) {
     final oldMode = ref.watch(_rgbwProvider(widget.device).notifier);
     oldMode.state = rgbw;
     if (sendToServer) {
-      widget.device
-          .sendToServer(sm.MessageType.Options, sm.Command.Color, ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]);
+      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Color,
+          ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"], ref.read(hubConnectionProvider));
     }
   }
 
   void _changeDelay(final WidgetRef ref, final int delay, [final bool sendToServer = true]) {
     if (sendToServer) {
-      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Delay, ["0x${delay.toRadixString(16)}"]);
+      widget.device.sendToServer(
+          sm.MessageType.Options, sm.Command.Delay, ["0x${delay.toRadixString(16)}"], ref.read(hubConnectionProvider));
     }
     final oldDelay = ref.watch(_delayProvider(widget.device).notifier);
     oldDelay.state = delay;
@@ -177,8 +180,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
 
   void _changeNumLeds(final WidgetRef ref, final int numLeds, [final bool sendToServer = true]) {
     if (sendToServer) {
-      widget.device
-          .sendToServer(sm.MessageType.Options, sm.Command.Calibration, ["0x${(numLeds.toInt()).toRadixString(16)}"]);
+      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Calibration,
+          ["0x${(numLeds.toInt()).toRadixString(16)}"], ref.read(hubConnectionProvider));
     }
     final oldNumLeds = ref.watch(_numLedsProvider(widget.device).notifier);
     oldNumLeds.state = numLeds;
@@ -186,8 +189,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
 
   void _changeBrightness(final WidgetRef ref, final int brightness, [final bool sendToServer = true]) {
     if (sendToServer) {
-      widget.device
-          .sendToServer(sm.MessageType.Options, sm.Command.Brightness, ["0x${(brightness.toInt()).toRadixString(16)}"]);
+      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Brightness,
+          ["0x${(brightness.toInt()).toRadixString(16)}"], ref.read(hubConnectionProvider));
     }
     final oldBrightness = ref.watch(_brightnessProvider(widget.device).notifier);
     oldBrightness.state = brightness;
@@ -316,7 +319,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                         : const Text("White"),
                   ),
                   onTap: () {
-                    widget.device.sendToServer(sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"]);
+                    widget.device.sendToServer(
+                        sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"], ref.read(hubConnectionProvider));
                   },
                   trailing: const Text(""),
                 );
@@ -335,7 +339,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           )
                         : const Text("Reverse"),
                   ),
-                  onTap: () => widget.device.sendToServer(sm.MessageType.Options, sm.Command.Reverse, []),
+                  onTap: () => widget.device
+                      .sendToServer(sm.MessageType.Options, sm.Command.Reverse, [], ref.read(hubConnectionProvider)),
                   trailing: const Text(""),
                 );
               },
@@ -428,7 +433,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                             'SingleColor',
                           ),
                           onPressed: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.SingleColor,
-                              ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"]),
+                              ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"], ref.read(hubConnectionProvider)),
                         ),
                       ],
                     ),

@@ -75,8 +75,10 @@ class IconManager extends StateNotifier<Map<String, Uint8List>> {
   }
 
   Future<Uint8List?> _getIcon(
-      final String name, final String endpointName, final HubConnection connection, final bool byTypeName) async {
+      final String name, final String endpointName, final HubConnection? connection, final bool byTypeName) async {
+    if (connection == null) return null;
     final cache = state;
+
     if (cache.containsKey(name)) return cache[name];
 
     String hash;

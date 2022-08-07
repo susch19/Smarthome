@@ -9,6 +9,7 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/smarthome_icons.dart';
 import 'package:smarthome/models/message.dart' as sm;
@@ -54,7 +55,7 @@ class Heater extends Device<HeaterModel> {
     // }) as XiaomiTempSensor;
     return Column(
       children: <Widget>[
-            Row(children: [
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Consumer(
                 builder: (final context, final ref, final child) => Text(
                   (ref.watch(HeaterModel.temperatureProvider(id))?.temperature.toStringAsFixed(1) ?? ""),
@@ -65,11 +66,11 @@ class Heater extends Device<HeaterModel> {
                 " °C",
                 style: TextStyle(fontSize: 18),
               ),
-            ], mainAxisAlignment: MainAxisAlignment.center),
+            ]),
             Container(
               height: 2,
             ),
-            Row(children: [
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Consumer(
                 builder: (final context, final ref, final child) {
                   final currentConfig = ref.watch(HeaterModel.currentConfigProvider(id));
@@ -83,10 +84,11 @@ class Heater extends Device<HeaterModel> {
                 "°C",
                 style: TextStyle(fontWeight: FontWeight.normal),
               ),
-            ], mainAxisAlignment: MainAxisAlignment.center),
+            ]),
             !DeviceManager.showDebugInformation
                 ? Container()
                 : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Consumer(
                         builder: (final context, final ref, final child) {
@@ -94,7 +96,6 @@ class Heater extends Device<HeaterModel> {
                         },
                       )
                     ],
-                    mainAxisAlignment: MainAxisAlignment.center,
                   ),
             // (xs.id == 0 ? Text(baseModel.xiaomiTempSensor.toString()) : Text(xs.baseModel.friendlyName)),
           ] +
@@ -188,8 +189,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
             builder: (final BuildContext context) => TempScheduling(widget.device.id), fullscreenDialog: true));
     if (res == null || !res.item1) return;
 
-    widget.device
-        .sendToServer(sm.MessageType.Options, sm.Command.Temp, res.item2.map((final f) => jsonEncode(f)).toList());
+    widget.device.sendToServer(sm.MessageType.Options, sm.Command.Temp,
+        res.item2.map((final f) => jsonEncode(f)).toList(), ref.read(hubConnectionProvider));
   }
 
   buildColumnView(final double width, final double value) {
@@ -260,7 +261,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
 
   void handlePointerValueChangedEnd(final double value) {
     handlePointerValueChanged(value);
-    widget.device.sendToServer(sm.MessageType.Update, sm.Command.Temp, <String>[_annotationValue]);
+    widget.device.sendToServer(
+        sm.MessageType.Update, sm.Command.Temp, <String>[_annotationValue], ref.read(hubConnectionProvider));
   }
 
   void handlePointerValueChanging(final ValueChangingArgs args) {
@@ -319,7 +321,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                     } else {
                       command = sm.Command.Off;
                     }
-                    widget.device.sendToServer(sm.MessageType.Update, command, []);
+                    widget.device.sendToServer(sm.MessageType.Update, command, [], ref.read(hubConnectionProvider));
                   },
                 );
               }),
@@ -347,7 +349,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                       } else {
                         command = sm.Command.Off;
                       }
-                      widget.device.sendToServer(sm.MessageType.Options, command, []);
+                      widget.device.sendToServer(sm.MessageType.Options, command, [], ref.read(hubConnectionProvider));
                     },
                   );
                 },
@@ -565,18 +567,18 @@ class TemperatureSensorDropdown extends ConsumerWidget {
     return DropdownButton(
       items: (possibleDevices
           .map((final f) => DropdownMenuItem(
+                value: f,
                 child: Consumer(
                   builder: (final context, final ref, final child) {
                     final friendlyName = ref.watch(BaseModel.friendlyNameProvider(f.id));
                     return Text(friendlyName);
                   },
                 ),
-                value: f,
               ))
           .toList()),
       onChanged: (final dynamic a) {
-        device.sendToServer(
-            sm.MessageType.Update, sm.Command.DeviceMapping, [a.id.toString(), currentDevice?.id.toString() ?? "0"]);
+        device.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping,
+            [a.id.toString(), currentDevice?.id.toString() ?? "0"], ref.read(hubConnectionProvider));
         final models = ref.read(baseModelProvider.notifier);
         final newList = models.state.toList();
         newList.remove(model);

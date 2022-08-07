@@ -110,7 +110,9 @@ class GenericDevice extends Device<BaseModel> {
     if (raisedButton) {
       return ElevatedButton(
         onPressed: (() async {
-          await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+          await ref
+              .read(hubConnectionConnectedProvider)
+              ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
         }),
         child: Text(info.display!,
             style: TextStyle(
@@ -120,7 +122,9 @@ class GenericDevice extends Device<BaseModel> {
 
     return MaterialButton(
       onPressed: (() async {
-        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        await ref
+            .read(hubConnectionConnectedProvider)
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
       }),
       child: Text(info.display!,
           style:
@@ -168,7 +172,9 @@ class GenericDevice extends Device<BaseModel> {
 
     return IconButton(
       onPressed: (() async {
-        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        await ref
+            .read(hubConnectionConnectedProvider)
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
       }),
       icon: Icon(IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons')),
     );
@@ -180,7 +186,9 @@ class GenericDevice extends Device<BaseModel> {
     final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
     return Switch(
       onChanged: ((final _) async {
-        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        await ref
+            .read(hubConnectionConnectedProvider)
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
       }),
       value: valueModel.currentValue == info.activeValue,
     );
@@ -198,7 +206,9 @@ class GenericDevice extends Device<BaseModel> {
       onChanged: (final value) async {
         final edit = info.editParameter.firstWhere((final element) => element.value == value);
         final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
-        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        await ref
+            .read(hubConnectionConnectedProvider)
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
       },
       value: valueModel.currentValue,
     );
@@ -226,7 +236,9 @@ class GenericDevice extends Device<BaseModel> {
         onChangeEnd: (final value) async {
           final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command,
               [customLabels[value.round()].values.first, ...?edit.parameters]);
-          await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+          await ref
+              .read(hubConnectionConnectedProvider)
+              ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
         },
         value: currentValue,
         label: customLabels[currentValue.round()].keys.first,
@@ -245,7 +257,9 @@ class GenericDevice extends Device<BaseModel> {
       onChangeEnd: (final value) async {
         final message =
             Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, [value, ...?edit.parameters]);
-        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        await ref
+            .read(hubConnectionConnectedProvider)
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
       },
       value: valueModel.currentValue is double ? valueModel.currentValue : valueModel.currentValue.toDouble(),
       label: info.display ?? valueModel.getValueAsString(),
@@ -360,7 +374,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
 
     return FloatingActionButton(
       onPressed: (() async {
-        await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        await ref
+            .read(hubConnectionConnectedProvider)
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
       }),
       child: Icon(
         IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),

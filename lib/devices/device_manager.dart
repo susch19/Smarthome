@@ -38,7 +38,9 @@ import 'device_exporter.dart';
 // }
 
 final deviceProvider = StateNotifierProvider<DeviceManager, List<Device>>((final ref) {
-  return DeviceManager(ref);
+  final connection = ref.watch(hubConnectionConnectedProvider);
+
+  return DeviceManager(ref, connection);
 });
 
 final deviceByIdProvider = Provider.family<Device?, int>((final ref, final id) {
@@ -113,7 +115,9 @@ class DeviceManager extends StateNotifier<List<Device>> {
   late Ref? _ref;
   static bool showDebugInformation = false;
 
-  DeviceManager(final Ref providerRef) : super([]) {
+  final HubConnection? _connection;
+
+  DeviceManager(final Ref providerRef, this._connection) : super([]) {
     _ref = providerRef;
     instance = this;
     _fetchIds();
@@ -131,11 +135,8 @@ class DeviceManager extends StateNotifier<List<Device>> {
 
   void _fetchIds() {
     final ref = _ref;
-    if (ref == null) return;
-    final connection = ref.watch(hubConnectionConnectedProvider);
-    if (connection == null) {
-      return;
-    }
+    final connection = _connection;
+    if (ref == null || connection == null) return;
     final ids = <int>[];
     for (final key in PreferencesManager.instance.getKeys().where((final x) => x.startsWith("SHD"))) {
       final id = PreferencesManager.instance.getInt(key);
@@ -335,14 +336,16 @@ class DeviceManager extends StateNotifier<List<Device>> {
   }
 
   Future reloadCurrentDevices() async {
-    if (_ref == null) return;
+    final ref = _ref;
+    final connection = _connection;
+    if (ref == null || connection == null) return;
 
-    final s = ConnectionManager.hubConnection.invoke("GetAllDevices", args: []);
+    final s = connection.invoke("GetAllDevices", args: []);
 
     final serverDevices = await s;
     if (serverDevices is! List<dynamic>) return;
 
-    final baseModelState = _ref!.read(baseModelProvider.notifier);
+    final baseModelState = ref.read(baseModelProvider.notifier);
     final baseModels = baseModelState.state.toList();
     for (int i = baseModels.length - 1; i >= 0; i--) {
       final baseModel = baseModels[i];
@@ -371,7 +374,8 @@ class DeviceManager extends StateNotifier<List<Device>> {
 
   void _syncDevices() {
     final ref = _ref;
-    if (ref == null) return;
+    final connection = _connection;
+    if (ref == null || connection == null || connection.state != HubConnectionState.Connected) return;
     List<int> deviceIds;
     deviceIds = _deviceIds;
     final deviceIdsSet = deviceIds.toSet();
@@ -385,9 +389,8 @@ class DeviceManager extends StateNotifier<List<Device>> {
       for (var id in removedDevices) DiffIdModel(id, Action.removed),
     ];
 
-    final connection = ref.watch(hubConnectionConnectedProvider);
     ref.watch(valueStoreProvider);
-    if (connection == null || _diffIds.isEmpty) {
+    if (_diffIds.isEmpty) {
       return;
     }
 
@@ -420,12 +423,12 @@ class DeviceManager extends StateNotifier<List<Device>> {
     }
   }
 
-  void _clearDevicesCacheOnConnectionLost() {
-    final connection = _ref!.watch(hubConnectionStateProvider);
-    if (connection != HubConnectionState.Connected) {
-      state = [];
-    }
-  }
+  // void _clearDevicesCacheOnConnectionLost() {
+  //   final connection = _ref!.watch(hubConnectionStateProvider);
+  //   if (connection != HubConnectionState.Connected) {
+  //     state = [];
+  //   }
+  // }
 }
 
 enum DeviceTypes {

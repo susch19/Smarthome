@@ -119,13 +119,13 @@ class MyApp extends StatelessWidget {
 class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserver {
   final Ref ref;
   InfoIconProvider(this.ref) : super(Icons.refresh) {
-    final connection = ref.watch(hubConnectionStateProvider);
+    final connection = ref.watch(hubConnectionProvider);
 
     // if (connection == HubConnectionState.disconnected) {
-    if (connection == HubConnectionState.Disconnected) {
+    if (connection.connectionState == HubConnectionState.Disconnected) {
       state = Icons.warning;
       // } else if (connection == HubConnectionState.connected) {
-    } else if (connection == HubConnectionState.Connected) {
+    } else if (connection.connectionState == HubConnectionState.Connected) {
       state = Icons.check;
     }
 
@@ -142,9 +142,9 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
       ref.read(hubConnectionProvider.notifier).newHubConnection();
     } else if (state.index == 2) {
       this.state = Icons.error_outline;
-      final connectionState = ref.watch(hubConnectionStateProvider);
+      final connection = ref.watch(hubConnectionProvider);
       // if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
-      if (connectionState == HubConnectionState.Connected) ConnectionManager.hubConnection.stop();
+      connection.connection?.stop();
     }
   }
 
@@ -467,7 +467,7 @@ class MyHomePage extends ConsumerWidget {
             defaultText: ref.read(BaseModel.friendlyNameProvider(x.id)),
             maxLines: 2,
             onSubmitted: (final s) async {
-              x.updateDeviceOnServer(x.id, s);
+              x.updateDeviceOnServer(x.id, s, ref.read(hubConnectionProvider));
             })).then((final x) => Navigator.of(context).pop());
   }
 
@@ -491,12 +491,12 @@ class MyHomePage extends ConsumerWidget {
 
   Future addNewDevice(final BuildContext context, final WidgetRef ref) async {
     // if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
-    if (ConnectionManager.hubConnection.state != HubConnectionState.Connected) {
-      await ConnectionManager.hubConnection.start();
+    final connection = ref.watch(hubConnectionConnectedProvider);
+    if (connection == null) {
+      return;
     }
 
-    final serverDevices =
-        (await ConnectionManager.hubConnection.invoke("GetDeviceOverview", args: [])) as List<dynamic>;
+    final serverDevices = (await connection.invoke("GetDeviceOverview", args: [])) as List<dynamic>;
     final serverDevicesList = serverDevices.map((final e) => DeviceOverviewModel.fromJson(e)).toList();
 
     final devices = ref.read(deviceProvider);

@@ -26,7 +26,7 @@ final historyPropertyProvider =
   final hubConnection = ref.watch(hubConnectionConnectedProvider);
 
   if (hubConnection != null) {
-    final result = await ConnectionManager.hubConnection.invoke("GetIoBrokerHistories", args: [id.item1, id.item2]);
+    final result = await hubConnection.invoke("GetIoBrokerHistories", args: [id.item1, id.item2]);
     final resList = result as List<dynamic>;
     return resList.map((final e) => IoBrokerHistoryModel.fromJson(e)).toList();
   }
@@ -126,12 +126,13 @@ abstract class Device<T extends BaseModel> {
   //   return baseModel.updateFromJson(message);
   // }
 
-  Future<dynamic> getFromServer(final String methodName, final List<Object>? args) async {
-    if (ConnectionManager.hubConnection.state == HubConnectionState.Disconnected) {
-      await ConnectionManager.hubConnection.start();
+  Future<dynamic> getFromServer(
+      final String methodName, final List<Object>? args, final HubConnectionContainer container) async {
+    if (container.connectionState != HubConnectionState.Connected || container.connection == null) {
+      return;
     }
 
-    return await ConnectionManager.hubConnection.invoke(methodName, args: args);
+    return await container.connection!.invoke(methodName, args: args);
   }
 
   @override
@@ -141,21 +142,22 @@ abstract class Device<T extends BaseModel> {
   int get hashCode => hash2(id, typeName);
 
   @mustCallSuper
-  Future sendToServer(
-      final sm.MessageType messageType, final sm.Command command, final List<String>? parameters) async {
-    if (ConnectionManager.hubConnection.state == HubConnectionState.Disconnected) {
-      await ConnectionManager.hubConnection.start();
+  Future sendToServer(final sm.MessageType messageType, final sm.Command command, final List<String>? parameters,
+      final HubConnectionContainer container) async {
+    if (container.connectionState != HubConnectionState.Connected || container.connection == null) {
+      return;
     }
+
     final message = sm.Message(id, messageType, command, parameters);
     final jsonMsg = message.toJson();
-    await ConnectionManager.hubConnection.invoke("Update", args: <Object>[jsonMsg]);
+    await container.connection!.invoke("Update", args: <Object>[jsonMsg]);
   }
 
-  Future updateDeviceOnServer(final int id, final String friendlyName) async {
-    if (ConnectionManager.hubConnection.state == HubConnectionState.Disconnecting) {
-      await ConnectionManager.hubConnection.start();
+  Future updateDeviceOnServer(final int id, final String friendlyName, final HubConnectionContainer container) async {
+    if (container.connectionState != HubConnectionState.Connected || container.connection == null) {
+      return;
     }
-    return await ConnectionManager.hubConnection.invoke("UpdateDevice", args: [id, friendlyName]);
+    return await container.connection!.invoke("UpdateDevice", args: [id, friendlyName]);
   }
 
   DeviceTypes getDeviceType();

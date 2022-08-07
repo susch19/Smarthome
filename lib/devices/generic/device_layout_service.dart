@@ -11,6 +11,7 @@ import 'package:synchronized/synchronized.dart';
 import 'generic_device_exporter.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:signalr_netcore/hub_connection.dart';
 
 final _layoutProvider = StateNotifierProvider<DeviceLayoutService, List<DeviceLayout>>((final ref) {
   return DeviceLayoutService();
@@ -32,8 +33,9 @@ final deviceLayoutProvider = Provider.family<DeviceLayout?, Tuple2<int, String>>
   final deviceLayoutId = ref.watch(_idLayoutProvider(device.item1));
   final deviceLayoutTypeName = ref.watch(_typeNameLayoutProvider(device.item2));
   final retLayout = deviceLayoutId ?? deviceLayoutTypeName;
+  final connection = ref.watch(hubConnectionConnectedProvider);
   if (retLayout == null) {
-    DeviceLayoutService.loadFromServer(device.item1);
+    DeviceLayoutService.loadFromServer(device.item1, connection);
   }
   return retLayout;
 });
@@ -122,12 +124,11 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
     instance.state = currentList;
   }
 
-  static Future<void> loadFromServer(final int id) async {
-    if (_instance == null) return;
+  static Future<void> loadFromServer(final int id, final HubConnection? connection) async {
+    if (_instance == null || connection == null) return;
 
     await lock.synchronized(() async {
-      final bestFit = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutHashByDeviceId", args: [id])
-          as Map<String, dynamic>?;
+      final bestFit = await connection.invoke("GetDeviceLayoutHashByDeviceId", args: [id]) as Map<String, dynamic>?;
       if (bestFit == null) return;
       final hash = bestFit["hash"] as String;
       final localHash = await _cacheFileManager.readHashCode(bestFit["name"]);
@@ -139,7 +140,7 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
         }
       }
 
-      final fromServer = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutByDeviceId", args: [id]);
+      final fromServer = await connection.invoke("GetDeviceLayoutByDeviceId", args: [id]);
       if (fromServer == null) return;
 
       _updateFromServer(fromServer as Map<String, dynamic>, hash, updateStorage: true);
