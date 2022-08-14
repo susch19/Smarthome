@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
- part 'iobroker_history_model.g.dart';
+part 'iobroker_history_model.g.dart';
 
 @JsonSerializable()
 class IoBrokerHistoryModel {
@@ -7,20 +7,20 @@ class IoBrokerHistoryModel {
   String? propertyName;
 
   IoBrokerHistoryModel();
-   factory IoBrokerHistoryModel.fromJson(final Map<String, dynamic> json) => _$IoBrokerHistoryModelFromJson(json);
+  factory IoBrokerHistoryModel.fromJson(final Map<String, dynamic> json) => _$IoBrokerHistoryModelFromJson(json);
 
-   Map<String, dynamic> toJson() => _$IoBrokerHistoryModelToJson(this);
+  Map<String, dynamic> toJson() => _$IoBrokerHistoryModelToJson(this);
 }
 
 @JsonSerializable()
 class HistoryRecord {
   @JsonKey(name: 'val')
-  double? value;
+  num? value;
   @JsonKey(name: 'ts')
   late int timeStamp;
-  
-  HistoryRecord();
-   factory HistoryRecord.fromJson(final Map<String, dynamic> json) => _$HistoryRecordFromJson(json);
 
-   Map<String, dynamic> toJson() => _$HistoryRecordToJson(this);
+  HistoryRecord();
+  factory HistoryRecord.fromJson(final Map<String, dynamic> json) => _$HistoryRecordFromJson(json);
+
+  Map<String, dynamic> toJson() => _$HistoryRecordToJson(this);
 }

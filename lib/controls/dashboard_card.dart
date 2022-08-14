@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:tuple/tuple.dart';
 
 class StatelessDashboardCard extends StatelessWidget {
@@ -81,10 +82,19 @@ class StatelessDashboardCard extends StatelessWidget {
                           width: 12,
                           child: Consumer(
                             builder: (final _, final ref, final __) {
-                              final isConnected = ref.watch(BaseModel.isConnectedProvider(device.id));
+                              final bool? isConnected;
+                              if (device is GenericDevice) {
+                                isConnected = ref
+                                    .watch(valueStoreChangedProvider(Tuple2("isConnected", device.id)))
+                                    ?.currentValue;
+                              } else {
+                                isConnected = ref.watch(ConnectionBaseModel.isConnectedProvider(device.id));
+                              }
+
+                              if (isConnected == null) return Container();
                               return CustomPaint(
                                 painter: CircleBlurPainter(
-                                  isConnected ?? false ? Colors.greenAccent : Colors.red,
+                                  isConnected ? Colors.greenAccent : Colors.red,
                                   const Offset(0, 8),
                                   blurSigma: 2,
                                   circleWidth: 10,

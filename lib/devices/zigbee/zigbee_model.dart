@@ -6,7 +6,7 @@ import 'package:riverpod/riverpod.dart';
 part 'zigbee_model.g.dart';
 
 @JsonSerializable()
-class ZigbeeModel extends BaseModel {
+class ZigbeeModel extends ConnectionBaseModel {
   final bool available;
   final DateTime lastReceived;
   @JsonKey(name: 'link_Quality')

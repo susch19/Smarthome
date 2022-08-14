@@ -46,7 +46,7 @@ class HistorySeriesAnnotationChartWidget extends StatelessWidget {
 /// Sample time series data type.
 class GraphTimeSeriesValue {
   final DateTime time;
-  final double? value;
+  final num? value;
   final Color lineColor;
 
   GraphTimeSeriesValue(this.time, this.value, this.lineColor);

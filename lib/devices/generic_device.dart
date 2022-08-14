@@ -433,7 +433,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                     Tuple3(widget.genericDevice.id, currentShownTime.toString(), info.propertyName)))
                 .when(
                   data: (final data) {
-                    if (data != null && data.historyRecords.isNotEmpty) {
+                    if (data.historyRecords.isNotEmpty) {
                       return buildHistorySeriesAnnotationChart(
                           data,
                           info.unitOfMeasurement,
@@ -562,8 +562,16 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                   pointColorMapper: (final GraphTimeSeriesValue value, final _) => value.lineColor,
                   width: 2)
             ],
-            h.historyRecords.where((final x) => x.value != null).map((final x) => x.value!).fold(10000, min),
-            h.historyRecords.where((final x) => x.value != null).map((final x) => x.value!).fold(0, max),
+            h.historyRecords
+                .where((final x) => x.value != null)
+                .map((final x) => x.value!)
+                .minBy(10000, (e) => e)
+                .toDouble(),
+            h.historyRecords
+                .where((final x) => x.value != null)
+                .map((final x) => x.value!)
+                .maxBy(0, (e) => e)
+                .toDouble(),
             unit,
             valueName,
             currentShownTime,

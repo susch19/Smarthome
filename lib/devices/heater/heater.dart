@@ -142,7 +142,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
     final double width = MediaQuery.of(context).size.width;
 
     final xiaomiTempSensor = ref.watch(HeaterModel.xiaomiProvider(widget.device.id));
-    final tempSensorDevice = ref.watch(valueStorePerIdAndNameProvider(Tuple2(xiaomiTempSensor ?? -1, "temperature")));
+    final tempSensorDevice = ref.watch(valueStoreChangedProvider(Tuple2("temperature", xiaomiTempSensor ?? -1)));
 
     return DefaultTabController(
       length: 2,

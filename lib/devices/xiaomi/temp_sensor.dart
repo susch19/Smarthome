@@ -7,6 +7,7 @@ import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
+import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
@@ -326,8 +327,16 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
                   pointColorMapper: (final TimeSeriesValue value, final _) => value.lineColor,
                   width: 2)
             ],
-            h.historyRecords.where((final x) => x.value != null).map((final x) => x.value!).fold(10000, min),
-            h.historyRecords.where((final x) => x.value != null).map((final x) => x.value!).fold(0, max),
+            h.historyRecords
+                .where((final x) => x.value != null)
+                .map((final x) => x.value!)
+                .minBy(10000, (e) => e)
+                .toDouble(),
+            h.historyRecords
+                .where((final x) => x.value != null)
+                .map((final x) => x.value!)
+                .maxBy(0, (e) => e)
+                .toDouble(),
             unit,
             valueName,
             currentShownTime,
@@ -416,7 +425,7 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
 /// Sample time series data type.
 class TimeSeriesValue {
   final DateTime time;
-  final double? value;
+  final num? value;
   final Color lineColor;
 
   TimeSeriesValue(this.time, this.value, this.lineColor);

@@ -30,11 +30,6 @@ class BaseModel {
     return baseModel?.friendlyName ?? "";
   });
 
-  static final isConnectedProvider = Provider.family<bool?, int>((final ref, final id) {
-    final baseModel = ref.watch(BaseModel.byIdProvider(id));
-    return baseModel?.isConnected;
-  });
-
   static final typeNamesProvider = Provider.family<List<String>?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return baseModel?.typeNames;
@@ -50,7 +45,6 @@ class BaseModel {
 
   final int id;
   final String friendlyName;
-  final bool isConnected;
 
   // @JsonKey(ignore: true)
   final List<String> typeNames;
@@ -76,10 +70,10 @@ class BaseModel {
     return false;
   }
 
-  const BaseModel(this.id, this.friendlyName, this.isConnected, [this.typeNames = defaultList]);
+  const BaseModel(this.id, this.friendlyName, [this.typeNames = defaultList]);
 
   factory BaseModel.fromJson(final Map<String, dynamic> json, final List<String> typeNames) {
-    final bm = BaseModel(json['id'] as int, json['friendlyName'] as String, json['isConnected'] as bool, typeNames);
+    final bm = BaseModel(json['id'] as int, json['friendlyName'] as String, typeNames);
     StoreService.updateAndGetStores(bm.id, json);
     return bm;
   }

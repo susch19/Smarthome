@@ -34,10 +34,15 @@ final historyPropertyProvider =
 });
 
 final historyPropertyNameProvider =
-    Provider.family<AsyncValue<IoBrokerHistoryModel?>, Tuple3<int, String, String>>((final ref, final id) {
-  final historyData = ref.watch(historyPropertyProvider(Tuple2(id.item1, id.item2)));
+    FutureProvider.family<IoBrokerHistoryModel, Tuple3<int, String, String>>((final ref, final id) async {
+  final hubConnection = ref.watch(hubConnectionConnectedProvider);
 
-  return historyData.whenData((final value) => value.firstOrNull((final element) => element.propertyName == id.item3));
+  if (hubConnection != null) {
+    final result = await hubConnection.invoke("GetIoBrokerHistory", args: [id.item1, id.item2, id.item3]);
+    final e = result as Map<String, dynamic>;
+    return IoBrokerHistoryModel.fromJson(e);
+  }
+  return IoBrokerHistoryModel();
 });
 
 final _iconWidgetProvider =

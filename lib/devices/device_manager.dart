@@ -48,9 +48,9 @@ final deviceByIdProvider = Provider.family<Device?, int>((final ref, final id) {
   return dm.firstOrNull((final e) => e.id == id);
 });
 
-final deviceByIdValueStoreKeyProvider = Provider.family<Device?, Tuple2<int, String>>((final ref, final key) {
-  final dm = ref.watch(deviceByIdProvider(key.item1));
-  final valueStores = ref.watch(valueStorePerIdAndNameProvider(key));
+final deviceByIdValueStoreKeyProvider = Provider.family<Device?, Tuple2<String, int>>((final ref, final key) {
+  final dm = ref.watch(deviceByIdProvider(key.item2));
+  final valueStores = ref.watch(valueStoreChangedProvider(key));
   if (valueStores != null) return dm;
   return null;
 });
@@ -59,7 +59,7 @@ final devicesByValueStoreKeyProvider = Provider.family<List<Device>, String>((fi
   final dm = ref.watch(deviceProvider);
   final List<Device> devices = [];
   for (final device in dm) {
-    final valueStores = ref.watch(valueStorePerIdAndNameProvider(Tuple2(device.id, key)));
+    final valueStores = ref.watch(valueStoreChangedProvider(Tuple2(key, device.id)));
     if (valueStores != null) devices.add(device);
   }
   return devices;

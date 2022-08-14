@@ -30,11 +30,6 @@ final valueStoreChangedProvider =
   return stores?.firstOrNull((final e) => e.key == key.item1);
 });
 
-final valueStorePerIdAndNameProvider = Provider.family<ValueStore?, Tuple2<int, String>>((final ref, final key) {
-  final stores = ref.watch(valueStoresPerIdProvider(key.item1));
-  return stores?.firstOrNull((final e) => e.key == key.item2);
-});
-
 class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
   StoreService() : super({}) {
     _instance = this;
