@@ -17,7 +17,7 @@ class PropertyEditInformation {
   String? hubMethod;
   Object? activeValue;
   @JsonKey(ignore: true)
-  Map<String, dynamic>? raw;
+  late Map<String, dynamic> raw;
 
   PropertyEditInformation(
       this.editCommand, this.editParameter, this.display, this.hubMethod, this.activeValue, this.editType);

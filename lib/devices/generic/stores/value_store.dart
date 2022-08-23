@@ -58,12 +58,18 @@ class ValueStore<T> extends ChangeNotifier {
     return "";
   }
 
-  String getValueAsString({final String? format}) {
-    if (currentValue.runtimeType == (double)) return (currentValue as double).toStringAsFixed(1);
+  String getValueAsString({final int precision = 1, final String? format}) {
+    if (currentValue.runtimeType == (double)) {
+      return (currentValue as double).toStringAsFixed(precision);
+    }
     if (format != null) {
       if (currentValue.runtimeType == (DateTime)) {
         return (currentValue as DateTime).toDate(format: format);
       }
+    }
+
+    if (currentValue is List<dynamic>) {
+      return (currentValue as List<dynamic>).join('\r\n');
     }
 
     return currentValue.toString();

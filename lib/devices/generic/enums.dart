@@ -1,11 +1,5 @@
 enum SpecialType { none, right }
 
-enum SpecialDetailType {
-  none,
-  target,
-  current,
-}
-
 enum EditType {
   button,
   raisedButton,

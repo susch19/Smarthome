@@ -146,4 +146,11 @@ extension Iterables<E> on Iterable<E> {
     }
     return max;
   }
+
+  bool all(final bool Function(E element) func) {
+    for (final item in [...this]) {
+      if (!func(item)) return false;
+    }
+    return false;
+  }
 }

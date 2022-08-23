@@ -30,12 +30,12 @@ final _typeNameLayoutProvider = Provider.family<DeviceLayout?, String>((final re
 });
 
 final deviceLayoutProvider = Provider.family<DeviceLayout?, Tuple2<int, String>>((final ref, final device) {
-  final deviceLayoutId = ref.watch(_idLayoutProvider(device.item1));
   final deviceLayoutTypeName = ref.watch(_typeNameLayoutProvider(device.item2));
+  final deviceLayoutId = ref.watch(_idLayoutProvider(device.item1));
   final retLayout = deviceLayoutId ?? deviceLayoutTypeName;
   final connection = ref.watch(hubConnectionConnectedProvider);
   if (retLayout == null) {
-    DeviceLayoutService.loadFromServer(device.item1, connection);
+    DeviceLayoutService.loadFromServer(device.item1, device.item2, connection);
   }
   return retLayout;
 });
@@ -101,6 +101,7 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
   static void updateFromServer(final List<Object?>? arguments) {
     final updateMap = arguments![0] as Map<String, dynamic>;
     final hash = arguments[1] as String;
+    // print(updateMap);
     _updateFromServer(updateMap, hash, updateStorage: true);
   }
 
@@ -124,7 +125,7 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
     instance.state = currentList;
   }
 
-  static Future<void> loadFromServer(final int id, final HubConnection? connection) async {
+  static Future<void> loadFromServer(final int id, final String typeName, final HubConnection? connection) async {
     if (_instance == null || connection == null) return;
 
     await lock.synchronized(() async {

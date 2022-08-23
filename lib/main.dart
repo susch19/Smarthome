@@ -161,10 +161,10 @@ final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
 
 final maxCrossAxisExtentProvider = StateProvider<double>((final _) =>
     PreferencesManager.instance.getDouble("DashboardCardSize") ?? (!kIsWeb && Platform.isAndroid ? 370 : 300));
+final _groupCollapsedProvider = StateProvider.family<bool, String>((final _, final __) => false);
 
 class MyHomePage extends ConsumerWidget {
   const MyHomePage({final Key? key, this.title}) : super(key: key);
-
   final String? title;
 
   Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
@@ -197,7 +197,7 @@ class MyHomePage extends ConsumerWidget {
                       if (deviceGroup == null) return const Text("Empty Entry");
                       return Container(
                         margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                        child: getDashboardCard(deviceGroup),
+                        child: getDashboardCard(deviceGroup, ref),
                       );
                     },
 
@@ -253,7 +253,9 @@ class MyHomePage extends ConsumerWidget {
 
   Widget getDashboardCard(
     final MapEntry<String, List<Device<BaseModel>>> deviceGroup,
+    final WidgetRef ref,
   ) {
+    final collapsed = ref.watch(_groupCollapsedProvider(deviceGroup.key));
     return Column(
         children: <Widget>[
               Container(
@@ -264,11 +266,17 @@ class MyHomePage extends ConsumerWidget {
                     Flexible(child: Consumer(
                       builder: (final context, final ref, final child) {
                         final groupName = ref.watch(DeviceManager.customGroupNameProvider(deviceGroup.key));
-                        return Text(
-                          groupName,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                        return MaterialButton(
+                          onPressed: (() {
+                            final oldCollapsed = ref.read(_groupCollapsedProvider(deviceGroup.key).notifier);
+                            oldCollapsed.state = !oldCollapsed.state;
+                          }),
+                          child: Text(
+                            groupName,
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       },
                     )),
@@ -288,20 +296,22 @@ class MyHomePage extends ConsumerWidget {
                 ),
               ),
             ] +
-            deviceGroup.value
-                .map<Widget>((final e) => Consumer(
-                      builder: (final context, final ref, final child) {
-                        return Container(
-                          margin: const EdgeInsets.only(),
-                          child: e.dashboardView(
-                            () {
-                              deviceAction(context, ref, e);
-                            },
-                          ),
-                        );
-                      },
-                    ))
-                .toList());
+            (collapsed
+                ? []
+                : deviceGroup.value
+                    .map<Widget>((final e) => Consumer(
+                          builder: (final context, final ref, final child) {
+                            return Container(
+                              margin: const EdgeInsets.only(),
+                              child: e.dashboardView(
+                                () {
+                                  deviceAction(context, ref, e);
+                                },
+                              ),
+                            );
+                          },
+                        ))
+                    .toList()));
   }
 
   void groupOption(final BuildContext context, final WidgetRef ref, final String value,

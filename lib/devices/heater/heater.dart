@@ -153,8 +153,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
               Consumer(
                 builder: (final context, final ref, final child) {
                   final typeNames = ref.watch(BaseModel.typeNamesProvider(widget.device.id));
-                  final icon =
-                      ref.watch(iconWidgetProvider(Tuple3(typeNames ?? [], widget.device, AdaptiveTheme.of(context))));
+                  final icon = ref.watch(
+                      iconWidgetProvider(Tuple4(typeNames ?? [], widget.device, AdaptiveTheme.of(context), true)));
                   return Tab(icon: icon);
                 },
               ),
@@ -302,7 +302,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
               Consumer(
                 builder: (final context, final ref, final child) {
                   final heaterIcon = ref.watch(iconWidgetSingleProvider(
-                      Tuple3(widget.device.typeName, widget.device, AdaptiveTheme.of(context))));
+                      Tuple4(widget.device.typeName, widget.device, AdaptiveTheme.of(context), false)));
                   return Container(
                     margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
                     child: heaterIcon,

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:quiver/core.dart';
 // import 'package:signalr_client/signalr_client.dart';
@@ -45,24 +46,24 @@ final historyPropertyNameProvider =
   return IoBrokerHistoryModel();
 });
 
-final _iconWidgetProvider =
-    Provider.autoDispose.family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final id) {
+final _iconWidgetProvider = Provider.autoDispose
+    .family<Widget, Tuple4<List<String>, Device, AdaptiveThemeManager, bool>>((final ref, final id) {
   final brightness = ref.watch(brightnessProvider(id.item3));
   final iconByName = ref.watch(iconByTypeNamesProvider(id.item1));
 
-  return id.item2._createIcon(brightness, iconByName);
+  return id.item2._createIcon(brightness, iconByName, id.item4);
 });
 
 final iconWidgetProvider = Provider.autoDispose
-    .family<Widget, Tuple3<List<String>, Device, AdaptiveThemeManager>>((final ref, final deviceTypeName) {
+    .family<Widget, Tuple4<List<String>, Device, AdaptiveThemeManager, bool>>((final ref, final deviceTypeName) {
   final iconByName = ref.watch(_iconWidgetProvider(deviceTypeName));
   return iconByName;
 });
 
 final iconWidgetSingleProvider = Provider.autoDispose
-    .family<Widget, Tuple3<String, Device, AdaptiveThemeManager>>((final ref, final deviveTypeName) {
-  final iconByName =
-      ref.watch(_iconWidgetProvider(Tuple3([deviveTypeName.item1], deviveTypeName.item2, deviveTypeName.item3)));
+    .family<Widget, Tuple4<String, Device, AdaptiveThemeManager, bool>>((final ref, final deviveTypeName) {
+  final iconByName = ref.watch(_iconWidgetProvider(
+      Tuple4([deviveTypeName.item1], deviveTypeName.item2, deviveTypeName.item3, deviveTypeName.item4)));
   return iconByName;
 });
 
@@ -91,25 +92,37 @@ abstract class Device<T extends BaseModel> {
     }
   }
 
-  Widget _createIcon(final Brightness themeMode, final Uint8List? iconBytes) {
+  Widget _createIcon(final Brightness themeMode, final Uint8List? iconBytes, final bool withMargin) {
     if (iconData != null) {
       return Icon(
         iconData,
       );
     }
     if (iconBytes != null) {
-      return createIconFromSvgByteList(iconBytes, themeMode);
+      return createIconFromSvgByteList(iconBytes, themeMode, withMargin);
     }
     return Container();
   }
 
-  Widget createIconFromSvgByteList(final Uint8List list, final Brightness brightness) {
-    return Center(
-      child: SvgPicture.memory(
-        list,
-        color: brightness == Brightness.light ? Colors.black : Colors.white,
-      ),
-    );
+  Widget createIconFromSvgByteList(final Uint8List list, final Brightness brightness, final bool withMargin) {
+    if (withMargin) {
+      return Container(
+        margin: const EdgeInsets.all(8),
+        child: Center(
+          child: SvgPicture.memory(
+            list,
+            color: brightness == Brightness.light ? Colors.black : Colors.white,
+          ),
+        ),
+      );
+    } else {
+      return Center(
+        child: SvgPicture.memory(
+          list,
+          color: brightness == Brightness.light ? Colors.black : Colors.white,
+        ),
+      );
+    }
   }
 
   Widget getRightWidgets() {

@@ -21,7 +21,7 @@ class DashboardRightValueStoreWidget extends ConsumerWidget {
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
     if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) return Container();
     if (e.specialType == SpecialType.right) {
-      return device.getEditWidget(e, valueModel, ref);
+      return device.getEditWidget(context, e, valueModel, ref);
     }
 
     // else if (e.specialType == SpecialType.disabled) {

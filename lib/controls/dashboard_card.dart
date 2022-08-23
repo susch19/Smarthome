@@ -51,10 +51,11 @@ class StatelessDashboardCard extends StatelessWidget {
                       child: Consumer(
                         builder: (final _, final ref, final __) {
                           final typeNames = ref.watch(BaseModel.typeNamesProvider(device.id));
-                          final deviceIcon =
-                              ref.watch(iconWidgetProvider(Tuple3(typeNames ?? [], device, AdaptiveTheme.of(context))));
-                          return SizedBox(width: 32, height: 40, child: deviceIcon //icon,
-                              );
+                          final deviceIcon = ref.watch(
+                              iconWidgetProvider(Tuple4(typeNames ?? [], device, AdaptiveTheme.of(context), false)));
+                          return SizedBox(
+                            width: 32, height: 40, child: deviceIcon, //icon,
+                          );
                         },
                       ),
                     ),

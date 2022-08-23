@@ -9,9 +9,10 @@ part 'detail_property_info.g.dart';
 @JsonSerializable()
 class DetailPropertyInfo extends LayoutBasePropertyInfo {
   String? displayName;
-  SpecialDetailType specialType;
+  bool? blurryCard;
+  int? tabInfoId;
 
-  DetailPropertyInfo(final String name, final int order, this.specialType) : super(name, order);
+  DetailPropertyInfo(final String name, final int order) : super(name, order);
 
   @override
   bool operator ==(final Object other) =>
@@ -24,12 +25,13 @@ class DetailPropertyInfo extends LayoutBasePropertyInfo {
       unitOfMeasurement == other.unitOfMeasurement &&
       format == other.format &&
       showOnlyInDeveloperMode == other.showOnlyInDeveloperMode &&
-      specialType == other.specialType &&
-      displayName == other.displayName;
+      displayName == other.displayName &&
+      blurryCard == other.blurryCard &&
+      tabInfoId == tabInfoId;
 
   @override
   int get hashCode => Object.hash(name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format,
-      showOnlyInDeveloperMode, specialType, displayName);
+      showOnlyInDeveloperMode, displayName, blurryCard, tabInfoId);
 
   factory DetailPropertyInfo.fromJson(final Map<String, dynamic> json) => _$DetailPropertyInfoFromJson(json);
   @override

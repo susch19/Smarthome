@@ -22,7 +22,7 @@ class DashboardValueStoreWidget extends ConsumerWidget {
       return Container();
     }
 
-    return device.getEditWidget(e, valueModel, ref);
+    return device.getEditWidget(context, e, valueModel, ref);
   }
 
   // Widget _buildInput(final ValueStore valueModel, final DashboardPropertyInfo e, final WidgetRef ref) {
@@ -48,5 +48,4 @@ class DashboardValueStoreWidget extends ConsumerWidget {
   //     controller: tec,
   //   );
   // }
-
 }
