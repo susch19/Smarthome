@@ -2,11 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/base_model.dart';
 
+import '../connection_base_model.dart';
+
 part 'led_strip_model.g.dart';
 
 @JsonSerializable()
 @immutable
-class LedStripModel extends BaseModel {
+class LedStripModel extends ConnectionBaseModel {
   final String colorMode;
   final int delay;
   final int numberOfLeds;
@@ -30,6 +32,16 @@ class LedStripModel extends BaseModel {
   @override
   LedStripModel getModelFromJson(final Map<String, dynamic> json) {
     return LedStripModel.fromJson(json);
+  }
+
+  @override
+  BaseModel updateFromJson(final Map<String, dynamic> json) {
+    final updatedModel = getModelFromJson(json);
+    bool updated = false;
+    if (updatedModel != this) {
+      updated = true;
+    }
+    return updated ? updatedModel : this;
   }
 
   @override

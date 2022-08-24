@@ -128,4 +128,29 @@ extension Iterables<E> on Iterable<E> {
     }
     return map;
   }
+
+  num minBy(num initial, final num Function(E element) func) {
+    num min = initial;
+    for (final item in [...this]) {
+      final ret = func(item);
+      if (ret < min) min = ret;
+    }
+    return min;
+  }
+
+  num maxBy(num initial, final num Function(E element) func) {
+    num max = initial;
+    for (final item in [...this]) {
+      final ret = func(item);
+      if (ret > max) max = ret;
+    }
+    return max;
+  }
+
+  bool all(final bool Function(E element) func) {
+    for (final item in [...this]) {
+      if (!func(item)) return false;
+    }
+    return false;
+  }
 }

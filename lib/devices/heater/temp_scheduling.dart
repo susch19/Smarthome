@@ -47,7 +47,7 @@ class HeaterConfigLoader {
     final connection = _ref.watch(hubConnectionConnectedProvider);
 
     final dc = await connection?.invoke("GetConfig", args: [_id]);
-
+    if (dc is! String) return;
     if (dc != "[]" && dc != null) {
       final notifier = _ref.read(heaterConfigProvider(_id).notifier);
       notifier.state = List<HeaterConfig>.from(jsonDecode(dc).map((final f) => HeaterConfig.fromJson(f)));

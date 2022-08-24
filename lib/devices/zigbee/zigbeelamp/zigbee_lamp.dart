@@ -7,6 +7,7 @@ import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbee_model.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,29 +35,30 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "An",
                 style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
+              ),
+              onPressed: () =>
+                  sendToServer(sm.MessageType.Update, sm.Command.SingleColor, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "Aus",
                 style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+              ),
+              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
       ],
     );
@@ -103,15 +105,18 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
   }
 
   void changeDelay(final double? delay) {
-    widget.device.sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()]);
+    widget.device
+        .sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()], ref.read(hubConnectionProvider));
   }
 
   void changeBrightness(final double brightness) {
-    widget.device.sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
+    widget.device.sendToServer(
+        sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()], ref.read(hubConnectionProvider));
   }
 
   void changeColorTemp(final double colorTemp) {
-    widget.device.sendToServer(sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()]);
+    widget.device.sendToServer(
+        sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()], ref.read(hubConnectionProvider));
   }
 
   @override
@@ -130,7 +135,8 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
         onPressed: () {
           final state = ref.read(ZigbeeLampModel.stateProvider(widget.device.id));
 
-          widget.device.sendToServer(sm.MessageType.Update, state ? sm.Command.Off : sm.Command.SingleColor, []);
+          widget.device.sendToServer(sm.MessageType.Update, state ? sm.Command.Off : sm.Command.SingleColor, [],
+              ref.read(hubConnectionProvider));
         },
       ),
     );

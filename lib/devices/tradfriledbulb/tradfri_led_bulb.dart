@@ -3,6 +3,7 @@ import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/shared_controls/shared_controls_exporter.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,29 +39,29 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(TradfriLedBulbModel.stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(TradfriLedBulbModel.stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "An",
                 style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, []),
+              ),
+              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(TradfriLedBulbModel.stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(TradfriLedBulbModel.stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "Aus",
                 style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+              ),
+              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
       ],
     );
@@ -95,12 +96,14 @@ class TradfriLedBulbScreen extends ConsumerWidget {
 
     return model?.brightness ?? 0;
   });
-  void changeBrightness(final double brightness) {
-    device.sendToServer(sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()]);
+  void changeBrightness(final double brightness, final WidgetRef ref) {
+    device.sendToServer(
+        sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()], ref.read(hubConnectionProvider));
   }
 
-  void changeColor(final RGB rgb) {
-    device.sendToServer(sm.MessageType.Update, sm.Command.Color, ["#${rgb.hr + rgb.hg + rgb.hb}"]);
+  void changeColor(final RGB rgb, final WidgetRef ref) {
+    device.sendToServer(
+        sm.MessageType.Update, sm.Command.Color, ["#${rgb.hr + rgb.hg + rgb.hb}"], ref.read(hubConnectionProvider));
   }
 
   @override
@@ -118,7 +121,8 @@ class TradfriLedBulbScreen extends ConsumerWidget {
         onPressed: () {
           final state = ref.read(TradfriLedBulbModel.stateProvider(device.id));
 
-          device.sendToServer(sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, []);
+          device.sendToServer(
+              sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, [], ref.read(hubConnectionProvider));
         },
       ),
     );
@@ -153,7 +157,7 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                   max: 100.0,
                   divisions: 100,
                   label: '$brightness',
-                  onChangeEnd: (final c) => changeBrightness(c),
+                  onChangeEnd: (final c) => changeBrightness(c, ref),
                 );
               }),
               data: SliderTheme.of(context).copyWith(
@@ -172,7 +176,7 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                   onChanged: (final d) {
                     ref.read(_rgbProvider(device).notifier).state = rgb.cloneWith(red: d.round());
                   },
-                  onChangeEnd: (final a) => changeColor(rgb),
+                  onChangeEnd: (final a) => changeColor(rgb, ref),
                   max: 255.0,
                   label: 'R',
                 ));
@@ -188,7 +192,7 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                   onChanged: (final d) {
                     ref.read(_rgbProvider(device).notifier).state = rgb.cloneWith(green: d.round());
                   },
-                  onChangeEnd: (final a) => changeColor(rgb),
+                  onChangeEnd: (final a) => changeColor(rgb, ref),
                   max: 255.0,
                   label: 'G',
                 ));
@@ -204,7 +208,7 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                   onChanged: (final d) {
                     ref.read(_rgbProvider(device).notifier).state = rgb.cloneWith(blue: d.round());
                   },
-                  onChangeEnd: (final a) => changeColor(rgb),
+                  onChangeEnd: (final a) => changeColor(rgb, ref),
                   max: 255.0,
                   label: 'B',
                 ));

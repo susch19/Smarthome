@@ -41,7 +41,7 @@ class GroupDevices extends ConsumerWidget {
           for (final device in modifiedDevices) {
             ref.read(Device.groupsByIdProvider(device.id).notifier).state = ref.read(tempGroupProvider(device.id));
           }
-          DeviceManager.saveDeviceGroups();
+          ref.read(deviceProvider.notifier).saveDeviceGroups();
           Navigator.of(context).pop(true);
         },
       ),

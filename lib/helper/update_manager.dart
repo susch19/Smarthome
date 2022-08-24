@@ -10,19 +10,20 @@ import 'package:version/version.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final versionAndUrlProvider = StateProvider<VersionAndUrl?>((final ref) {
-  UpdateManager(ref);
+final versionAndUrlProvider = StateNotifierProvider<UpdateManager, VersionAndUrl?>((final ref) {
+  final um = UpdateManager();
   UpdateManager.checkForNewestVersion();
-  return null;
+  return um;
 });
 
-class UpdateManager {
+class UpdateManager extends StateNotifier<VersionAndUrl?> {
   static final Version version = Version(1, 1, 5);
   static const int checkEveryHours = 16;
   static final GitHub gitHub = GitHub();
   static final RepositorySlug repositorySlug = RepositorySlug("susch19", "SmartHome");
   static final RegExp versionRegExp = RegExp(r'v|V');
   static DateTime? lastChecked;
+  static late UpdateManager _instance;
 
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -32,9 +33,8 @@ class UpdateManager {
 
   static int notificationId = 0;
 
-  static late Ref _ref;
-  UpdateManager(final StateProviderRef<VersionAndUrl?> ref) {
-    _ref = ref;
+  UpdateManager() : super(null) {
+    _instance = this;
   }
 
   static Future<void> initialize() async {
@@ -64,13 +64,13 @@ class UpdateManager {
 
       final versionAndUrl = await getVersionAndUrl();
       if (versionAndUrl?.url != null && await _isNewVersionAvailable(versionAndUrl?.version)) {
-        _ref.read(versionAndUrlProvider.notifier).state = versionAndUrl;
+        _instance.state = versionAndUrl;
       }
     }
   }
 
   static Future<void> displayNotificationDialog(final BuildContext context, final VersionAndUrl versionAndUrl) async {
-    _ref.read(versionAndUrlProvider.notifier).state = null;
+    _instance.state = null;
     if (Platform.isAndroid) {
       // Show notification
       await _showNotification(versionAndUrl);

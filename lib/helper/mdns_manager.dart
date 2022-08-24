@@ -2,10 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:multicast_dns/multicast_dns.dart';
-import 'package:signalr_core/signalr_core.dart';
+// import 'package:signalr_core/signalr_core.dart';
 import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/models/server_record.dart';
 import 'package:version/version.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 
 class MdnsManager {
   static const String name = '_smarthome._tcp';
@@ -126,10 +127,11 @@ class MdnsManager {
       // }
       final hc = HubConnectionBuilder()
           .withUrl(
-              "http://${isIpv6 ? "[" : ""}${ipAddr.address.address}${isIpv6 ? "]" : ""}:${srv.port}/SmartHome",
-              HttpConnectionOptions(
-                  //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
-                  logging: (final level, final message) => print('$level: $message')))
+            "http://${isIpv6 ? "[" : ""}${ipAddr.address.address}${isIpv6 ? "]" : ""}:${srv.port}/SmartHome",
+            // options: HttpConnectionOptions(
+            //     //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
+            //     logging: (final level, final message) => print('$level: $message')))
+          )
           .build();
       await hc.start();
 

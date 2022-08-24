@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 
@@ -13,6 +15,11 @@ class LayoutBasePropertyInfo {
   String? unitOfMeasurement;
   String? format;
   bool? showOnlyInDeveloperMode;
+  int? deviceId;
+  bool? expanded;
+  int? precision;
+  @JsonKey(ignore: true)
+  late Map<String, dynamic> raw;
 
   LayoutBasePropertyInfo(this.name, this.order);
 
@@ -26,13 +33,17 @@ class LayoutBasePropertyInfo {
       rowNr == other.rowNr &&
       unitOfMeasurement == other.unitOfMeasurement &&
       format == other.format &&
-      showOnlyInDeveloperMode == other.showOnlyInDeveloperMode;
+      showOnlyInDeveloperMode == other.showOnlyInDeveloperMode &&
+      deviceId == other.deviceId &&
+      expanded == other.expanded &&
+      precision == other.precision;
 
   @override
-  int get hashCode =>
-      Object.hash(name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format, showOnlyInDeveloperMode);
+  int get hashCode => Object.hash(name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format,
+      showOnlyInDeveloperMode, deviceId, expanded, precision);
 
-  factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) => _$LayoutBasePropertyInfoFromJson(json);
+  factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) =>
+      _$LayoutBasePropertyInfoFromJson(json)..raw = json;
 
   Map<String, dynamic> toJson() => _$LayoutBasePropertyInfoToJson(this);
 }

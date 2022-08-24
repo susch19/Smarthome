@@ -11,10 +11,10 @@ import 'package:synchronized/synchronized.dart';
 import 'generic_device_exporter.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:signalr_netcore/hub_connection.dart';
 
-final _layoutProvider = StateProvider<List<DeviceLayout>>((final ref) {
-  DeviceLayoutService(ref);
-  return [];
+final _layoutProvider = StateNotifierProvider<DeviceLayoutService, List<DeviceLayout>>((final ref) {
+  return DeviceLayoutService();
 });
 
 final _idLayoutProvider = Provider.family<DeviceLayout?, int>((final ref, final id) {
@@ -30,11 +30,12 @@ final _typeNameLayoutProvider = Provider.family<DeviceLayout?, String>((final re
 });
 
 final deviceLayoutProvider = Provider.family<DeviceLayout?, Tuple2<int, String>>((final ref, final device) {
-  final deviceLayoutId = ref.watch(_idLayoutProvider(device.item1));
   final deviceLayoutTypeName = ref.watch(_typeNameLayoutProvider(device.item2));
+  final deviceLayoutId = ref.watch(_idLayoutProvider(device.item1));
   final retLayout = deviceLayoutId ?? deviceLayoutTypeName;
+  final connection = ref.watch(hubConnectionConnectedProvider);
   if (retLayout == null) {
-    DeviceLayoutService.loadFromServer(device.item1);
+    DeviceLayoutService.loadFromServer(device.item1, device.item2, connection);
   }
   return retLayout;
 });
@@ -65,7 +66,14 @@ final detailDeviceLayoutProvider = Provider.family<DetailDeviceLayout?, Tuple2<i
 final detailPropertyInfoLayoutProvider =
     Provider.family<List<DetailPropertyInfo>?, Tuple2<int, String>>((final ref, final device) {
   final layoutProvider = ref.watch(detailDeviceLayoutProvider(device));
-  return layoutProvider?.propertyInfos;
+  final props = layoutProvider?.propertyInfos;
+  return props;
+});
+
+final fabLayoutProvider = Provider.family<DetailPropertyInfo?, Tuple2<int, String>>((final ref, final device) {
+  final layoutProvider = ref.watch(detailDeviceLayoutProvider(device));
+  final props = layoutProvider?.propertyInfos;
+  return props?.firstOrNull((final element) => element.editInfo?.editType == EditType.floatingActionButton);
 });
 
 final detailTabInfoLayoutProvider =
@@ -80,12 +88,11 @@ final detailHistoryLayoutProvider =
   return layoutProvider?.historyProperties;
 });
 
-class DeviceLayoutService {
-  DeviceLayoutService(this._ref) {
+class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
+  DeviceLayoutService() : super([]) {
     _instance = this;
   }
 
-  final Ref _ref;
   static DeviceLayoutService? _instance;
   static final CacheFileManager _cacheFileManager =
       CacheFileManager(path.join(Directory.systemTemp.path, "smarthome_layout_cache"), "json");
@@ -94,18 +101,19 @@ class DeviceLayoutService {
   static void updateFromServer(final List<Object?>? arguments) {
     final updateMap = arguments![0] as Map<String, dynamic>;
     final hash = arguments[1] as String;
+    // print(updateMap);
     _updateFromServer(updateMap, hash, updateStorage: true);
   }
 
   static Future _updateFromServer(final Map<String, dynamic> deviceLayoutJson, final String hash,
       {final bool updateStorage = false}) async {
-    if (_instance == null) return;
-    final layoutProvider = _instance!._ref.read(_layoutProvider.notifier);
+    final instance = _instance;
+    if (instance == null) return;
     final deviceLayout = DeviceLayout.fromJson(deviceLayoutJson);
 
-    final currentList = layoutProvider.state.toList();
+    final currentList = instance.state.toList();
     final existingLayout = currentList.firstOrNull((final e) => e.uniqueName == deviceLayout.uniqueName);
-    if (existingLayout.hashCode == deviceLayout.hashCode) return;
+    if (existingLayout == deviceLayout) return;
     if (existingLayout != null) currentList.remove(existingLayout);
 
     currentList.add(deviceLayout);
@@ -114,16 +122,15 @@ class DeviceLayoutService {
       await _cacheFileManager.writeHashCode(deviceLayout.uniqueName, hash);
       await _cacheFileManager.writeContentAsString(deviceLayout.uniqueName, jsonEncode(deviceLayoutJson));
     }
-    layoutProvider.state = currentList;
+    instance.state = currentList;
   }
 
-  static Future<void> loadFromServer(final int id) async {
-    if (_instance == null) return;
+  static Future<void> loadFromServer(final int id, final String typeName, final HubConnection? connection) async {
+    if (_instance == null || connection == null) return;
 
-    final bestFit = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutHashByDeviceId", args: [id])
-        as Map<String, dynamic>?;
-    if (bestFit == null) return;
     await lock.synchronized(() async {
+      final bestFit = await connection.invoke("GetDeviceLayoutHashByDeviceId", args: [id]) as Map<String, dynamic>?;
+      if (bestFit == null) return;
       final hash = bestFit["hash"] as String;
       final localHash = await _cacheFileManager.readHashCode(bestFit["name"]);
       if (localHash == hash) {
@@ -134,7 +141,7 @@ class DeviceLayoutService {
         }
       }
 
-      final fromServer = await ConnectionManager.hubConnection.invoke("GetDeviceLayoutByDeviceId", args: [id]);
+      final fromServer = await connection.invoke("GetDeviceLayoutByDeviceId", args: [id]);
       if (fromServer == null) return;
 
       _updateFromServer(fromServer as Map<String, dynamic>, hash, updateStorage: true);

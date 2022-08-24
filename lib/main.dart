@@ -5,12 +5,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
+// import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 import 'package:smarthome/dashboard/group_devices.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/device_overview_model.dart';
+import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
@@ -58,12 +60,14 @@ void main() async {
 }
 
 final _brightnessChangeProvider =
-    ChangeNotifierProvider.autoDispose.family<AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
+    ChangeNotifierProvider.family<AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
   return AdaptiveThemeModeWatcher(b);
 });
 
-final brightnessProvider = Provider.autoDispose.family<Brightness, AdaptiveThemeManager>((final ref, final b) {
-  return ref.watch(_brightnessChangeProvider(b)).brightness;
+final brightnessProvider = Provider.family<Brightness, AdaptiveThemeManager>((final ref, final b) {
+  final brightness = ref.watch(_brightnessChangeProvider(b)).brightness;
+  print("Brighntess changed");
+  return brightness;
 });
 
 class AdaptiveThemeModeWatcher extends ChangeNotifier {
@@ -72,13 +76,13 @@ class AdaptiveThemeModeWatcher extends ChangeNotifier {
   final AdaptiveThemeManager _themeManager;
   AdaptiveThemeModeWatcher(this._themeManager) {
     _themeManager.modeChangeNotifier.addListener(modeChanged);
-    brightness = _themeManager.brightness;
+    brightness = _themeManager.brightness!;
   }
 
   void modeChanged() {
     final newBrightness = _themeManager.brightness;
     if (newBrightness != brightness) {
-      brightness = newBrightness;
+      brightness = newBrightness!;
       notifyListeners();
     }
   }
@@ -115,11 +119,13 @@ class MyApp extends StatelessWidget {
 class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserver {
   final Ref ref;
   InfoIconProvider(this.ref) : super(Icons.refresh) {
-    final connection = ref.watch(hubConnectionStateProvider);
+    final connection = ref.watch(hubConnectionProvider);
 
-    if (connection == HubConnectionState.disconnected) {
+    // if (connection == HubConnectionState.disconnected) {
+    if (connection.connectionState == HubConnectionState.Disconnected) {
       state = Icons.warning;
-    } else if (connection == HubConnectionState.connected) {
+      // } else if (connection == HubConnectionState.connected) {
+    } else if (connection.connectionState == HubConnectionState.Connected) {
       state = Icons.check;
     }
 
@@ -133,11 +139,12 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
   @override
   void didChangeAppLifecycleState(final AppLifecycleState state) {
     if (state.index == 0) {
-      ConnectionManager.newHubConnection(ref: ref);
+      ref.read(hubConnectionProvider.notifier).newHubConnection();
     } else if (state.index == 2) {
       this.state = Icons.error_outline;
-      final connectionState = ref.watch(hubConnectionStateProvider);
-      if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
+      final connection = ref.watch(hubConnectionProvider);
+      // if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
+      connection.connection?.stop();
     }
   }
 
@@ -154,10 +161,10 @@ final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
 
 final maxCrossAxisExtentProvider = StateProvider<double>((final _) =>
     PreferencesManager.instance.getDouble("DashboardCardSize") ?? (!kIsWeb && Platform.isAndroid ? 370 : 300));
+final _groupCollapsedProvider = StateProvider.family<bool, String>((final _, final __) => false);
 
 class MyHomePage extends ConsumerWidget {
   const MyHomePage({final Key? key, this.title}) : super(key: key);
-
   final String? title;
 
   Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
@@ -174,6 +181,7 @@ class MyHomePage extends ConsumerWidget {
       decoration: ThemeManager.getBackgroundDecoration(context),
       child: RefreshIndicator(
         child: ConstrainedBox(
+          constraints: BoxConstraints.tight(Size.infinite),
           child: OrientationBuilder(
             builder: (final context, final orientation) {
               return Consumer(
@@ -189,7 +197,7 @@ class MyHomePage extends ConsumerWidget {
                       if (deviceGroup == null) return const Text("Empty Entry");
                       return Container(
                         margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-                        child: getDashboardCard(context, deviceGroup),
+                        child: getDashboardCard(deviceGroup, ref),
                       );
                     },
 
@@ -199,7 +207,6 @@ class MyHomePage extends ConsumerWidget {
               );
             },
           ),
-          constraints: BoxConstraints.tight(Size.infinite),
         ),
         onRefresh: () async => refresh(ref),
       ),
@@ -207,11 +214,13 @@ class MyHomePage extends ConsumerWidget {
   }
 
   Widget buildBody(final BuildContext context, final WidgetRef ref) {
+    ref.watch(valueStoreProvider);
     final devices = ref.watch(sortedDeviceProvider);
     return Container(
       decoration: ThemeManager.getBackgroundDecoration(context),
       child: RefreshIndicator(
         child: ConstrainedBox(
+          constraints: BoxConstraints.tight(Size.infinite),
           child: OrientationBuilder(
             builder: (final context, final orientation) {
               return Consumer(
@@ -236,7 +245,6 @@ class MyHomePage extends ConsumerWidget {
               );
             },
           ),
-          constraints: BoxConstraints.tight(Size.infinite),
         ),
         onRefresh: () async => refresh(ref),
       ),
@@ -244,9 +252,10 @@ class MyHomePage extends ConsumerWidget {
   }
 
   Widget getDashboardCard(
-    final BuildContext context,
     final MapEntry<String, List<Device<BaseModel>>> deviceGroup,
+    final WidgetRef ref,
   ) {
+    final collapsed = ref.watch(_groupCollapsedProvider(deviceGroup.key));
     return Column(
         children: <Widget>[
               Container(
@@ -257,11 +266,17 @@ class MyHomePage extends ConsumerWidget {
                     Flexible(child: Consumer(
                       builder: (final context, final ref, final child) {
                         final groupName = ref.watch(DeviceManager.customGroupNameProvider(deviceGroup.key));
-                        return Text(
-                          groupName,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                        return MaterialButton(
+                          onPressed: (() {
+                            final oldCollapsed = ref.read(_groupCollapsedProvider(deviceGroup.key).notifier);
+                            oldCollapsed.state = !oldCollapsed.state;
+                          }),
+                          child: Text(
+                            groupName,
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       },
                     )),
@@ -281,20 +296,22 @@ class MyHomePage extends ConsumerWidget {
                 ),
               ),
             ] +
-            deviceGroup.value
-                .map<Widget>((final e) => Consumer(
-                      builder: (final context, final ref, final child) {
-                        return Container(
-                          margin: const EdgeInsets.only(),
-                          child: e.dashboardView(
-                            () {
-                              deviceAction(context, ref, e);
-                            },
-                          ),
-                        );
-                      },
-                    ))
-                .toList());
+            (collapsed
+                ? []
+                : deviceGroup.value
+                    .map<Widget>((final e) => Consumer(
+                          builder: (final context, final ref, final child) {
+                            return Container(
+                              margin: const EdgeInsets.only(),
+                              child: e.dashboardView(
+                                () {
+                                  deviceAction(context, ref, e);
+                                },
+                              ),
+                            );
+                          },
+                        ))
+                    .toList()));
   }
 
   void groupOption(final BuildContext context, final WidgetRef ref, final String value,
@@ -308,7 +325,7 @@ class MyHomePage extends ConsumerWidget {
             cancelButtonText: "Abbrechen",
             defaultText: ref.read(DeviceManager.customGroupNameProvider(deviceGroup.key)),
             onSubmitted: (final s) {
-              DeviceManager.changeGroupName(deviceGroup.key, s);
+              ref.read(deviceProvider.notifier).changeGroupName(deviceGroup.key, s);
             },
             title: "Gruppenname ändern",
             context: context);
@@ -323,7 +340,7 @@ class MyHomePage extends ConsumerWidget {
           if (groups.isEmpty) removeDevice(context, ref, element.id, pop: false);
           groupsState.state = groups;
         }
-        DeviceManager.saveDeviceGroups();
+        ref.read(deviceProvider.notifier).saveDeviceGroups();
 
         break;
       case 'Edit':
@@ -336,18 +353,18 @@ class MyHomePage extends ConsumerWidget {
     }
   }
 
-  Future addDevice(final DeviceOverviewModel device) async {
+  Future addDevice(final DeviceOverviewModel device, final WidgetRef ref) async {
     for (final item in device.typeNames) {
-      if (await tryCreateDevice(device, item)) return;
+      if (await tryCreateDevice(device, item, ref)) return;
     }
   }
 
-  Future<bool> tryCreateDevice(final DeviceOverviewModel device, final String item) async {
+  Future<bool> tryCreateDevice(final DeviceOverviewModel device, final String item, final WidgetRef ref) async {
     if (!DeviceManager.ctorFactory.containsKey(item) || !DeviceManager.stringNameJsonFactory.containsKey(item)) {
       return false;
     }
 
-    DeviceManager.subscribeToDevice(device.id);
+    ref.read(deviceProvider.notifier).subscribeToDevice(device.id);
     return true;
   }
 
@@ -371,7 +388,7 @@ class MyHomePage extends ConsumerWidget {
             ],
           ),
           PopupMenuButton<String>(
-            onSelected: (final v) => selectedOption(context, v),
+            onSelected: (final v) => selectedOption(context, v, ref),
             itemBuilder: (final BuildContext context) => <PopupMenuItem<String>>[
               const PopupMenuItem<String>(value: 'RemoveAll', child: Text("Entferne alle Geräte")),
               const PopupMenuItem<String>(value: 'Settings', child: Text("Einstellungen")),
@@ -396,7 +413,7 @@ class MyHomePage extends ConsumerWidget {
     );
   }
 
-  void selectedOption(final BuildContext context, final String value) {
+  void selectedOption(final BuildContext context, final String value, final WidgetRef ref) {
     switch (value) {
       case "Debug":
         DeviceManager.showDebugInformation = !DeviceManager.showDebugInformation;
@@ -405,7 +422,7 @@ class MyHomePage extends ConsumerWidget {
         AdaptiveTheme.of(context).toggleThemeMode();
         break;
       case "RemoveAll":
-        DeviceManager.removeAllDevices();
+        ref.read(deviceProvider.notifier).removeAllDevices();
         break;
       case "Info":
         Navigator.push(context, MaterialPageRoute(builder: (final c) => const AboutScreen()));
@@ -433,21 +450,19 @@ class MyHomePage extends ConsumerWidget {
     );
 
     final dialog = SimpleDialog(
-      children: actions,
       title: Consumer(
         builder: (final context, final ref, final child) {
           return Text("Gerät " + (ref.watch(BaseModel.friendlyNameProvider(d.id))));
         },
       ),
+      children: actions,
     );
     showDialog(context: context, builder: (final b) => dialog);
   }
 
   void removeDevice(final BuildContext context, final WidgetRef ref, final int id, {final bool pop = true}) {
-    final deviceId = ref.read(deviceIdProvider.notifier);
-    final list = deviceId.state.toList();
-    list.remove(id);
-    deviceId.state = list;
+    final deviceId = ref.read(deviceProvider.notifier).removeDevice(id);
+
     if (pop) Navigator.pop(context);
   }
 
@@ -462,7 +477,7 @@ class MyHomePage extends ConsumerWidget {
             defaultText: ref.read(BaseModel.friendlyNameProvider(x.id)),
             maxLines: 2,
             onSubmitted: (final s) async {
-              x.updateDeviceOnServer(x.id, s);
+              x.updateDeviceOnServer(x.id, s, ref.read(hubConnectionProvider));
             })).then((final x) => Navigator.of(context).pop());
   }
 
@@ -485,12 +500,13 @@ class MyHomePage extends ConsumerWidget {
   }
 
   Future addNewDevice(final BuildContext context, final WidgetRef ref) async {
-    if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
-      await ConnectionManager.hubConnection.start();
+    // if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
+    final connection = ref.watch(hubConnectionConnectedProvider);
+    if (connection == null) {
+      return;
     }
 
-    final serverDevices =
-        (await ConnectionManager.hubConnection.invoke("GetDeviceOverview", args: [])) as List<dynamic>;
+    final serverDevices = (await connection.invoke("GetDeviceOverview", args: [])) as List<dynamic>;
     final serverDevicesList = serverDevices.map((final e) => DeviceOverviewModel.fromJson(e)).toList();
 
     final devices = ref.read(deviceProvider);
@@ -501,7 +517,7 @@ class MyHomePage extends ConsumerWidget {
           SimpleDialogOption(
             child: Text((dev.friendlyName ?? dev.id.toString()) + ": " + dev.typeNames[0]),
             onPressed: () async {
-              await addDevice(dev);
+              await addDevice(dev, ref);
               Navigator.pop(context);
             },
           ),
@@ -514,7 +530,7 @@ class MyHomePage extends ConsumerWidget {
         SimpleDialogOption(
           child: const Text("Subscribe to all"),
           onPressed: () async {
-            DeviceManager.subscribeToDevices(serverDevicesList
+            ref.read(deviceProvider.notifier).subscribeToDevices(serverDevicesList
                 .map((final e) => e.id)
                 .where((final element) => !devices.any((final x) => x.id == element))
                 .toList());
@@ -533,8 +549,8 @@ class MyHomePage extends ConsumerWidget {
   }
 
   void refresh(final WidgetRef ref) {
-    ConnectionManager.newHubConnection(widgetRef: ref).then((final value) async {
-      await DeviceManager.reloadCurrentDevices();
+    ref.read(hubConnectionProvider.notifier).newHubConnection().then((final value) async {
+      await ref.read(deviceProvider.notifier).reloadCurrentDevices();
     });
   }
 

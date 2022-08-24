@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/base_model.dart';
+import 'package:smarthome/devices/connection_base_model.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -8,7 +9,7 @@ part 'heater_model.g.dart';
 
 @JsonSerializable()
 @immutable
-class HeaterModel extends BaseModel {
+class HeaterModel extends ConnectionBaseModel {
   final HeaterConfig? temperature;
   final int? xiaomiTempSensor;
   final HeaterConfig? currentConfig;
@@ -72,6 +73,16 @@ class HeaterModel extends BaseModel {
   @override
   HeaterModel getModelFromJson(final Map<String, dynamic> json) {
     return HeaterModel.fromJson(json);
+  }
+
+  @override
+  BaseModel updateFromJson(final Map<String, dynamic> json) {
+    final updatedModel = getModelFromJson(json);
+    bool updated = false;
+    if (updatedModel != this) {
+      updated = true;
+    }
+    return updated ? updatedModel : this;
   }
 
   @override

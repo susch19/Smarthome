@@ -26,7 +26,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(final BuildContext context) {
     final theme = AdaptiveTheme.of(context);
-    final hubConnection = ref.watch(hubConnectionProvider);
+    final hubConnection = ref.watch(hubConnectionConnectedProvider);
+    if (hubConnection == null) return Container();
     // final _ = ref.watch(brightnessProvider);
     final settings = ref.watch(settingsProvider);
     _textEditingController.text = settings.serverUrl;

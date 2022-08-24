@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
+import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,29 +24,30 @@ class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.spaceEvenly,
       children: [
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "An",
                 style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.SingleColor, []),
+              ),
+              onPressed: () =>
+                  sendToServer(sm.MessageType.Update, sm.Command.SingleColor, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
-        MaterialButton(
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
-              return Text(
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final state = ref.watch(ZigbeeSwitchModel.stateProvider(id));
+            return MaterialButton(
+              child: Text(
                 "Aus",
                 style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
-              );
-            },
-          ),
-          onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, []),
+              ),
+              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+            );
+          },
         ),
       ],
     );
@@ -80,9 +82,12 @@ class _TradfriControlOutletScreenState extends ConsumerState<TradfriControlOutle
         child: buildBody(),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.power_settings_new),
-        onPressed: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.Off, []),
-      ),
+          child: const Icon(Icons.power_settings_new),
+          onPressed: () {
+            final state = ref.watch(ZigbeeSwitchModel.stateProvider(widget.device.id));
+            widget.device.sendToServer(
+                sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, [], ref.read(hubConnectionProvider));
+          }),
     );
   }
 
