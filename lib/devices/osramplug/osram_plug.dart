@@ -75,10 +75,12 @@ class OsramPlugScreen extends ConsumerWidget {
         child: buildBody(ref),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.power_settings_new),
-        onPressed: () =>
-            device.sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
-      ),
+          child: const Icon(Icons.power_settings_new),
+          onPressed: () {
+            final state = ref.watch(ZigbeeSwitchModel.stateProvider(device.id));
+            device.sendToServer(
+                sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, [], ref.read(hubConnectionProvider));
+          }),
     );
   }
 

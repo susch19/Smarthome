@@ -82,10 +82,12 @@ class _TradfriControlOutletScreenState extends ConsumerState<TradfriControlOutle
         child: buildBody(),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.power_settings_new),
-        onPressed: () =>
-            widget.device.sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
-      ),
+          child: const Icon(Icons.power_settings_new),
+          onPressed: () {
+            final state = ref.watch(ZigbeeSwitchModel.stateProvider(widget.device.id));
+            widget.device.sendToServer(
+                sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, [], ref.read(hubConnectionProvider));
+          }),
     );
   }
 
