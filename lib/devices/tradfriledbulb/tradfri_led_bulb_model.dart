@@ -28,9 +28,9 @@ class TradfriLedBulbModel extends ZigbeeModel {
   @override
   bool get isConnected => available;
 
-  const TradfriLedBulbModel(final int id, final String friendlyName, final bool isConnected, final bool available,
-      final DateTime lastReceived, final int linkQuality, this.brightness, this.color, this.state)
-      : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
+  const TradfriLedBulbModel(final int id, final String friendlyName, final String typeName, final bool isConnected,
+      final bool available, final DateTime lastReceived, final int linkQuality, this.brightness, this.color, this.state)
+      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
   factory TradfriLedBulbModel.fromJson(final Map<String, dynamic> json) => _$TradfriLedBulbModelFromJson(json);
 
   @override

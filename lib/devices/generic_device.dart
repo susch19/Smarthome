@@ -46,8 +46,7 @@ class GenericDevice extends Device<BaseModel> {
         final baseModel = ref.watch(BaseModel.byIdProvider(id));
 
         if (baseModel == null) return Container();
-        final dashboardDeviceLayout =
-            ref.watch(dashboardNoSpecialTypeLayoutProvider(Tuple2(id, baseModel.typeNames.first)));
+        final dashboardDeviceLayout = ref.watch(dashboardNoSpecialTypeLayoutProvider(Tuple2(id, baseModel.typeName)));
         if (dashboardDeviceLayout?.isEmpty ?? true) return Container();
 
         return DashboardLayoutWidget(this, dashboardDeviceLayout!);
@@ -63,7 +62,7 @@ class GenericDevice extends Device<BaseModel> {
 
         if (baseModel == null) return Container();
 
-        final properties = ref.watch(dashboardSpecialTypeLayoutProvider(Tuple2(id, baseModel.typeNames.first)));
+        final properties = ref.watch(dashboardSpecialTypeLayoutProvider(Tuple2(id, baseModel.typeName)));
         if (properties?.isEmpty ?? true) return Container();
 
         properties!.sort((final a, final b) => a.order.compareTo(b.order));

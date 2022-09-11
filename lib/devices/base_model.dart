@@ -45,6 +45,7 @@ class BaseModel {
 
   final int id;
   final String friendlyName;
+  final String typeName;
 
   // @JsonKey(ignore: true)
   final List<String> typeNames;
@@ -70,10 +71,10 @@ class BaseModel {
     return false;
   }
 
-  const BaseModel(this.id, this.friendlyName, [this.typeNames = defaultList]);
+  const BaseModel(this.id, this.friendlyName, this.typeName, [this.typeNames = defaultList]);
 
   factory BaseModel.fromJson(final Map<String, dynamic> json, final List<String> typeNames) {
-    final bm = BaseModel(json['id'] as int, json['friendlyName'] as String, typeNames);
+    final bm = BaseModel(json['id'] as int, json['friendlyName'] as String, json['typeName'], typeNames);
     StoreService.updateAndGetStores(bm.id, json);
     return bm;
   }
@@ -81,7 +82,8 @@ class BaseModel {
   Map<String, dynamic> toJson() => _$BaseModelToJson(this);
 
   @override
-  bool operator ==(final Object other) => other is BaseModel && other.id == id && other.friendlyName == friendlyName;
+  bool operator ==(final Object other) =>
+      other is BaseModel && other.id == id && other.friendlyName == friendlyName && other.typeName == typeName;
 
   @override
   int get hashCode => Object.hash(id, friendlyName);

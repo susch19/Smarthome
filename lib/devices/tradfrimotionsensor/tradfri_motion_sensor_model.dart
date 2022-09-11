@@ -25,9 +25,18 @@ class TradfriMotionSensorModel extends ZigbeeModel {
     return (baseModel as TradfriMotionSensorModel).occupancy;
   });
 
-  const TradfriMotionSensorModel(final int id, final String friendlyName, final bool isConnected, final bool available,
-      final DateTime lastReceived, final int linkQuality, this.battery, this.noMotion, this.occupancy)
-      : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
+  const TradfriMotionSensorModel(
+      final int id,
+      final String friendlyName,
+      final String typeName,
+      final bool isConnected,
+      final bool available,
+      final DateTime lastReceived,
+      final int linkQuality,
+      this.battery,
+      this.noMotion,
+      this.occupancy)
+      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
   factory TradfriMotionSensorModel.fromJson(final Map<String, dynamic> json) =>
       _$TradfriMotionSensorModelFromJson(json);
 

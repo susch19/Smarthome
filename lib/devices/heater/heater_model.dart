@@ -58,6 +58,7 @@ class HeaterModel extends ConnectionBaseModel {
   const HeaterModel(
     final int id,
     final String friendlyName,
+    final String typeName,
     final bool isConnected,
     this.temperature,
     this.xiaomiTempSensor,
@@ -66,7 +67,7 @@ class HeaterModel extends ConnectionBaseModel {
     this.version,
     this.disableLed,
     this.disableHeating,
-  ) : super(id, friendlyName, isConnected);
+  ) : super(id, friendlyName, typeName, isConnected);
 
   factory HeaterModel.fromJson(final Map<String, dynamic> json) => _$HeaterModelFromJson(json);
 
@@ -108,6 +109,7 @@ class HeaterModel extends ConnectionBaseModel {
   HeaterModel copyWith(
       {final int? id,
       final String? friendlyName,
+      final String? typeName,
       final bool? isConnected,
       final bool? disableHeating,
       final bool? disableLed,
@@ -119,6 +121,7 @@ class HeaterModel extends ConnectionBaseModel {
     return HeaterModel(
       id ?? this.id,
       friendlyName ?? this.friendlyName,
+      typeName ?? this.typeName,
       isConnected ?? this.isConnected,
       temperature ?? this.temperature,
       xiaomiTempSensor ?? this.xiaomiTempSensor,

@@ -6,7 +6,7 @@ part 'edit_parameter.g.dart';
 
 @JsonSerializable()
 class EditParameter {
-  Command command;
+  int command;
   Object value;
   String? displayName;
   List<Object?>? parameters;

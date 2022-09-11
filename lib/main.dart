@@ -515,7 +515,7 @@ class MyHomePage extends ConsumerWidget {
       if (!devices.any((final x) => x.id == dev.id)) {
         devicesToSelect.add(
           SimpleDialogOption(
-            child: Text((dev.friendlyName ?? dev.id.toString()) + ": " + dev.typeNames[0]),
+            child: Text((dev.friendlyName ?? dev.id.toString()) + ": " + dev.typeName),
             onPressed: () async {
               await addDevice(dev, ref);
               Navigator.pop(context);

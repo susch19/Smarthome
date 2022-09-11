@@ -166,7 +166,7 @@ abstract class Device<T extends BaseModel> {
       return;
     }
 
-    final message = sm.Message(id, messageType, command, parameters);
+    final message = sm.Message(id, messageType, command.index, parameters);
     final jsonMsg = message.toJson();
     await container.connection!.invoke("Update", args: <Object>[jsonMsg]);
   }

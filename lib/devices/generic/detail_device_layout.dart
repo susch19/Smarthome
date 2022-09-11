@@ -11,18 +11,22 @@ part 'detail_device_layout.g.dart';
 @JsonSerializable()
 class DetailDeviceLayout {
   List<DetailPropertyInfo> propertyInfos;
-  List<DetailTabInfo> tabInfos;
-  List<HistoryPropertyInfo> historyProperties;
+  List<DetailTabInfo>? tabInfos;
+  List<HistoryPropertyInfo>? historyProperties;
 
   @override
   bool operator ==(final Object other) =>
       other is DetailDeviceLayout &&
       other.propertyInfos.sequenceEquals(propertyInfos) &&
-      other.tabInfos.sequenceEquals(tabInfos) &&
-      other.historyProperties.sequenceEquals(historyProperties);
+      ((other.tabInfos == tabInfos ||
+          (other.tabInfos != null && tabInfos != null && other.tabInfos!.sequenceEquals(tabInfos!)))) &&
+      (other.historyProperties == historyProperties ||
+          other.historyProperties != null &&
+              historyProperties != null &&
+              other.historyProperties!.sequenceEquals(historyProperties!));
 
   @override
-  int get hashCode => hashObjects(propertyInfos) ^ hashObjects(tabInfos) ^ hashObjects(historyProperties);
+  int get hashCode => hashObjects(propertyInfos) ^ hashObjects(tabInfos ?? []) ^ hashObjects(historyProperties ?? []);
 
   DetailDeviceLayout(this.propertyInfos, this.tabInfos, this.historyProperties);
 

@@ -6,11 +6,13 @@ part 'device_overview_model.g.dart';
 class DeviceOverviewModel {
   int id;
   List<String> typeNames;
+  String typeName;
   String? friendlyName;
 
   DeviceOverviewModel(
     this.id,
     this.typeNames,
+    this.typeName,
     this.friendlyName,
   );
 
