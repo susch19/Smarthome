@@ -20,7 +20,7 @@ class SmarthomeProtocol implements IHubProtocol {
 
   static AppCloudConfiguration? cloudConfig;
 
-  Key get _key => Key(cloudConfig!.keyBytes);
+  Key get _key => Key(cloudConfig?.keyBytes ?? Uint8List(32));
 
   @override
   String get name => "smarthome";
