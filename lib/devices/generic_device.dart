@@ -323,7 +323,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
 
   Widget buildWithoutHistory(final BuildContext context, final List<DetailTabInfo>? tabInfos) {
     final friendlyName = ref.watch(BaseModel.friendlyNameProvider(widget.genericDevice.id));
-    if (tabInfos == null || tabInfos.isEmpty) {
+    if (tabInfos == null || tabInfos.isEmpty || tabInfos.length == 1) {
       return Scaffold(
           floatingActionButton: _buildFab(),
           appBar: AppBar(
@@ -331,18 +331,20 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
           ),
           body: buildBody());
     }
-    return Scaffold(
-        floatingActionButton: _buildFab(),
-        appBar: AppBar(
-          title: TabBar(
-            tabs: tabInfos.map((final e) {
-              final icon = ref.watch(
-                  iconWidgetSingleProvider(Tuple4(e.iconName, widget.genericDevice, AdaptiveTheme.of(context), true)));
-              return Tab(icon: icon);
-            }).toList(),
-          ),
-        ),
-        body: TabBarView(children: tabInfos.map((final e) => buildBody(e)).toList(growable: false)));
+    return DefaultTabController(
+        length: tabInfos.length,
+        child: Scaffold(
+            floatingActionButton: _buildFab(),
+            appBar: AppBar(
+              title: TabBar(
+                tabs: tabInfos.map((final e) {
+                  final icon = ref.watch(iconWidgetSingleProvider(
+                      Tuple4(e.iconName, widget.genericDevice, AdaptiveTheme.of(context), true)));
+                  return Tab(icon: icon);
+                }).toList(),
+              ),
+            ),
+            body: TabBarView(children: tabInfos.map((final e) => buildBody(e)).toList(growable: false))));
   }
 
   Widget buildWithHistory(
