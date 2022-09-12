@@ -50,44 +50,48 @@ class SmarthomeProtocol implements IHubProtocol {
     final encrypter = Encrypter(AES(_key, mode: AESMode.cbc));
     int lastIndex = 0;
     while (lastIndex < input.length) {
-      final len = _getLengthOfBytes(input.sublist(lastIndex, 4));
-      final iv = IV(input.sublist(lastIndex + 4, 20));
+      try {
+        final len = _getLengthOfBytes(input.sublist(lastIndex, lastIndex + 4));
+        final iv = IV(input.sublist(lastIndex + 4, lastIndex + 20));
 
-      final inputWithoutLen = input.sublist(lastIndex + 20, lastIndex + len + 20);
-      lastIndex = len + 20;
-      final decrypted = encrypter.decryptBytes(Encrypted(inputWithoutLen), iv: iv);
+        final inputWithoutLen = input.sublist(lastIndex + 20, lastIndex + len + 20);
+        lastIndex = lastIndex + len + 20;
+        final decrypted = encrypter.decryptBytes(Encrypted(inputWithoutLen), iv: iv);
 
-      final jsonInput = utf8.decode(gzip.decode(decrypted));
+        final jsonInput = utf8.decode(gzip.decode(decrypted));
 
-      // Parse the messages
-      final messages = TextMessageFormat.parse(jsonInput);
-      for (final message in messages) {
-        final jsonData = json.decode(message);
-        final messageType = _getMessageTypeFromJson(jsonData);
-        HubMessageBase messageObj;
+        // Parse the messages
+        final messages = TextMessageFormat.parse(jsonInput);
+        for (final message in messages) {
+          final jsonData = json.decode(message);
+          final messageType = _getMessageTypeFromJson(jsonData);
+          HubMessageBase messageObj;
 
-        switch (messageType) {
-          case MessageType.Invocation:
-            messageObj = _getInvocationMessageFromJson(jsonData);
-            break;
-          case MessageType.StreamItem:
-            messageObj = _getStreamItemMessageFromJson(jsonData);
-            break;
-          case MessageType.Completion:
-            messageObj = _getCompletionMessageFromJson(jsonData);
-            break;
-          case MessageType.Ping:
-            messageObj = _getPingMessageFromJson(jsonData);
-            break;
-          case MessageType.Close:
-            messageObj = _getCloseMessageFromJson(jsonData);
-            break;
-          default:
-            // Future protocol changes can add message types, old clients can ignore them
-            logger?.info("Unknown message type '$messageType' ignored.");
-            continue;
+          switch (messageType) {
+            case MessageType.Invocation:
+              messageObj = _getInvocationMessageFromJson(jsonData);
+              break;
+            case MessageType.StreamItem:
+              messageObj = _getStreamItemMessageFromJson(jsonData);
+              break;
+            case MessageType.Completion:
+              messageObj = _getCompletionMessageFromJson(jsonData);
+              break;
+            case MessageType.Ping:
+              messageObj = _getPingMessageFromJson(jsonData);
+              break;
+            case MessageType.Close:
+              messageObj = _getCloseMessageFromJson(jsonData);
+              break;
+            default:
+              // Future protocol changes can add message types, old clients can ignore them
+              logger?.info("Unknown message type '$messageType' ignored.");
+              continue;
+          }
+          hubMessages.add(messageObj);
         }
-        hubMessages.add(messageObj);
+      } catch (e) {
+        rethrow;
       }
     }
 

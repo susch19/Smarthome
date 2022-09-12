@@ -126,7 +126,7 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
   }
 
   static Future<void> loadFromServer(final int id, final String typeName, final HubConnection? connection) async {
-    if (_instance == null || connection == null) return;
+    if (_instance == null || connection == null || connection.state != HubConnectionState.Connected) return;
 
     await lock.synchronized(() async {
       final bestFit = await connection.invoke("GetDeviceLayoutHashByDeviceId", args: [id]) as Map<String, dynamic>?;

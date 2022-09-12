@@ -58,7 +58,7 @@ class BaseModel {
   BaseModel updateFromJson(final Map<String, dynamic> json) {
     final updatedModel = getModelFromJson(json);
 
-    bool updated = StoreService.updateAndGetStores(id, json);
+    bool updated = false;
     if (updatedModel != this) {
       updated = true;
     }

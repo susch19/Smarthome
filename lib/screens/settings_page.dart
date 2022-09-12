@@ -27,7 +27,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(final BuildContext context) {
     final theme = AdaptiveTheme.of(context);
     final hubConnection = ref.watch(hubConnectionConnectedProvider);
-    if (hubConnection == null) return Container();
     // final _ = ref.watch(brightnessProvider);
     final settings = ref.watch(settingsProvider);
     _textEditingController.text = settings.serverUrl;
@@ -176,7 +175,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     title: const Text(
                       "Painless Mesh Zeit Update",
                     ),
-                    onTap: () => hubConnection.invoke("UpdateTime"),
+                    onTap: () => hubConnection?.invoke("UpdateTime"),
                   )
                 : Container(),
             settings.showDebugInformation ? const Divider() : Container(),

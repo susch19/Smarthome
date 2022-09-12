@@ -63,7 +63,6 @@ class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
 
   static final lock = Lock();
   static bool updateAndGetStores(final int deviceId, final Map<String, dynamic> json) {
-    print("$deviceId updateAndGetStores");
     final Map<String, ValueStore> stores = (_instance.state[deviceId] ?? []).toMap((final e) => e.key, (final e) => e);
     bool changed = false;
     bool rebuild = false;

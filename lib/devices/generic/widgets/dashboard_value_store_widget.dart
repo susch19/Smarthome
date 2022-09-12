@@ -17,6 +17,7 @@ class DashboardValueStoreWidget extends ConsumerWidget {
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
     if (valueModel == null ||
+        valueModel.currentValue == null ||
         (e.specialType == SpecialType.right) ||
         ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)) {
       return Container();
