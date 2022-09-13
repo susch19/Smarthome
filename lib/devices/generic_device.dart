@@ -434,8 +434,8 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     } else if (valueModel.currentValue is int) {
       final val = (valueModel.currentValue as int);
       edit = info.editParameter.firstWhere((final element) {
-        final lower = element.raw["Min"] as int?;
-        final upper = element.raw["Max"] as int?;
+        final lower = element.raw["Min"] as double?;
+        final upper = element.raw["Max"] as double?;
         if (lower != null && upper != null) {
           return val >= lower && val < upper;
         }

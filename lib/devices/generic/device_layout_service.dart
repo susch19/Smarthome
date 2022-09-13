@@ -113,7 +113,9 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
 
     final currentList = instance.state.toList();
     final existingLayout = currentList.firstOrNull((final e) => e.uniqueName == deviceLayout.uniqueName);
-    if (existingLayout == deviceLayout) return;
+    if (existingLayout != null && existingLayout.version == deviceLayout.version && existingLayout == deviceLayout) {
+      return;
+    }
     if (existingLayout != null) currentList.remove(existingLayout);
 
     currentList.add(deviceLayout);
