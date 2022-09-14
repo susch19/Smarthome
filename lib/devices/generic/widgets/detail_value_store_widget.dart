@@ -20,9 +20,16 @@ class DetailValueStoreWidget extends ConsumerWidget {
     final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
-    if (valueModel == null || ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)) {
+    if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
       return Container();
     }
+    if (valueModel == null) {
+      return Text(
+        (e.displayName ?? "") + (e.unitOfMeasurement ?? ""),
+        style: e.textStyle?.toTextStyle(),
+      );
+    }
+
     Widget ret;
     if (e.editInfo != null) {
       ret = device.getEditWidget(context, e, valueModel, ref);

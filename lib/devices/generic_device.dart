@@ -328,7 +328,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
           appBar: AppBar(
             title: Text(friendlyName),
           ),
-          body: buildBody());
+          body: buildBody(tabInfos?.first));
     }
     return DefaultTabController(
         length: tabInfos.length,
