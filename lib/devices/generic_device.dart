@@ -44,7 +44,6 @@ class GenericDevice extends Device<BaseModel> {
     return Consumer(
       builder: (final context, final ref, final child) {
         final baseModel = ref.watch(BaseModel.byIdProvider(id));
-
         if (baseModel == null) return Container();
         final dashboardDeviceLayout = ref.watch(dashboardNoSpecialTypeLayoutProvider(Tuple2(id, baseModel.typeName)));
         if (dashboardDeviceLayout?.isEmpty ?? true) return Container();

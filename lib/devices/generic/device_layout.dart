@@ -14,15 +14,22 @@ class DeviceLayout {
   DashboardDeviceLayout? dashboardDeviceLayout;
   DetailDeviceLayout? detailDeviceLayout;
   int version;
+  bool showOnlyInDeveloperMode;
 
   DeviceLayout(this.uniqueName,
-      {this.typeName, this.ids, this.dashboardDeviceLayout, this.detailDeviceLayout, this.version = 1});
+      {this.typeName,
+      this.ids,
+      this.dashboardDeviceLayout,
+      this.detailDeviceLayout,
+      this.version = 1,
+      this.showOnlyInDeveloperMode = false});
 
   @override
   bool operator ==(final Object other) =>
       other is DeviceLayout &&
       other.uniqueName == uniqueName &&
       other.version == version &&
+      other.showOnlyInDeveloperMode == showOnlyInDeveloperMode &&
       other.typeName == typeName &&
       dashboardDeviceLayout == other.dashboardDeviceLayout &&
       detailDeviceLayout == other.detailDeviceLayout &&
@@ -30,7 +37,8 @@ class DeviceLayout {
 
   @override
   int get hashCode =>
-      Object.hash(uniqueName, typeName, version, dashboardDeviceLayout, detailDeviceLayout) ^ hashObjects(ids ?? []);
+      Object.hash(uniqueName, typeName, version, dashboardDeviceLayout, detailDeviceLayout, showOnlyInDeveloperMode) ^
+      hashObjects(ids ?? []);
 
   factory DeviceLayout.fromJson(final Map<String, dynamic> json) => _$DeviceLayoutFromJson(json);
 

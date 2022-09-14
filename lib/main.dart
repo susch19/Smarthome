@@ -12,6 +12,7 @@ import 'package:smarthome/devices/device_exporter.dart';
 import 'dart:async';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/device_overview_model.dart';
+import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
@@ -27,6 +28,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tuple/tuple.dart';
 
 import 'controls/expandable_fab.dart';
 import 'helper/connection_manager.dart';
@@ -230,6 +232,11 @@ class MyHomePage extends ConsumerWidget {
                     itemCount: devices.length,
                     itemBuilder: (final context, final i) {
                       final device = devices[i];
+                      if (device is GenericDevice) {
+                        final developerMode = ref.watch(debugInformationEnabledProvider);
+                        final layout = ref.watch(deviceLayoutProvider(Tuple2(device.id, device.typeName)));
+                        if (layout == null || (!developerMode && layout.showOnlyInDeveloperMode)) return Container();
+                      }
                       return Container(
                         margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
                         child: device.dashboardView(
@@ -256,6 +263,7 @@ class MyHomePage extends ConsumerWidget {
     final WidgetRef ref,
   ) {
     final collapsed = ref.watch(_groupCollapsedProvider(deviceGroup.key));
+
     return Column(
         children: <Widget>[
               Container(
@@ -301,6 +309,14 @@ class MyHomePage extends ConsumerWidget {
                 : deviceGroup.value
                     .map<Widget>((final e) => Consumer(
                           builder: (final context, final ref, final child) {
+                            if (e is GenericDevice) {
+                              final developerMode = ref.watch(debugInformationEnabledProvider);
+                              final layout = ref.watch(deviceLayoutProvider(Tuple2(e.id, e.typeName)));
+                              if (layout == null || (!developerMode && layout.showOnlyInDeveloperMode)) {
+                                return Container();
+                              }
+                            }
+
                             return Container(
                               margin: const EdgeInsets.only(),
                               child: e.dashboardView(
