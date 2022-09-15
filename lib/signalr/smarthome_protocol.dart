@@ -194,10 +194,10 @@ class SmarthomeProtocol implements IHubProtocol {
   }
 
   Uint8List _getBytesOfInt(final int l) {
-    int a = (l >> 24) & 0xFF;
-    int b = (l >> 16) & 0xFF;
-    int c = (l >> 8) & 0xFF;
-    int d = (l >> 0) & 0xFF;
+    final a = (l >> 24) & 0xFF;
+    final b = (l >> 16) & 0xFF;
+    final c = (l >> 8) & 0xFF;
+    final d = (l >> 0) & 0xFF;
     return Uint8List.fromList([a, b, c, d]);
   }
 

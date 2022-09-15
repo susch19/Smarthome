@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:smarthome/helper/cache_file_manager.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
+import 'package:smarthome/helper/settings_manager.dart';
 import 'package:tuple/tuple.dart';
 import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart';
@@ -79,7 +80,13 @@ final fabLayoutProvider = Provider.family<DetailPropertyInfo?, Tuple2<int, Strin
 final detailTabInfoLayoutProvider =
     Provider.family<List<DetailTabInfo>?, Tuple2<int, String>>((final ref, final device) {
   final layoutProvider = ref.watch(detailDeviceLayoutProvider(device));
-  return layoutProvider?.tabInfos;
+  final showDebugInformation = ref.watch(debugInformationEnabledProvider);
+  final tabInfos = layoutProvider?.tabInfos;
+  if (tabInfos == null) return null;
+  return tabInfos
+      .where((final element) =>
+          !element.showOnlyInDeveloperMode || element.showOnlyInDeveloperMode == showDebugInformation)
+      .toList();
 });
 
 final detailHistoryLayoutProvider =

@@ -10,19 +10,21 @@ class DetailTabInfo {
   String iconName;
   int order;
   LinkedDeviceTab? linkedDevice;
+  bool showOnlyInDeveloperMode;
 
   @override
   bool operator ==(final Object other) =>
       other is DetailTabInfo &&
       other.id == id &&
+      other.showOnlyInDeveloperMode == other.showOnlyInDeveloperMode &&
       other.iconName == iconName &&
       other.order == order &&
       other.linkedDevice == linkedDevice;
 
   @override
-  int get hashCode => hash4(id, iconName, order, linkedDevice);
+  int get hashCode => Object.hash(id, iconName, order, linkedDevice, showOnlyInDeveloperMode);
 
-  DetailTabInfo(this.id, this.iconName, this.order, this.linkedDevice);
+  DetailTabInfo(this.id, this.iconName, this.order, this.linkedDevice, [this.showOnlyInDeveloperMode = false]);
 
   factory DetailTabInfo.fromJson(final Map<String, dynamic> json) => _$DetailTabInfoFromJson(json);
 

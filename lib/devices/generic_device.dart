@@ -465,8 +465,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
     if (detailProperties == null || detailProperties.isEmpty) return Container();
     detailProperties = detailProperties
-        .where((final element) =>
-            (tabInfo == null && element.tabInfoId == null) || (tabInfo != null && tabInfo.id == element.tabInfoId))
+        .where((final element) => tabInfo == null || tabInfo.id == element.tabInfoId)
         .toList(growable: false);
     // final widgets = <Widget>[];
     detailProperties.sort((final a, final b) => a.order.compareTo(b.order));
@@ -480,6 +479,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     final props = detailProperties
         .where((final e) =>
             !(e.showOnlyInDeveloperMode ?? false) || (showDebugInformation && e.showOnlyInDeveloperMode == true))
+        .where((e) => e.editInfo == null || e.editInfo!.editType != EditType.floatingActionButton)
         .groupBy((final g) => g.rowNr)
         .map((final row, final elements) {
       final children = elements.map((final e) {
