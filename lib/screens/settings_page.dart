@@ -5,6 +5,7 @@ import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/main.dart';
 import 'package:smarthome/models/ipport.dart';
+import 'package:smarthome/screens/history_configure_screen.dart';
 
 import '../helper/connection_manager.dart';
 import 'screen_export.dart';
@@ -33,7 +34,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Serversuche"),
+        title: const Text("Einstellungen"),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
@@ -117,6 +118,43 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   );
                 },
               ),
+            ),
+            const Divider(),
+            const ListTile(
+              title: Text(
+                "Historie",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+            ListTile(
+              title: const Text("Konfigurieren pro Gerätetyp"),
+              onTap: () {
+                Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", true)))
+                    .then((final value) {});
+              },
+            ),
+            ListTile(
+              title: const Text("Konfigurieren pro Gerät"),
+              onTap: () {
+                Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", false)))
+                    .then((final value) {
+                  if (value is IpPort) {
+                    final isIpv6 = value.type.name == "IPv6";
+
+                    final uri = Uri.parse(
+                        "http://${isIpv6 ? "[" : ""}${value.ipAddress}${isIpv6 ? "]" : ""}:${value.port}/SmartHome");
+
+                    SettingsManager.setServerUrl(uri.toString());
+                    _textEditingController.text = uri.toString();
+                  }
+                });
+              },
             ),
             const Divider(),
             const ListTile(
