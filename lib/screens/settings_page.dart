@@ -130,30 +130,18 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               title: const Text("Konfigurieren pro Gerätetyp"),
               onTap: () {
                 Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", true)))
-                    .then((final value) {});
+                    context,
+                    MaterialPageRoute(
+                        builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", true)));
               },
             ),
             ListTile(
               title: const Text("Konfigurieren pro Gerät"),
               onTap: () {
                 Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", false)))
-                    .then((final value) {
-                  if (value is IpPort) {
-                    final isIpv6 = value.type.name == "IPv6";
-
-                    final uri = Uri.parse(
-                        "http://${isIpv6 ? "[" : ""}${value.ipAddress}${isIpv6 ? "]" : ""}:${value.port}/SmartHome");
-
-                    SettingsManager.setServerUrl(uri.toString());
-                    _textEditingController.text = uri.toString();
-                  }
-                });
+                    context,
+                    MaterialPageRoute(
+                        builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", false)));
               },
             ),
             const Divider(),
