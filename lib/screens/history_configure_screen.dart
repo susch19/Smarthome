@@ -94,13 +94,12 @@ class HistoryConfigureScreen extends ConsumerWidget {
                                 .map((final e) => Consumer(
                                       builder: (final context, final ref, final child) {
                                         final overwrite = ref.watch(_overwrittenStatesGrouped(key));
+                                        final val = values.all(
+                                            (final element) => !element.containsKey(e) || element[e] as bool == true);
                                         return ListTile(
                                           title: Text(e),
                                           trailing: Checkbox(
-                                            value: overwrite.containsKey(e)
-                                                ? overwrite[e]
-                                                : values.all((final element) =>
-                                                    !element.containsKey(e) || element[e] as bool == true),
+                                            value: overwrite.containsKey(e) ? overwrite[e] : val,
                                             onChanged: (final v) {
                                               if (v == null || connection == null) return;
                                               connection.invoke("SetHistories", args: [v, ids, e]);

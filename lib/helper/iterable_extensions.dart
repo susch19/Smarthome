@@ -167,6 +167,6 @@ extension Iterables<E> on Iterable<E> {
     for (final item in [...this]) {
       if (!func(item)) return false;
     }
-    return false;
+    return true;
   }
 }
