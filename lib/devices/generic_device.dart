@@ -156,6 +156,16 @@ class GenericDevice extends Device<BaseModel> {
         }
         return element.value == val;
       }, orElse: () => info.editParameter.first);
+    } else if (valueModel.currentValue is bool) {
+      final val = (valueModel.currentValue as bool);
+      edit = info.editParameter.firstWhere((final element) {
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else if (valueModel.currentValue is String) {
+      final val = (valueModel.currentValue as String);
+      edit = info.editParameter.firstWhere((final element) {
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
     } else {
       edit = info.editParameter.first;
     }
@@ -565,40 +575,6 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
             //Happends in debug when exiting in the history tab
           }
         });
-
-    // final h = ;
-
-    // return h.when(
-    //   data: (final data) {
-    //     if (data != null && data.historyRecords.isNotEmpty) {
-    //       return buildHistorySeriesAnnotationChart(
-    //           data,
-    //           info.unitOfMeasurement,
-    //           info.xAxisName,
-    //           AdaptiveTheme.of(context).brightness == Brightness.light
-    //               ? Color(info.brightThemeColor)
-    //               : Color(info.darkThemeColor),
-    //           currentShownTime);
-    //     }
-    //     return buildDataMissing(currentShownTime);
-    //   },
-    //   error: (final e, final o) => Text(e.toString()),
-    //   loading: () => Column(
-    //     children: <Widget>[
-    //       Container(
-    //         margin: const EdgeInsets.only(top: 50),
-    //         child: Text(
-    //           'Lade weitere History Daten...',
-    //           style: Theme.of(context).textTheme.headline6,
-    //         ),
-    //       ),
-    //       Container(
-    //         margin: const EdgeInsets.only(top: 25),
-    //         child: const CircularProgressIndicator(),
-    //       ),
-    //     ],
-    //   ),
-    // );
   }
 
   Widget buildDataMissing(final DateTime currentShownTime) {
@@ -631,7 +607,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     );
   }
 
-  Widget buildHistorySeriesAnnotationChart(final IoBrokerHistoryModel h, final String unit, final String valueName,
+  Widget buildHistorySeriesAnnotationChart(final HistoryModel h, final String unit, final String valueName,
       final Color lineColor, final DateTime currentShownTime) {
     h.historyRecords = h.historyRecords.where((final x) => x.value != null).toList(growable: false);
     return Flex(
@@ -670,6 +646,23 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
             unit,
             valueName,
             currentShownTime,
+            loadMoreIndicatorBuilder: (final context, final direction) {
+              return Consumer(
+                builder: (final context, final ref, final child) {
+                  Future<void>.delayed(const Duration(milliseconds: 10), (() {
+                    final current = ref.read(_currentShownTimeProvider.notifier);
+                    if (direction == ChartSwipeDirection.end) {
+                      if (current.state.day < DateTime.now().day) {
+                        current.state = current.state.add(const Duration(days: 1));
+                      }
+                    } else {
+                      current.state = current.state.add(const Duration(days: -1));
+                    }
+                  }));
+                  return Container();
+                },
+              );
+            },
           ),
         ),
         Row(

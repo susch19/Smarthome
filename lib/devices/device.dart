@@ -23,27 +23,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 
 final historyPropertyProvider =
-    FutureProvider.family<List<IoBrokerHistoryModel>, Tuple2<int, String>>((final ref, final id) async {
+    FutureProvider.family<List<HistoryModel>, Tuple2<int, String>>((final ref, final id) async {
   final hubConnection = ref.watch(hubConnectionConnectedProvider);
 
   if (hubConnection != null) {
     final result = await hubConnection.invoke("GetIoBrokerHistories", args: [id.item1, id.item2]);
     final resList = result as List<dynamic>;
-    return resList.map((final e) => IoBrokerHistoryModel.fromJson(e)).toList();
+    return resList.map((final e) => HistoryModel.fromJson(e)).toList();
   }
   return [];
 });
 
 final historyPropertyNameProvider =
-    FutureProvider.family<IoBrokerHistoryModel, Tuple3<int, String, String>>((final ref, final id) async {
+    FutureProvider.family<HistoryModel, Tuple3<int, String, String>>((final ref, final id) async {
   final hubConnection = ref.watch(hubConnectionConnectedProvider);
 
   if (hubConnection != null) {
     final result = await hubConnection.invoke("GetIoBrokerHistory", args: [id.item1, id.item2, id.item3]);
     final e = result as Map<String, dynamic>;
-    return IoBrokerHistoryModel.fromJson(e);
+    return HistoryModel.fromJson(e);
   }
-  return IoBrokerHistoryModel();
+  return HistoryModel();
 });
 
 final _iconWidgetProvider = Provider.autoDispose

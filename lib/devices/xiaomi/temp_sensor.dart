@@ -121,20 +121,20 @@ class XiaomiTempSensorScreen extends ConsumerStatefulWidget {
 }
 
 class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen> with SingleTickerProviderStateMixin {
-  late List<IoBrokerHistoryModel> histories;
+  late List<HistoryModel> histories;
   late DateTime currentShownTime;
 
   @override
   void initState() {
     super.initState();
     currentShownTime = DateTime.now();
-    histories = <IoBrokerHistoryModel>[];
+    histories = <HistoryModel>[];
     widget.device
         .getFromServer(
             "GetIoBrokerHistories", [widget.device.id, currentShownTime.toString()], ref.read(hubConnectionProvider))
         .then((final x) {
       for (final hist in x) {
-        histories.add(IoBrokerHistoryModel.fromJson(hist));
+        histories.add(HistoryModel.fromJson(hist));
       }
       setState(() {});
     });
@@ -302,7 +302,7 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
   }
 
   Widget buildTimeSeriesRangeAnnotationChart(
-      final IoBrokerHistoryModel h, final String unit, final String valueName, final Color lineColor) {
+      final HistoryModel h, final String unit, final String valueName, final Color lineColor) {
     h.historyRecords = h.historyRecords.where((final x) => x.value != null).toList(growable: false);
     return Flex(
       direction: Axis.vertical,
@@ -373,7 +373,7 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
       currentShownTime = dt;
       histories.clear();
       for (final hist in x) {
-        final histo = IoBrokerHistoryModel.fromJson(hist);
+        final histo = HistoryModel.fromJson(hist);
         histo.historyRecords = histo.historyRecords.where((final x) => x.value != null).toList();
         histories.add(histo);
       }

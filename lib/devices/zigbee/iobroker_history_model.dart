@@ -2,14 +2,14 @@ import 'package:json_annotation/json_annotation.dart';
 part 'iobroker_history_model.g.dart';
 
 @JsonSerializable()
-class IoBrokerHistoryModel {
+class HistoryModel {
   late List<HistoryRecord> historyRecords;
   String? propertyName;
 
-  IoBrokerHistoryModel();
-  factory IoBrokerHistoryModel.fromJson(final Map<String, dynamic> json) => _$IoBrokerHistoryModelFromJson(json);
+  HistoryModel();
+  factory HistoryModel.fromJson(final Map<String, dynamic> json) => _$HistoryModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$IoBrokerHistoryModelToJson(this);
+  Map<String, dynamic> toJson() => _$HistoryModelToJson(this);
 }
 
 @JsonSerializable()
