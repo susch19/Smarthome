@@ -566,6 +566,10 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
               },
             )),
             Expanded(
+              child: MaterialButton(
+                  onPressed: () => _openDatePicker(currentShownTime), child: const Text('Datum auswählen')),
+            ),
+            Expanded(
                 child: MaterialButton(
               child: const Text("Später"),
               onPressed: () {
@@ -646,6 +650,10 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                 getNewData(currentShownTime.subtract(const Duration(days: 1)));
               },
             )),
+            Expanded(
+              child: MaterialButton(
+                  onPressed: () => _openDatePicker(currentShownTime), child: const Text('Datum auswählen')),
+            ),
             currentShownTime.isAfter(DateTime.now().add(const Duration(hours: -23)))
                 ? Expanded(
                     child: Container(),
@@ -661,6 +669,18 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
         )
       ],
     );
+  }
+
+  void _openDatePicker(DateTime initial) {
+    // showDatePicker is a pre-made funtion of Flutter
+    showDatePicker(context: context, initialDate: initial, firstDate: DateTime(2018), lastDate: DateTime.now())
+        .then((final pickedDate) {
+      // Check if no date is selected
+      if (pickedDate == null) {
+        return;
+      }
+      getNewData(pickedDate);
+    });
   }
 
   getNewData(final DateTime dt) {

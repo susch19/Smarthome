@@ -288,6 +288,10 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
               },
             )),
             Expanded(
+              child: MaterialButton(
+                  onPressed: () => _openDatePicker(currentShownTime), child: const Text('Datum auswählen')),
+            ),
+            Expanded(
                 child: MaterialButton(
               child: const Text("Später"),
               onPressed: () {
@@ -352,6 +356,10 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
               },
             )),
             Expanded(
+              child: MaterialButton(
+                  onPressed: () => _openDatePicker(currentShownTime), child: const Text('Datum auswählen')),
+            ),
+            Expanded(
                 child: MaterialButton(
               child: const Text("Später"),
               onPressed: () {
@@ -363,6 +371,18 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
         )
       ],
     );
+  }
+
+  void _openDatePicker(DateTime initial) {
+    // showDatePicker is a pre-made funtion of Flutter
+    showDatePicker(context: context, initialDate: initial, firstDate: DateTime(2018), lastDate: DateTime.now())
+        .then((final pickedDate) {
+      // Check if no date is selected
+      if (pickedDate == null) {
+        return;
+      }
+      getNewData(pickedDate);
+    });
   }
 
   getNewData(final DateTime dt) {
