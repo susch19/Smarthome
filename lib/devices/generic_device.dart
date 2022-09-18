@@ -135,40 +135,7 @@ class GenericDevice extends Device<BaseModel> {
 
   Widget _icon(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final info = e.editInfo!;
-    EditParameter edit;
-    if (valueModel.currentValue is double) {
-      final val = (valueModel.currentValue as double);
-      edit = info.editParameter.firstWhere((final element) {
-        final lower = element.raw["Min"] as double?;
-        final upper = element.raw["Max"] as double?;
-        if (lower != null && upper != null) {
-          return val >= lower && val < upper;
-        }
-        return element.value == val;
-      }, orElse: () => info.editParameter.first);
-    } else if (valueModel.currentValue is int) {
-      final val = (valueModel.currentValue as int);
-      edit = info.editParameter.firstWhere((final element) {
-        final lower = element.raw["Min"] as int?;
-        final upper = element.raw["Max"] as int?;
-        if (lower != null && upper != null) {
-          return val >= lower && val < upper;
-        }
-        return element.value == val;
-      }, orElse: () => info.editParameter.first);
-    } else if (valueModel.currentValue is bool) {
-      final val = (valueModel.currentValue as bool);
-      edit = info.editParameter.firstWhere((final element) {
-        return element.value == val;
-      }, orElse: () => info.editParameter.first);
-    } else if (valueModel.currentValue is String) {
-      final val = (valueModel.currentValue as String);
-      edit = info.editParameter.firstWhere((final element) {
-        return element.value == val;
-      }, orElse: () => info.editParameter.first);
-    } else {
-      edit = info.editParameter.first;
-    }
+    EditParameter edit = _getEditParameter(valueModel, e.editInfo!);
 
     return Icon(
       IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
@@ -298,6 +265,32 @@ class GenericDevice extends Device<BaseModel> {
         label: info.display ?? valueModel.getValueAsString(precision: e.precision ?? 1),
       ),
     );
+  }
+
+  EditParameter _getEditParameter(final ValueStore<dynamic> valueModel, final PropertyEditInformation info) {
+    if (valueModel.currentValue is num) {
+      final val = (valueModel.currentValue as num);
+      return info.editParameter.firstWhere((final element) {
+        final lower = element.raw["Min"] as num?;
+        final upper = element.raw["Max"] as num?;
+        if (lower != null && upper != null) {
+          return val >= lower && val < upper;
+        }
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else if (valueModel.currentValue is bool) {
+      final val = (valueModel.currentValue as bool);
+      return info.editParameter.firstWhere((final element) {
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else if (valueModel.currentValue is String) {
+      final val = (valueModel.currentValue as String);
+      return info.editParameter.firstWhere((final element) {
+        return element.value == val;
+      }, orElse: () => info.editParameter.first);
+    } else {
+      return info.editParameter.first;
+    }
   }
 }
 
@@ -430,29 +423,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
 
     final info = fabLayout.editInfo!;
     final EditParameter edit;
-    if (valueModel.currentValue is double) {
-      final val = (valueModel.currentValue as double);
-      edit = info.editParameter.firstWhere((final element) {
-        final lower = element.raw["Min"] as double?;
-        final upper = element.raw["Max"] as double?;
-        if (lower != null && upper != null) {
-          return val >= lower && val < upper;
-        }
-        return element.value == val;
-      }, orElse: () => info.editParameter.first);
-    } else if (valueModel.currentValue is int) {
-      final val = (valueModel.currentValue as int);
-      edit = info.editParameter.firstWhere((final element) {
-        final lower = element.raw["Min"] as double?;
-        final upper = element.raw["Max"] as double?;
-        if (lower != null && upper != null) {
-          return val >= lower && val < upper;
-        }
-        return element.value == val;
-      }, orElse: () => info.editParameter.first);
-    } else {
-      edit = info.editParameter.first;
-    }
+    edit = widget.genericDevice._getEditParameter(valueModel, info);
     final message = Message(
         edit.id ?? widget.genericDevice.id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
 
