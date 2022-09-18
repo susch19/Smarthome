@@ -27,7 +27,8 @@ final _idLayoutProvider = Provider.family<DeviceLayout?, int>((final ref, final 
 final _typeNameLayoutProvider = Provider.family<DeviceLayout?, String>((final ref, final typeName) {
   final layouts = ref.watch(_layoutProvider);
 
-  return layouts.firstOrNull((final element) => element.typeName == typeName);
+  return layouts
+      .firstOrNull((final element) => element.typeName == typeName || (element.typeNames?.contains(typeName) ?? false));
 });
 
 final deviceLayoutProvider = Provider.family<DeviceLayout?, Tuple2<int, String>>((final ref, final device) {
