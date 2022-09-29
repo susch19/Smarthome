@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -12,6 +13,8 @@ import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/layout_base_property_info.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
+import 'package:smarthome/devices/heater/heater_config.dart';
+import 'package:smarthome/devices/heater/temp_scheduling.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
@@ -78,7 +81,7 @@ class GenericDevice extends Device<BaseModel> {
     switch (e.editInfo?.editType) {
       case EditType.button:
       case EditType.raisedButton:
-        return _buildButton(valueModel, e, ref, e.editInfo!.editType == EditType.raisedButton);
+        return _buildButton(context, valueModel, e, ref, e.editInfo!.editType == EditType.raisedButton);
       case EditType.toggle:
         return _buildToggle(valueModel, e, ref);
       case EditType.dropdown:
@@ -103,17 +106,20 @@ class GenericDevice extends Device<BaseModel> {
     }
   }
 
-  Widget _buildButton(
-      final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref, final bool raisedButton) {
+  Widget _buildButton(final BuildContext context, final ValueStore valueModel, final LayoutBasePropertyInfo e,
+      final WidgetRef ref, final bool raisedButton) {
     final info = e.editInfo!;
-    final edit = info.editParameter.first;
-    final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
+    final tempSettingsDialog = info.dialog == "HeaterConfig";
+
     if (raisedButton) {
       return ElevatedButton(
         onPressed: (() async {
-          await ref
-              .read(hubConnectionConnectedProvider)
-              ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+          if (tempSettingsDialog) {
+            _pushTempSettings(context, id, e, ref);
+          } else {
+            await ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update",
+                args: <Object>[_getMessage(info, info.editParameter.first).toJson()]);
+          }
         }),
         child: Text(info.display!,
             style: TextStyle(
@@ -123,9 +129,12 @@ class GenericDevice extends Device<BaseModel> {
 
     return MaterialButton(
       onPressed: (() async {
-        await ref
-            .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+        if (tempSettingsDialog) {
+          _pushTempSettings(context, id, e, ref);
+        } else {
+          await ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update",
+              args: <Object>[_getMessage(info, info.editParameter.first).toJson()]);
+        }
       }),
       child: Text(info.display!,
           style:
@@ -134,8 +143,7 @@ class GenericDevice extends Device<BaseModel> {
   }
 
   Widget _icon(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
-    final info = e.editInfo!;
-    EditParameter edit = _getEditParameter(valueModel, e.editInfo!);
+    final edit = _getEditParameter(valueModel, e.editInfo!);
 
     return Icon(
       IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
@@ -146,13 +154,12 @@ class GenericDevice extends Device<BaseModel> {
     final info = e.editInfo!;
     final edit = info.editParameter.firstWhere((final element) => element.value == valueModel.currentValue,
         orElse: () => info.editParameter.first);
-    final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
 
     return IconButton(
       onPressed: (() async {
         await ref
             .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[_getMessage(info, edit).toJson()]);
       }),
       icon: Icon(IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons')),
     );
@@ -161,12 +168,11 @@ class GenericDevice extends Device<BaseModel> {
   Widget _buildToggle(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final info = e.editInfo!;
     final edit = info.editParameter.firstWhere((final element) => element.value != valueModel.currentValue);
-    final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
     return Switch(
       onChanged: ((final _) async {
         await ref
             .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[_getMessage(info, edit).toJson()]);
       }),
       value: valueModel.currentValue == info.activeValue,
     );
@@ -183,10 +189,9 @@ class GenericDevice extends Device<BaseModel> {
           .toList(),
       onChanged: (final value) async {
         final edit = info.editParameter.firstWhere((final element) => element.value == value);
-        final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
         await ref
             .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+            ?.invoke(info.hubMethod ?? "Update", args: <Object>[_getMessage(info, edit).toJson()]);
       },
       value: valueModel.currentValue,
     );
@@ -250,9 +255,11 @@ class GenericDevice extends Device<BaseModel> {
         max: json["Max"] as double? ?? 1.0,
         divisions: json["Divisions"] as int?,
         onChanged: (final value) {
-          if (valueModel.currentValue is double)
+          if (valueModel.currentValue is double) {
             valueModel.setValue(value);
-          else if (valueModel.currentValue is int) valueModel.setValue(value.toInt());
+          } else if (valueModel.currentValue is int) {
+            valueModel.setValue(value.toInt());
+          }
         },
         onChangeEnd: (final value) async {
           final message =
@@ -265,6 +272,23 @@ class GenericDevice extends Device<BaseModel> {
         label: info.display ?? valueModel.getValueAsString(precision: e.precision ?? 1),
       ),
     );
+  }
+
+  void _pushTempSettings(
+      final BuildContext context, final int id, final LayoutBasePropertyInfo e, final WidgetRef ref) async {
+    final res = await Navigator.push(
+        context,
+        MaterialPageRoute<Tuple2<bool, List<HeaterConfig>>>(
+            builder: (final BuildContext context) => TempScheduling(id), fullscreenDialog: true));
+    if (res == null || !res.item1) return;
+    final info = e.editInfo!;
+    final message = Message(
+        id, MessageType.Options, Command.Temp.index, ["store", ...res.item2.map((final f) => jsonEncode(f)).toList()]);
+    ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update", args: [message.toJson()]);
+  }
+
+  Message _getMessage(final PropertyEditInformation info, final EditParameter edit) {
+    return Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
   }
 
   EditParameter _getEditParameter(final ValueStore<dynamic> valueModel, final PropertyEditInformation info) {

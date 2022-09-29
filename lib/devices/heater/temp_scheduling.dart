@@ -18,42 +18,27 @@ enum DismissDialogAction {
 }
 
 final heaterConfigProvider = StateProvider.family<List<HeaterConfig>, int>((final ref, final id) {
-  HeaterConfigLoader(ref, id);
   return [];
 });
 
 final _groupedHeaterConfigProvider =
-    Provider.family<Map<Tuple2<TimeOfDay?, double?>, List<HeaterConfig>>, int>((final ref, final id) {
+    FutureProvider.family<Map<Tuple2<TimeOfDay?, double?>, List<HeaterConfig>>, int>((final ref, final id) async {
   final configs = ref.watch(heaterConfigProvider(id));
 
   if (configs.isEmpty) {
-    HeaterConfigLoader.loadHeaterConfig();
+    final connection = ref.watch(hubConnectionConnectedProvider);
+
+    final dc = await connection?.invoke("GetConfig", args: [id]);
+    if (dc is! String) return {};
+    if (dc != "[]") {
+      final notifier = ref.read(heaterConfigProvider(id).notifier);
+      notifier.state = List<HeaterConfig>.from(jsonDecode(dc).map((final f) => HeaterConfig.fromJson(f)));
+    }
     return {};
   }
   configs.sort((final x, final y) => x.compareTo(y));
   return configs.groupBy((final x) => Tuple2(x.timeOfDay, x.temperature));
 });
-
-class HeaterConfigLoader {
-  static late StateProviderRef<List<HeaterConfig>> _ref;
-  static late int _id;
-
-  HeaterConfigLoader(final StateProviderRef<List<HeaterConfig>> ref, final int id) {
-    _ref = ref;
-    _id = id;
-  }
-
-  static Future<void> loadHeaterConfig() async {
-    final connection = _ref.watch(hubConnectionConnectedProvider);
-
-    final dc = await connection?.invoke("GetConfig", args: [_id]);
-    if (dc is! String) return;
-    if (dc != "[]" && dc != null) {
-      final notifier = _ref.read(heaterConfigProvider(_id).notifier);
-      notifier.state = List<HeaterConfig>.from(jsonDecode(dc).map((final f) => HeaterConfig.fromJson(f)));
-    }
-  }
-}
 
 const List<HeaterConfig> emptyConfigs = [];
 
@@ -158,9 +143,18 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
           child: Consumer(
             builder: (final context, final ref, final child) {
               final hConfig = ref.watch(_groupedHeaterConfigProvider(widget.id));
-              return ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: hConfig.entries.map((final x) => newHeaterConfigToWidget(x.key, x.value)).toList());
+              return hConfig.when(
+                data: (final data) {
+                  return ListView(
+                      padding: const EdgeInsets.all(16.0),
+                      children: data.entries.map((final x) => newHeaterConfigToWidget(x.key, x.value)).toList());
+                },
+                error: (final error, final stackTrace) => ListView(padding: const EdgeInsets.all(16.0)),
+                loading: () => Container(
+                  margin: const EdgeInsets.only(top: 25),
+                  child: const CircularProgressIndicator(),
+                ),
+              );
             },
           ),
         ),

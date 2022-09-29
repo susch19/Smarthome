@@ -161,20 +161,15 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
               const Tab(
                 icon: Icon(Icons.settings),
               ),
-              // Tab(icon: Icon(SmarthomeIcons.temperature)),
             ],
           ),
         ),
-        body: // buildColumnView(width, xs),
-            Container(
+        body: Container(
           decoration: ThemeManager.getBackgroundDecoration(context),
           child: TabBarView(
             children: [
               buildColumnView(width, tempSensorDevice is ValueStore<double> ? tempSensorDevice.currentValue : 21.0),
               buildSettingsView(width),
-              // ((xs.id) > 0)
-              //     ? XiaomiTempSensorScreen(xs, showAppBar: false)
-              //     : const Text("Kein Xiaomi Temperatursensor vorhanden")
             ],
           ),
         ),
