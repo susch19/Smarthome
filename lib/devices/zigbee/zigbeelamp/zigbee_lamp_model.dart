@@ -9,9 +9,9 @@ part 'zigbee_lamp_model.g.dart';
 @JsonSerializable()
 @immutable
 class ZigbeeLampModel extends ZigbeeModel {
-  final int brightness;
+  final int? brightness;
   final bool state;
-  final int colortemp;
+  final int? colortemp;
   final double? transitionTime;
 
   static final transitionTimeProvider = Provider.family<double?, int>((final ref, final id) {
@@ -20,11 +20,11 @@ class ZigbeeLampModel extends ZigbeeModel {
   });
   static final brightnessProvider = Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
-    return (baseModel as ZigbeeLampModel).brightness;
+    return (baseModel as ZigbeeLampModel).brightness ?? 0;
   });
   static final colorTempProvider = Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
-    return (baseModel as ZigbeeLampModel).colortemp;
+    return (baseModel as ZigbeeLampModel).colortemp ?? 0;
   });
   static final stateProvider = Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));

@@ -13,6 +13,8 @@ import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/layout_base_property_info.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
+import 'package:smarthome/devices/generic/widgets/edits/basic_edit_types.dart';
+import 'package:smarthome/devices/generic/widgets/edits/gauge_edit.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
 import 'package:smarthome/devices/heater/temp_scheduling.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
@@ -76,22 +78,29 @@ class GenericDevice extends Device<BaseModel> {
     );
   }
 
-  Widget getEditWidget(
-      final BuildContext context, final LayoutBasePropertyInfo e, final ValueStore valueModel, final WidgetRef ref) {
+  Widget getEditWidget(final BuildContext context, final LayoutBasePropertyInfo e, final ValueStore valueModel,
+          final WidgetRef ref) =>
+      GenericDevice.getEditWidgetFor(context, id, e, valueModel, ref);
+
+  static Widget getEditWidgetFor(final BuildContext context, final int id, final LayoutBasePropertyInfo e,
+      final ValueStore? valueModel, final WidgetRef ref) {
     switch (e.editInfo?.editType) {
       case EditType.button:
       case EditType.raisedButton:
-        return _buildButton(context, valueModel, e, ref, e.editInfo!.editType == EditType.raisedButton);
+        return BasicEditTypes.buildButton(
+            id, context, valueModel, e, ref, e.editInfo!.editType == EditType.raisedButton);
       case EditType.toggle:
-        return _buildToggle(valueModel, e, ref);
+        return BasicEditTypes.buildToggle(id, valueModel, e, ref);
       case EditType.dropdown:
-        return _buildDropdown(valueModel, e, ref);
+        return BasicEditTypes.buildDropdown(id, valueModel, e, ref);
       case EditType.slider:
-        return _buildSlider(context, valueModel, e, ref);
+        return BasicEditTypes.buildSlider(context, id, valueModel, e, ref);
       case EditType.iconButton:
-        return _iconButton(valueModel, e, ref);
+        return BasicEditTypes.iconButton(id, valueModel, e, ref);
       case EditType.icon:
-        return _icon(valueModel, e, ref);
+        return BasicEditTypes.icon(valueModel, e, ref);
+      case EditType.radial:
+        return GaugeEdit.getTempGauge(id, context, valueModel, e, ref);
       // case EditType.input:
       //   return _buildInput(valueModel, e, ref);
       //https://github.com/mchome/flutter_colorpicker
@@ -100,198 +109,19 @@ class GenericDevice extends Device<BaseModel> {
         return Container();
       default:
         return Text(
-          valueModel.getValueAsString(format: e.format, precision: e.precision ?? 1) + (e.unitOfMeasurement ?? ""),
+          (valueModel?.getValueAsString(format: e.format, precision: e.precision ?? 1) ?? "") +
+              (e.unitOfMeasurement ?? ""),
           style: e.textStyle?.toTextStyle(),
         );
     }
   }
 
-  Widget _buildButton(final BuildContext context, final ValueStore valueModel, final LayoutBasePropertyInfo e,
-      final WidgetRef ref, final bool raisedButton) {
-    final info = e.editInfo!;
-    final tempSettingsDialog = info.dialog == "HeaterConfig";
-
-    if (raisedButton) {
-      return ElevatedButton(
-        onPressed: (() async {
-          if (tempSettingsDialog) {
-            _pushTempSettings(context, id, e, ref);
-          } else {
-            await ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update",
-                args: <Object>[_getMessage(info, info.editParameter.first).toJson()]);
-          }
-        }),
-        child: Text(info.display!,
-            style: TextStyle(
-                fontWeight: valueModel.currentValue == info.activeValue ? FontWeight.bold : FontWeight.normal)),
-      );
-    }
-
-    return MaterialButton(
-      onPressed: (() async {
-        if (tempSettingsDialog) {
-          _pushTempSettings(context, id, e, ref);
-        } else {
-          await ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update",
-              args: <Object>[_getMessage(info, info.editParameter.first).toJson()]);
-        }
-      }),
-      child: Text(info.display!,
-          style:
-              TextStyle(fontWeight: valueModel.currentValue == info.activeValue ? FontWeight.bold : FontWeight.normal)),
-    );
-  }
-
-  Widget _icon(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
-    final edit = _getEditParameter(valueModel, e.editInfo!);
-
-    return Icon(
-      IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
-    );
-  }
-
-  Widget _iconButton(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
-    final info = e.editInfo!;
-    final edit = info.editParameter.firstWhere((final element) => element.value == valueModel.currentValue,
-        orElse: () => info.editParameter.first);
-
-    return IconButton(
-      onPressed: (() async {
-        await ref
-            .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[_getMessage(info, edit).toJson()]);
-      }),
-      icon: Icon(IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons')),
-    );
-  }
-
-  Widget _buildToggle(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
-    final info = e.editInfo!;
-    final edit = info.editParameter.firstWhere((final element) => element.value != valueModel.currentValue);
-    return Switch(
-      onChanged: ((final _) async {
-        await ref
-            .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[_getMessage(info, edit).toJson()]);
-      }),
-      value: valueModel.currentValue == info.activeValue,
-    );
-  }
-
-  Widget _buildDropdown(final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
-    final info = e.editInfo!;
-    return DropdownButton(
-      items: info.editParameter
-          .map((final e) => DropdownMenuItem(
-                value: e.value,
-                child: Text(e.displayName ?? e.value.toString()),
-              ))
-          .toList(),
-      onChanged: (final value) async {
-        final edit = info.editParameter.firstWhere((final element) => element.value == value);
-        await ref
-            .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[_getMessage(info, edit).toJson()]);
-      },
-      value: valueModel.currentValue,
-    );
-  }
-
-  static final _sliderValueProvider = StateProvider.family<double, Tuple2<String, int>>((final _, final __) {
-    return 0.0;
-  });
-
-  Widget _buildSlider(
-      final BuildContext context, final ValueStore valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
-    final info = e.editInfo!;
-    final edit = info.editParameter.first;
-    final json = edit.value;
-    if (json is! Map<String, dynamic>) return Container();
-    var sliderTheme = SliderTheme.of(context);
-    if (info.raw.containsKey("GradientColors")) {
-      final gradients = info.raw["GradientColors"] as List<dynamic>;
-      final List<Color> colors = [];
-      for (final grad in gradients) {
-        if (grad is int) {
-          colors.add(Color(grad));
-        } else if (grad is List<dynamic>) {
-          colors.add(Color.fromARGB(grad[0], grad[1], grad[2], grad[3]));
-        }
-      }
-      sliderTheme = sliderTheme.copyWith(
-        trackShape: GradientRoundedRectSliderTrackShape(LinearGradient(colors: colors)),
-      );
-    }
-
-    if (json.containsKey("Divisions") && json.containsKey("Values")) {
-      final customLabels = (json["Values"]);
-      final currentValue = ref.watch(_sliderValueProvider(Tuple2(e.name, id)));
-      return SliderTheme(
-        data: sliderTheme,
-        child: Slider(
-          min: json["Min"] as double,
-          max: json["Max"] as double,
-          divisions: json["Divisions"],
-          onChanged: (final value) {
-            ref.read(_sliderValueProvider(Tuple2(e.name, id)).notifier).state = value;
-          },
-          onChangeEnd: (final value) async {
-            final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command,
-                [customLabels[value.round()].values.first, ...?edit.parameters]);
-            await ref
-                .read(hubConnectionConnectedProvider)
-                ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
-          },
-          value: currentValue,
-          label: customLabels[currentValue.round()].keys.first,
-        ),
-      );
-    }
-
-    return SliderTheme(
-      data: sliderTheme,
-      child: Slider(
-        min: json["Min"] as double? ?? 0.0,
-        max: json["Max"] as double? ?? 1.0,
-        divisions: json["Divisions"] as int?,
-        onChanged: (final value) {
-          if (valueModel.currentValue is double) {
-            valueModel.setValue(value);
-          } else if (valueModel.currentValue is int) {
-            valueModel.setValue(value.toInt());
-          }
-        },
-        onChangeEnd: (final value) async {
-          final message =
-              Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, [value, ...?edit.parameters]);
-          await ref
-              .read(hubConnectionConnectedProvider)
-              ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
-        },
-        value: valueModel.currentValue is double ? valueModel.currentValue : valueModel.currentValue.toDouble(),
-        label: info.display ?? valueModel.getValueAsString(precision: e.precision ?? 1),
-      ),
-    );
-  }
-
-  void _pushTempSettings(
-      final BuildContext context, final int id, final LayoutBasePropertyInfo e, final WidgetRef ref) async {
-    final res = await Navigator.push(
-        context,
-        MaterialPageRoute<Tuple2<bool, List<HeaterConfig>>>(
-            builder: (final BuildContext context) => TempScheduling(id), fullscreenDialog: true));
-    if (res == null || !res.item1) return;
-    final info = e.editInfo!;
-    final message = Message(
-        id, MessageType.Options, Command.Temp.index, ["store", ...res.item2.map((final f) => jsonEncode(f)).toList()]);
-    ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update", args: [message.toJson()]);
-  }
-
-  Message _getMessage(final PropertyEditInformation info, final EditParameter edit) {
+  static Message getMessage(final PropertyEditInformation info, final EditParameter edit, final int id) {
     return Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
   }
 
-  EditParameter _getEditParameter(final ValueStore<dynamic> valueModel, final PropertyEditInformation info) {
+  static EditParameter getEditParameter(final ValueStore<dynamic>? valueModel, final PropertyEditInformation info) {
+    if (valueModel == null) return info.editParameter.first;
     if (valueModel.currentValue is num) {
       final val = (valueModel.currentValue as num);
       return info.editParameter.firstWhere((final element) {
@@ -447,7 +277,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
 
     final info = fabLayout.editInfo!;
     final EditParameter edit;
-    edit = widget.genericDevice._getEditParameter(valueModel, info);
+    edit = GenericDevice.getEditParameter(valueModel, info);
     final message = Message(
         edit.id ?? widget.genericDevice.id, edit.messageType ?? info.editCommand, edit.command, edit.parameters);
 
@@ -484,7 +314,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     final props = detailProperties
         .where((final e) =>
             !(e.showOnlyInDeveloperMode ?? false) || (showDebugInformation && e.showOnlyInDeveloperMode == true))
-        .where((e) => e.editInfo == null || e.editInfo!.editType != EditType.floatingActionButton)
+        .where((final e) => e.editInfo == null || e.editInfo!.editType != EditType.floatingActionButton)
         .groupBy((final g) => g.rowNr)
         .map((final row, final elements) {
       final children = elements.map((final e) {
@@ -635,12 +465,12 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
             h.historyRecords
                 .where((final x) => x.value != null)
                 .map((final x) => x.value!)
-                .minBy(10000, (e) => e)
+                .minBy(10000, (final e) => e)
                 .toDouble(),
             h.historyRecords
                 .where((final x) => x.value != null)
                 .map((final x) => x.value!)
-                .maxBy(0, (e) => e)
+                .maxBy(0, (final e) => e)
                 .toDouble(),
             unit,
             valueName,
@@ -695,7 +525,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     );
   }
 
-  void _openDatePicker(DateTime initial) {
+  void _openDatePicker(final DateTime initial) {
     // showDatePicker is a pre-made funtion of Flutter
     showDatePicker(context: context, initialDate: initial, firstDate: DateTime(2018), lastDate: DateTime.now())
         .then((final pickedDate) {

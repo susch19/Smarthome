@@ -5,6 +5,7 @@ import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/main.dart';
 import 'package:smarthome/models/ipport.dart';
+import 'package:smarthome/screens/dynamic_ui_creator_page.dart';
 import 'package:smarthome/screens/history_configure_screen.dart';
 
 import '../helper/connection_manager.dart';
@@ -204,6 +205,19 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     onTap: () => hubConnection?.invoke("UpdateTime"),
                   )
                 : Container(),
+            // settings.showDebugInformation
+            //     ? ListTile(
+            //         title: const Text(
+            //           "Dynamische UI erstellen / bearbeiten",
+            //         ),
+            //         onTap: () => Navigator.push(
+            //           context,
+            //           MaterialPageRoute(
+            //             builder: (final c) => const DynamicUiCreatorPage(),
+            //           ),
+            //         ),
+            //       )
+            //     : Container(),
             settings.showDebugInformation ? const Divider() : Container(),
             ListTile(
               leading: const Text("Über"),

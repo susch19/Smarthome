@@ -56,7 +56,15 @@ class SmarthomeProtocol implements IHubProtocol {
 
         final inputWithoutLen = input.sublist(lastIndex + 20, lastIndex + len + 20);
         lastIndex = lastIndex + len + 20;
-        final decrypted = encrypter.decryptBytes(Encrypted(inputWithoutLen), iv: iv);
+        final decrypted;
+        try {
+          decrypted = encrypter.decryptBytes(Encrypted(inputWithoutLen), iv: iv);
+        } catch (e) {
+          //Don't know where these 16 bytes come from. The server is not sending anything at this point
+          //Therefore filtering it the dirty way, so the connection doesn't have to be reestablished
+          if (len == 16 && e.toString() == "Invalid argument(s): Invalid or corrupted pad block") return [];
+          rethrow;
+        }
 
         final jsonInput = utf8.decode(gzip.decode(decrypted));
 
@@ -91,6 +99,7 @@ class SmarthomeProtocol implements IHubProtocol {
           hubMessages.add(messageObj);
         }
       } catch (e) {
+        print(e);
         rethrow;
       }
     }

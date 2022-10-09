@@ -546,10 +546,7 @@ class MyHomePage extends ConsumerWidget {
         SimpleDialogOption(
           child: const Text("Subscribe to all"),
           onPressed: () async {
-            ref.read(deviceProvider.notifier).subscribeToDevices(serverDevicesList
-                .map((final e) => e.id)
-                .where((final element) => !devices.any((final x) => x.id == element))
-                .toList());
+            ref.read(deviceProvider.notifier).subscribeToDevices(serverDevicesList.map((final e) => e.id).toList());
             // }
             Navigator.pop(context);
           },

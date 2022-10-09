@@ -11,6 +11,7 @@ part 'property_edit_information.g.dart';
 @JsonSerializable()
 class PropertyEditInformation {
   MessageType editCommand;
+  @JsonKey(defaultValue: [])
   List<EditParameter> editParameter;
   String? display;
   EditType editType;
@@ -32,10 +33,12 @@ class PropertyEditInformation {
       other.hubMethod == hubMethod &&
       other.activeValue == activeValue &&
       other.dialog == dialog &&
+      hashCode == other.hashCode &&
       editParameter.sequenceEquals(other.editParameter);
 
   @override
-  int get hashCode => Object.hash(editType, editCommand, display, activeValue, dialog) ^ hashObjects(editParameter);
+  int get hashCode =>
+      Object.hash(editType, editCommand, display, activeValue, dialog, raw) ^ hashObjects(editParameter);
 
   List<EditParameter> getEditParametersFor(final int id) {
     final ret = editParameter.map((final e) => e.clone()).toList();

@@ -10,5 +10,6 @@ enum EditType {
   slider,
   input,
   icon /*colorpicker*/,
-  text
+  text,
+  radial
 }
