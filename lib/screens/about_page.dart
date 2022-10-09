@@ -1,14 +1,23 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smarthome/helper/helper_methods.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
 import 'package:smarthome/models/version_and_url.dart';
 
-class AboutScreen extends StatelessWidget {
-  const AboutScreen({final Key? key}) : super(key: key);
+import '../helper/settings_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+class AboutPage extends ConsumerStatefulWidget {
+  const AboutPage({final Key? key}) : super(key: key);
+
+  @override
+  AboutPageState createState() => AboutPageState();
+}
+
+class AboutPageState extends ConsumerState<AboutPage> {
   @override
   Widget build(final BuildContext context) {
     return Scaffold(
@@ -20,7 +29,29 @@ class AboutScreen extends StatelessWidget {
   }
 
   Widget buildBody(final BuildContext context) {
+    final settings = ref.watch(settingsProvider);
     final iconColor = AdaptiveTheme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
+
+    Future<String> getCommit() async {
+      return (await rootBundle.loadString('.git/ORIG_HEAD')).trim();
+    }
+
+    Future<String> getBranch() async {
+      final head = await rootBundle.loadString('.git/HEAD');
+      // Skip "ref: refs/heads/"
+      return head.split('/').skip(2).join("/").trim();
+    }
+
+    Future<String> getGitDetails() async {
+      final commit = await getCommit();
+      if (settings.showDebugInformation) {
+        final branch = await getBranch();
+        return "$branch\r\n$commit";
+      } else {
+        return commit;
+      }
+    }
+
     return Container(
       decoration: ThemeManager.getBackgroundDecoration(context),
       child: ListView(
@@ -94,7 +125,15 @@ class AboutScreen extends StatelessWidget {
                       }
                     });
               }),
-
+          const Divider(),
+          FutureBuilder<String>(
+              future: getGitDetails(),
+              builder: (final context, final AsyncSnapshot<String> snapshot) {
+                return ListTile(
+                    title: Text(
+                  snapshot.data ?? "Konnte git Details nicht laden",
+                ));
+              }),
           const Divider(),
           ListTile(
             leading: SvgPicture.asset(
