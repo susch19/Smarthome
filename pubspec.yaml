@@ -69,6 +69,8 @@ flutter:
   assets:
     - assets/images/
     - assets/vectors/
+    - .git/HEAD         # This file points out the current branch of the project.
+    - .git/ORIG_HEAD    # This file points to the commit id at origin (last commit id of the remote repository).
   fonts:
     - family:  Smarthome
       fonts:

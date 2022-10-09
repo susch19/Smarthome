@@ -425,7 +425,7 @@ class MyHomePage extends ConsumerWidget {
         ref.read(deviceProvider.notifier).removeAllDevices();
         break;
       case "Info":
-        Navigator.push(context, MaterialPageRoute(builder: (final c) => const AboutScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (final c) => const AboutPage()));
         break;
       case 'Settings':
         Navigator.push(context, MaterialPageRoute(builder: (final c) => const SettingsPage()));
