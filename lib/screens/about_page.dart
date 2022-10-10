@@ -2,6 +2,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:smarthome/helper/helper_methods.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
@@ -10,25 +11,20 @@ import 'package:smarthome/models/version_and_url.dart';
 import '../helper/settings_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AboutPage extends ConsumerStatefulWidget {
+class AboutPage extends ConsumerWidget {
   const AboutPage({final Key? key}) : super(key: key);
 
   @override
-  AboutPageState createState() => AboutPageState();
-}
-
-class AboutPageState extends ConsumerState<AboutPage> {
-  @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Über"),
       ),
-      body: buildBody(context),
+      body: buildBody(context, ref),
     );
   }
 
-  Widget buildBody(final BuildContext context) {
+  Widget buildBody(final BuildContext context, final WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final iconColor = AdaptiveTheme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
 
@@ -130,9 +126,15 @@ class AboutPageState extends ConsumerState<AboutPage> {
               future: getGitDetails(),
               builder: (final context, final AsyncSnapshot<String> snapshot) {
                 return ListTile(
+                    onTap: () =>
+                        HelperMethods.openUrl("https://github.com/susch19/Smarthome/commit/${snapshot.data ?? ""}"),
+                    onLongPress: () {
+                      Clipboard.setData(ClipboardData(text: snapshot.data));
+                      showToast("Details kopiert");
+                    },
                     title: Text(
-                  snapshot.data ?? "Konnte git Details nicht laden",
-                ));
+                      snapshot.data ?? "Konnte git Details nicht laden",
+                    ));
               }),
           const Divider(),
           ListTile(
