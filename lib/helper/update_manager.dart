@@ -63,7 +63,7 @@ class UpdateManager extends StateNotifier<VersionAndUrl?> {
       PreferencesManager.instance.setDateTime("lastChecked", lastChecked!);
 
       final versionAndUrl = await getVersionAndUrl();
-      if (versionAndUrl?.url != null && await _isNewVersionAvailable(versionAndUrl?.version)) {
+      if (versionAndUrl != null && !versionAndUrl.upToDate && versionAndUrl.url != null) {
         _instance.state = versionAndUrl;
       }
     }
@@ -101,11 +101,15 @@ class UpdateManager extends StateNotifier<VersionAndUrl?> {
         payload: versionAndUrl.url);
   }
 
-  static String getVersionString(final Version? newVersion) {
+  static String getVersionString(final VersionAndUrl? newVersion) {
     var v = version.toString();
 
-    if (newVersion != null) {
-      v += " (neue Version " + newVersion.toString() + " verfügbar)";
+    if (newVersion == null) {
+      v += " - konnte neue Version nicht überprüfen";
+    } else if (newVersion.upToDate) {
+      v += " - aktuell";
+    } else {
+      v += " - neue Version ${newVersion.version} verfügbar";
     }
 
     return v;
@@ -124,9 +128,13 @@ class UpdateManager extends StateNotifier<VersionAndUrl?> {
     final v = await _getNewVersion();
     if (v == null) return null;
 
-    final url = await _newVersionUrl();
+    final newVersionAvailable = await _isNewVersionAvailable(v);
 
-    return VersionAndUrl(v, url);
+    if (newVersionAvailable) {
+      return VersionAndUrl(v, false, await _newVersionUrl());
+    } else {
+      return VersionAndUrl(v, true, null);
+    }
   }
 
   static Future<Version?> _getNewVersion() {
@@ -137,7 +145,7 @@ class UpdateManager extends StateNotifier<VersionAndUrl?> {
         // TODO: log
         return null;
       }
-    }).firstWhere((final element) => (element ?? Version(0, 0, 0)) > version, orElse: () => null);
+    }).firstWhere((final element) => (element ?? Version(0, 0, 0)) > version, orElse: () => version);
   }
 
   static Future<String?> _newVersionUrl() async {
