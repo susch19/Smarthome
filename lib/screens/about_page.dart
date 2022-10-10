@@ -108,7 +108,7 @@ class AboutPage extends ConsumerWidget {
               builder: (final context, final AsyncSnapshot<VersionAndUrl?> snapshot) {
                 return ListTile(
                     title: Row(children: [
-                      Text(UpdateManager.getVersionString(snapshot.data?.version)),
+                      Text(UpdateManager.getVersionString(snapshot.data)),
                       if (!snapshot.hasData && !snapshot.hasError)
                         const Padding(
                           padding: EdgeInsets.only(left: 8),
