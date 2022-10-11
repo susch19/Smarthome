@@ -12,5 +12,5 @@ class VersionAndUrl {
       other is VersionAndUrl && version == other.version && upToDate == other.upToDate && url == other.url;
 
   @override
-  int get hashCode => Object.hash(version.hashCode, upToDate.hashCode, url);
+  int get hashCode => Object.hash(version.hashCode, upToDate, url);
 }
