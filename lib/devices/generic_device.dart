@@ -366,8 +366,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                     if (data.historyRecords.isNotEmpty) {
                       return buildHistorySeriesAnnotationChart(
                           data,
-                          info.unitOfMeasurement,
-                          info.xAxisName,
+                          info,
                           AdaptiveTheme.of(context).brightness == Brightness.light
                               ? Color(info.brightThemeColor)
                               : Color(info.darkThemeColor),
@@ -436,32 +435,17 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     );
   }
 
-  Widget buildHistorySeriesAnnotationChart(final HistoryModel h, final String unit, final String valueName,
-      final Color lineColor, final DateTime currentShownTime) {
+  Widget buildHistorySeriesAnnotationChart(
+      final HistoryModel h, final HistoryPropertyInfo info, final Color lineColor, final DateTime currentShownTime) {
     h.historyRecords = h.historyRecords.where((final x) => x.value != null).toList(growable: false);
+    final chartType = info.chartType;
+    final dynamic seriesList = _getSeriesList(chartType, h, lineColor);
     return Flex(
       direction: Axis.vertical,
       children: <Widget>[
         Expanded(
           child: HistorySeriesAnnotationChartWidget(
-            [
-              LineSeries<GraphTimeSeriesValue, DateTime>(
-                  enableTooltip: true,
-                  animationDuration: 500,
-                  // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
-                  markerSettings: const MarkerSettings(
-                    isVisible: true,
-                    shape: DataMarkerType.circle,
-                  ),
-                  dataSource: h.historyRecords
-                      .map((final x) => GraphTimeSeriesValue(
-                          DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
-                      .toList(),
-                  xValueMapper: (final GraphTimeSeriesValue value, final _) => value.time,
-                  yValueMapper: (final GraphTimeSeriesValue value, final _) => value.value,
-                  pointColorMapper: (final GraphTimeSeriesValue value, final _) => value.lineColor,
-                  width: 2)
-            ],
+            seriesList,
             h.historyRecords
                 .where((final x) => x.value != null)
                 .map((final x) => x.value!)
@@ -472,8 +456,8 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                 .map((final x) => x.value!)
                 .maxBy(0, (final e) => e)
                 .toDouble(),
-            unit,
-            valueName,
+            info.unitOfMeasurement,
+            info.xAxisName,
             currentShownTime,
             loadMoreIndicatorBuilder: (final context, final direction) {
               return Consumer(
@@ -523,6 +507,49 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
         )
       ],
     );
+  }
+
+  dynamic _getSeriesList(final String charType, final HistoryModel h, final Color lineColor) {
+    switch (charType) {
+      case "step":
+        return [
+          StepLineSeries<GraphTimeSeriesValue, DateTime>(
+              enableTooltip: true,
+              animationDuration: 500,
+              // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
+              markerSettings: const MarkerSettings(
+                isVisible: true,
+                shape: DataMarkerType.circle,
+              ),
+              dataSource: h.historyRecords
+                  .map((final x) =>
+                      GraphTimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
+                  .toList(),
+              xValueMapper: (final GraphTimeSeriesValue value, final _) => value.time,
+              yValueMapper: (final GraphTimeSeriesValue value, final _) => value.value,
+              pointColorMapper: (final GraphTimeSeriesValue value, final _) => value.lineColor,
+              width: 2)
+        ];
+      default:
+        return [
+          LineSeries<GraphTimeSeriesValue, DateTime>(
+              enableTooltip: true,
+              animationDuration: 500,
+              // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
+              markerSettings: const MarkerSettings(
+                isVisible: true,
+                shape: DataMarkerType.circle,
+              ),
+              dataSource: h.historyRecords
+                  .map((final x) =>
+                      GraphTimeSeriesValue(DateTime(1970).add(Duration(milliseconds: x.timeStamp)), x.value, lineColor))
+                  .toList(),
+              xValueMapper: (final GraphTimeSeriesValue value, final _) => value.time,
+              yValueMapper: (final GraphTimeSeriesValue value, final _) => value.value,
+              pointColorMapper: (final GraphTimeSeriesValue value, final _) => value.lineColor,
+              width: 2)
+        ];
+    }
   }
 
   void _openDatePicker(final DateTime initial) {

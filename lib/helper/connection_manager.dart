@@ -218,7 +218,7 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
         HubConnectionState.Disconnected);
   }
 
-  Future update(final List<Object>? arguments) async {
+  Future update(final List<Object?>? arguments) async {
     await lock.synchronized(() async {
       final baseModels = ref.read(baseModelProvider.notifier);
       final oldState = baseModels.state.toList();

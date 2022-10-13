@@ -3,7 +3,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 
 class HistorySeriesAnnotationChartWidget extends StatelessWidget {
-  final List<LineSeries> seriesList;
+  final dynamic seriesList;
   final double min;
   final double max;
   final String unit;
