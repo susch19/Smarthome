@@ -1,4 +1,4 @@
-name: Draft Github Release
+name: CI Build
 on:
   workflow_dispatch:
     # Enable manual run
