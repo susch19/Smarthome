@@ -1,26 +1,53 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:smarthome/helper/helper_methods.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
 import 'package:smarthome/models/version_and_url.dart';
 
-class AboutScreen extends StatelessWidget {
-  const AboutScreen({final Key? key}) : super(key: key);
+import '../helper/settings_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class AboutPage extends ConsumerWidget {
+  const AboutPage({final Key? key}) : super(key: key);
 
   @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Über"),
       ),
-      body: buildBody(context),
+      body: buildBody(context, ref),
     );
   }
 
-  Widget buildBody(final BuildContext context) {
+  Widget buildBody(final BuildContext context, final WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
     final iconColor = AdaptiveTheme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
+
+    Future<String> getCommit() async {
+      return (await rootBundle.loadString('.git/ORIG_HEAD')).trim();
+    }
+
+    Future<String> getBranch() async {
+      final head = await rootBundle.loadString('.git/HEAD');
+      // Skip "ref: refs/heads/"
+      return head.split('/').skip(2).join("/").trim();
+    }
+
+    Future<String> getGitDetails() async {
+      final commit = await getCommit();
+      if (settings.showDebugInformation) {
+        final branch = await getBranch();
+        return "$branch\r\n$commit";
+      } else {
+        return commit;
+      }
+    }
+
     return Container(
       decoration: ThemeManager.getBackgroundDecoration(context),
       child: ListView(
@@ -81,7 +108,7 @@ class AboutScreen extends StatelessWidget {
               builder: (final context, final AsyncSnapshot<VersionAndUrl?> snapshot) {
                 return ListTile(
                     title: Row(children: [
-                      Text(UpdateManager.getVersionString(snapshot.data?.version)),
+                      Text(UpdateManager.getVersionString(snapshot.data)),
                       if (!snapshot.hasData && !snapshot.hasError)
                         const Padding(
                           padding: EdgeInsets.only(left: 8),
@@ -94,7 +121,21 @@ class AboutScreen extends StatelessWidget {
                       }
                     });
               }),
-
+          const Divider(),
+          FutureBuilder<String>(
+              future: getGitDetails(),
+              builder: (final context, final AsyncSnapshot<String> snapshot) {
+                return ListTile(
+                    onTap: () =>
+                        HelperMethods.openUrl("https://github.com/susch19/Smarthome/commit/${snapshot.data ?? ""}"),
+                    onLongPress: () {
+                      Clipboard.setData(ClipboardData(text: snapshot.data));
+                      showToast("Details kopiert");
+                    },
+                    title: Text(
+                      snapshot.data ?? "Konnte git Details nicht laden",
+                    ));
+              }),
           const Divider(),
           ListTile(
             leading: SvgPicture.asset(

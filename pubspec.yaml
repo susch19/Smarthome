@@ -48,6 +48,7 @@ dependencies:
   tuple: ^2.0.0
   url_launcher: ^6.0.20
   version: ^3.0.2
+  oktoast: ^3.3.1
 
 
 dev_dependencies:
@@ -69,6 +70,8 @@ flutter:
   assets:
     - assets/images/
     - assets/vectors/
+    - .git/HEAD         # This file points out the current branch of the project.
+    - .git/ORIG_HEAD    # This file points to the commit id at origin (last commit id of the remote repository).
   fonts:
     - family:  Smarthome
       fonts:

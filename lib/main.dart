@@ -3,6 +3,7 @@ import 'dart:ui';
 
 // import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // // import 'package:signalr_client/signalr_client.dart';
 // import 'package:signalr_core/signalr_core.dart';
@@ -55,7 +56,11 @@ void main() async {
   initializeDateFormatting("de-DE").then((final _) {
     // ConnectionManager.startConnection();
     runApp(ProviderScope(
-      child: MyApp(savedThemeMode),
+      child: OKToast(
+        backgroundColor: Colors.grey.withOpacity(0.3),
+        position: ToastPosition.bottom,
+        child: MyApp(savedThemeMode),
+      ),
     ));
   });
   UpdateManager.initialize();
@@ -441,7 +446,7 @@ class MyHomePage extends ConsumerWidget {
         ref.read(deviceProvider.notifier).removeAllDevices();
         break;
       case "Info":
-        Navigator.push(context, MaterialPageRoute(builder: (final c) => const AboutScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (final c) => const AboutPage()));
         break;
       case 'Settings':
         Navigator.push(context, MaterialPageRoute(builder: (final c) => const SettingsPage()));
