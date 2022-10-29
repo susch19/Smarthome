@@ -29,9 +29,19 @@ class TempSensorModel extends ZigbeeModel {
     return (baseModel as TempSensorModel).battery;
   });
 
-  const TempSensorModel(final int id, final String friendlyName, final bool isConnected, final bool available,
-      final DateTime lastReceived, final int linkQuality, this.temperature, this.humidity, this.pressure, this.battery)
-      : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
+  const TempSensorModel(
+      final int id,
+      final String friendlyName,
+      final String typeName,
+      final bool isConnected,
+      final bool available,
+      final DateTime lastReceived,
+      final int linkQuality,
+      this.temperature,
+      this.humidity,
+      this.pressure,
+      this.battery)
+      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
 
   factory TempSensorModel.fromJson(final Map<String, dynamic> json) => _$TempSensorModelFromJson(json);
 

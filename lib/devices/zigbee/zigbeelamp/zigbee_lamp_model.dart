@@ -9,23 +9,22 @@ part 'zigbee_lamp_model.g.dart';
 @JsonSerializable()
 @immutable
 class ZigbeeLampModel extends ZigbeeModel {
-  final int brightness;
+  final int? brightness;
   final bool state;
-  final int colorTemp;
-  @JsonKey(name: 'transition_Time')
-  final double transitionTime;
+  final int? colortemp;
+  final double? transitionTime;
 
-  static final transitionTimeProvider = Provider.family<double, int>((final ref, final id) {
+  static final transitionTimeProvider = Provider.family<double?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeLampModel).transitionTime;
   });
   static final brightnessProvider = Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
-    return (baseModel as ZigbeeLampModel).brightness;
+    return (baseModel as ZigbeeLampModel).brightness ?? 0;
   });
   static final colorTempProvider = Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
-    return (baseModel as ZigbeeLampModel).colorTemp;
+    return (baseModel as ZigbeeLampModel).colortemp ?? 0;
   });
   static final stateProvider = Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
@@ -35,15 +34,16 @@ class ZigbeeLampModel extends ZigbeeModel {
   const ZigbeeLampModel(
       final int id,
       final String friendlyName,
+      final String typeName,
       final bool isConnected,
       final bool available,
       final DateTime lastReceived,
       final int linkQuality,
       this.brightness,
       this.state,
-      this.colorTemp,
+      this.colortemp,
       this.transitionTime)
-      : super(id, friendlyName, isConnected, available, lastReceived, linkQuality);
+      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
 
   factory ZigbeeLampModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
 
@@ -60,7 +60,7 @@ class ZigbeeLampModel extends ZigbeeModel {
         super.hashCode,
         brightness,
         state,
-        colorTemp,
+        colortemp,
         transitionTime,
       );
 
@@ -70,6 +70,6 @@ class ZigbeeLampModel extends ZigbeeModel {
       super == other &&
       brightness == other.brightness &&
       state == other.state &&
-      colorTemp == other.colorTemp &&
+      colortemp == other.colortemp &&
       transitionTime == other.transitionTime;
 }

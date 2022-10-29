@@ -20,9 +20,20 @@ class LedStripModel extends ConnectionBaseModel {
   @JsonKey(name: "version")
   final int version;
 
-  const LedStripModel(this.colorMode, this.delay, this.numberOfLeds, this.brightness, this.step, this.reverse,
-      this.colorNumber, this.version, final int id, final String friendlyName, final bool isConnected)
-      : super(id, friendlyName, isConnected);
+  const LedStripModel(
+      this.colorMode,
+      this.delay,
+      this.numberOfLeds,
+      this.brightness,
+      this.step,
+      this.reverse,
+      this.colorNumber,
+      this.version,
+      final int id,
+      final String friendlyName,
+      final String typeName,
+      final bool isConnected)
+      : super(id, friendlyName, typeName, isConnected);
 
   factory LedStripModel.fromJson(final Map<String, dynamic> json) => _$LedStripModelFromJson(json);
 

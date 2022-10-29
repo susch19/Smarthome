@@ -39,7 +39,7 @@ class Message {
   @JsonKey(name: "m")
   MessageType messageType;
   @JsonKey(name: "c")
-  Command command;
+  int command;
   @JsonKey(name: "p")
   List<Object?>? parameters;
 

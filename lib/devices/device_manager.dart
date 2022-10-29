@@ -1,5 +1,6 @@
 // ignore_for_file: unused_import, constant_identifier_names
 
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:math';
 
@@ -106,7 +107,7 @@ class DiffIdModel {
 }
 
 class DeviceManager extends StateNotifier<List<Device>> {
-  List<int> _deviceIds = [];
+  HashSet<int> _deviceIds = HashSet<int>();
 
   static DeviceManager? instance;
 
@@ -137,7 +138,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     final ref = _ref;
     final connection = _connection;
     if (ref == null || connection == null) return;
-    final ids = <int>[];
+    final ids = HashSet<int>();
     for (final key in PreferencesManager.instance.getKeys().where((final x) => x.startsWith("SHD"))) {
       final id = PreferencesManager.instance.getInt(key);
       if (id == null) continue;
@@ -161,12 +162,12 @@ class DeviceManager extends StateNotifier<List<Device>> {
   }
 
   void subscribeToDevice(final int device) {
-    _deviceIds = [..._deviceIds, device];
+    _deviceIds.add(device);
     _syncDevices();
   }
 
   void subscribeToDevices(final List<int> deviceIds) {
-    _deviceIds = [..._deviceIds, ...deviceIds];
+    _deviceIds.addAll(deviceIds);
     _syncDevices();
   }
 
@@ -366,7 +367,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
       PreferencesManager.instance.remove("Json${d.id}");
       PreferencesManager.instance.remove("Type${d.id}");
     }
-    _deviceIds = [];
+    _deviceIds.clear();
     _syncDevices();
 
     saveDeviceGroups();
@@ -376,8 +377,8 @@ class DeviceManager extends StateNotifier<List<Device>> {
     final ref = _ref;
     final connection = _connection;
     if (ref == null || connection == null || connection.state != HubConnectionState.Connected) return;
-    List<int> deviceIds;
-    deviceIds = _deviceIds;
+    final deviceIds = _deviceIds;
+
     final deviceIdsSet = deviceIds.toSet();
     final existingDeviceIdsSet = state.map((final x) => x.id).toSet();
 
@@ -412,7 +413,6 @@ class DeviceManager extends StateNotifier<List<Device>> {
           devices.removeWhere((final d) => d.id == diffId.id);
         }
         state = devices;
-        // deviceIdState.state = devices.map((final e) => e.id).toList();
       });
       for (final id in deviceIds) {
         PreferencesManager.instance.remove("SHD$id");
@@ -422,13 +422,6 @@ class DeviceManager extends StateNotifier<List<Device>> {
       }
     }
   }
-
-  // void _clearDevicesCacheOnConnectionLost() {
-  //   final connection = _ref!.watch(hubConnectionStateProvider);
-  //   if (connection != HubConnectionState.Connected) {
-  //     state = [];
-  //   }
-  // }
 }
 
 enum DeviceTypes {

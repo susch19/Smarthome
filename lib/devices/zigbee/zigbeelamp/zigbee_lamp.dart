@@ -89,7 +89,7 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
   final _colorTemp = StateProvider.family<int, Device<ZigbeeLampModel>>((final ref, final device) {
     final model = ref.watch(device.baseModelTProvider(device.id));
 
-    return model?.colorTemp ?? 0;
+    return model?.colortemp ?? 0;
   });
   final _transitionTime = StateProvider.family<double, Device<ZigbeeLampModel>>((final ref, final device) {
     final model = ref.watch(device.baseModelTProvider(device.id));
@@ -217,7 +217,7 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
         ),
         ListTile(
           title: Text("Übergangszeit " +
-              ref.watch(ZigbeeLampModel.transitionTimeProvider(widget.device.id)).toStringAsFixed(1) +
+              (ref.watch(ZigbeeLampModel.transitionTimeProvider(widget.device.id)) ?? 0).toStringAsFixed(1) +
               " Sekunden"),
           subtitle: GestureDetector(
             child: Consumer(builder: (final context, final ref, final child) {

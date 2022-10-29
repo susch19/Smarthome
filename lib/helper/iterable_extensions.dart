@@ -60,6 +60,22 @@ extension StringShortcuts on String {
 }
 
 extension Iterables<E> on Iterable<E> {
+  Iterable<K> mapMany<K>(final Iterable<K> Function(E) func) sync* {
+    for (final e in this) {
+      for (final ret in func(e)) {
+        yield ret;
+      }
+    }
+  }
+
+  Iterable<E> distinct() {
+    final list = <E>[];
+    for (final e in this) {
+      if (!list.any((final element) => element == e)) list.add(e);
+    }
+    return list;
+  }
+
   Map<K, List<E>> groupBy<K>(final K Function(E) keyFunction) => fold(<K, List<E>>{},
       (final Map<K, List<E>> map, final E element) => map..putIfAbsent(keyFunction(element), () => <E>[]).add(element));
 
@@ -151,6 +167,6 @@ extension Iterables<E> on Iterable<E> {
     for (final item in [...this]) {
       if (!func(item)) return false;
     }
-    return false;
+    return true;
   }
 }

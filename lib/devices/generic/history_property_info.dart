@@ -10,9 +10,11 @@ class HistoryPropertyInfo {
   String unitOfMeasurement;
   int brightThemeColor;
   int darkThemeColor;
+  String chartType = "line";
 
   HistoryPropertyInfo(this.propertyName, this.xAxisName, this.unitOfMeasurement, this.iconName, this.brightThemeColor,
-      this.darkThemeColor);
+      this.darkThemeColor,
+      {this.chartType = "line"});
 
   @override
   bool operator ==(final Object other) =>
@@ -22,11 +24,12 @@ class HistoryPropertyInfo {
       unitOfMeasurement == other.unitOfMeasurement &&
       iconName == other.iconName &&
       brightThemeColor == other.brightThemeColor &&
-      darkThemeColor == other.darkThemeColor;
+      darkThemeColor == other.darkThemeColor &&
+      chartType == other.chartType;
 
   @override
   int get hashCode =>
-      Object.hash(propertyName, xAxisName, unitOfMeasurement, iconName, brightThemeColor, darkThemeColor);
+      Object.hash(propertyName, xAxisName, unitOfMeasurement, iconName, brightThemeColor, darkThemeColor, chartType);
 
   factory HistoryPropertyInfo.fromJson(final Map<String, dynamic> json) => _$HistoryPropertyInfoFromJson(json);
 

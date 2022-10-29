@@ -10,6 +10,7 @@ import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
 import 'package:smarthome/helper/connection_manager.dart';
+import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/smarthome_icons.dart';
 import 'package:smarthome/models/message.dart' as sm;
@@ -53,54 +54,61 @@ class Heater extends Device<HeaterModel> {
     // XiaomiTempSensor xs = DeviceManager.devices.firstWhere((x) => x.id == baseModel.xiaomiTempSensor, orElse: () {
     //   return XiaomiTempSensor(0, TempSensorModel(0, "", false), connection, icon);
     // }) as XiaomiTempSensor;
-    return Column(
-      children: <Widget>[
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Consumer(
-                builder: (final context, final ref, final child) => Text(
-                  (ref.watch(HeaterModel.temperatureProvider(id))?.temperature.toStringAsFixed(1) ?? ""),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                ),
-              ),
-              const Text(
-                " °C",
-                style: TextStyle(fontSize: 18),
-              ),
-            ]),
-            Container(
-              height: 2,
-            ),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Consumer(
-                builder: (final context, final ref, final child) {
-                  final currentConfig = ref.watch(HeaterModel.currentConfigProvider(id));
-                  return Text(
-                    currentConfig == null ? "" : ((currentConfig.temperature.toStringAsFixed(1))),
-                    style: const TextStyle(fontWeight: FontWeight.normal),
-                  );
-                },
-              ),
-              const Text(
-                "°C",
-                style: TextStyle(fontWeight: FontWeight.normal),
-              ),
-            ]),
-            !DeviceManager.showDebugInformation
-                ? Container()
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Consumer(
-                        builder: (final context, final ref, final child) {
-                          return Text(ref.watch(HeaterModel.versionProvider(id)));
-                        },
-                      )
-                    ],
-                  ),
-            // (xs.id == 0 ? Text(baseModel.xiaomiTempSensor.toString()) : Text(xs.baseModel.friendlyName)),
-          ] +
-          (DeviceManager.showDebugInformation ? [Text(id.toString())] : <Widget>[]),
-    );
+    return Column(children: <Widget>[
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Consumer(
+          builder: (final context, final ref, final child) => Text(
+            (ref.watch(HeaterModel.temperatureProvider(id))?.temperature.toStringAsFixed(1) ?? ""),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+          ),
+        ),
+        const Text(
+          " °C",
+          style: TextStyle(fontSize: 18),
+        ),
+      ]),
+      Container(
+        height: 2,
+      ),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final currentConfig = ref.watch(HeaterModel.currentConfigProvider(id));
+            return Text(
+              currentConfig == null ? "" : ((currentConfig.temperature.toStringAsFixed(1))),
+              style: const TextStyle(fontWeight: FontWeight.normal),
+            );
+          },
+        ),
+        const Text(
+          "°C",
+          style: TextStyle(fontWeight: FontWeight.normal),
+        ),
+      ]),
+      Consumer(builder: (context, ref, child) {
+        final showDebug = ref.watch(debugInformationEnabledProvider);
+        return !showDebug
+            ? Container()
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Consumer(
+                    builder: (final context, final ref, final child) {
+                      return Text(ref.watch(HeaterModel.versionProvider(id)));
+                    },
+                  )
+                ],
+              );
+      }),
+      Consumer(
+        builder: (context, ref, child) {
+          final showDebug = ref.watch(debugInformationEnabledProvider);
+          return showDebug ? Text(id.toString()) : Container();
+        },
+      )
+
+      // (xs.id == 0 ? Text(baseModel.xiaomiTempSensor.toString()) : Text(xs.baseModel.friendlyName)),
+    ]);
   }
 
   @override
@@ -161,20 +169,15 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
               const Tab(
                 icon: Icon(Icons.settings),
               ),
-              // Tab(icon: Icon(SmarthomeIcons.temperature)),
             ],
           ),
         ),
-        body: // buildColumnView(width, xs),
-            Container(
+        body: Container(
           decoration: ThemeManager.getBackgroundDecoration(context),
           child: TabBarView(
             children: [
               buildColumnView(width, tempSensorDevice is ValueStore<double> ? tempSensorDevice.currentValue : 21.0),
               buildSettingsView(width),
-              // ((xs.id) > 0)
-              //     ? XiaomiTempSensorScreen(xs, showAppBar: false)
-              //     : const Text("Kein Xiaomi Temperatursensor vorhanden")
             ],
           ),
         ),
@@ -250,6 +253,22 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
             ],
           ),
         ),
+        ref.watch(debugInformationEnabledProvider)
+            ? BlurryCard(
+                margin: const EdgeInsets.only(left: 8, right: 8, top: 8.0),
+                child: Row(
+                  children: [
+                    Container(
+                        margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                        child: const Icon(Icons.receipt)),
+                    Consumer(builder: (final context, final ref, final child) {
+                      final version = ref.watch(HeaterModel.versionProvider(widget.device.id));
+                      return Text(version);
+                    }),
+                  ],
+                ),
+              )
+            : Container(),
         getTempGauge(value)
       ],
     );

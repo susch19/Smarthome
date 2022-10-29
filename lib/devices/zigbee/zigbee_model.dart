@@ -9,7 +9,6 @@ part 'zigbee_model.g.dart';
 class ZigbeeModel extends ConnectionBaseModel {
   final bool available;
   final DateTime lastReceived;
-  @JsonKey(name: 'link_Quality')
   final int linkQuality;
 
   static final availableProvider = Provider.family<bool, int>((final ref, final id) {
@@ -28,9 +27,8 @@ class ZigbeeModel extends ConnectionBaseModel {
   @override
   bool get isConnected => available;
 
-  const ZigbeeModel(final int id, final String friendlyName, final bool isConnected, this.available, this.lastReceived,
-      this.linkQuality)
-      : super(id, friendlyName, isConnected);
+  const ZigbeeModel(super.id, super.friendlyName, super.typeName, super.isConnected, this.available, this.lastReceived,
+      this.linkQuality);
   factory ZigbeeModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeModelFromJson(json);
 
   @override

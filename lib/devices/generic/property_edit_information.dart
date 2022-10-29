@@ -11,16 +11,18 @@ part 'property_edit_information.g.dart';
 @JsonSerializable()
 class PropertyEditInformation {
   MessageType editCommand;
+  @JsonKey(defaultValue: [])
   List<EditParameter> editParameter;
   String? display;
   EditType editType;
   String? hubMethod;
   Object? activeValue;
+  String? dialog;
   @JsonKey(ignore: true)
   late Map<String, dynamic> raw;
 
   PropertyEditInformation(
-      this.editCommand, this.editParameter, this.display, this.hubMethod, this.activeValue, this.editType);
+      this.editCommand, this.editParameter, this.display, this.hubMethod, this.activeValue, this.editType, this.dialog);
 
   @override
   bool operator ==(final Object other) =>
@@ -30,10 +32,13 @@ class PropertyEditInformation {
       other.display == display &&
       other.hubMethod == hubMethod &&
       other.activeValue == activeValue &&
+      other.dialog == dialog &&
+      hashCode == other.hashCode &&
       editParameter.sequenceEquals(other.editParameter);
 
   @override
-  int get hashCode => Object.hash(editType, editCommand, display, activeValue) ^ hashObjects(editParameter);
+  int get hashCode =>
+      Object.hash(editType, editCommand, display, activeValue, dialog, raw) ^ hashObjects(editParameter);
 
   List<EditParameter> getEditParametersFor(final int id) {
     final ret = editParameter.map((final e) => e.clone()).toList();

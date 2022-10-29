@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:smarthome/helper/cache_file_manager.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
+import 'package:smarthome/helper/settings_manager.dart';
 import 'package:tuple/tuple.dart';
 import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart';
@@ -26,7 +27,8 @@ final _idLayoutProvider = Provider.family<DeviceLayout?, int>((final ref, final 
 final _typeNameLayoutProvider = Provider.family<DeviceLayout?, String>((final ref, final typeName) {
   final layouts = ref.watch(_layoutProvider);
 
-  return layouts.firstOrNull((final element) => element.typeName == typeName);
+  return layouts
+      .firstOrNull((final element) => element.typeName == typeName || (element.typeNames?.contains(typeName) ?? false));
 });
 
 final deviceLayoutProvider = Provider.family<DeviceLayout?, Tuple2<int, String>>((final ref, final device) {
@@ -79,7 +81,13 @@ final fabLayoutProvider = Provider.family<DetailPropertyInfo?, Tuple2<int, Strin
 final detailTabInfoLayoutProvider =
     Provider.family<List<DetailTabInfo>?, Tuple2<int, String>>((final ref, final device) {
   final layoutProvider = ref.watch(detailDeviceLayoutProvider(device));
-  return layoutProvider?.tabInfos;
+  final showDebugInformation = ref.watch(debugInformationEnabledProvider);
+  final tabInfos = layoutProvider?.tabInfos;
+  if (tabInfos == null) return null;
+  return tabInfos
+      .where((final element) =>
+          !element.showOnlyInDeveloperMode || element.showOnlyInDeveloperMode == showDebugInformation)
+      .toList();
 });
 
 final detailHistoryLayoutProvider =
@@ -113,7 +121,9 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
 
     final currentList = instance.state.toList();
     final existingLayout = currentList.firstOrNull((final e) => e.uniqueName == deviceLayout.uniqueName);
-    if (existingLayout == deviceLayout) return;
+    if (existingLayout != null && existingLayout.version == deviceLayout.version && existingLayout == deviceLayout) {
+      return;
+    }
     if (existingLayout != null) currentList.remove(existingLayout);
 
     currentList.add(deviceLayout);
@@ -126,7 +136,7 @@ class DeviceLayoutService extends StateNotifier<List<DeviceLayout>> {
   }
 
   static Future<void> loadFromServer(final int id, final String typeName, final HubConnection? connection) async {
-    if (_instance == null || connection == null) return;
+    if (_instance == null || connection == null || connection.state != HubConnectionState.Connected) return;
 
     await lock.synchronized(() async {
       final bestFit = await connection.invoke("GetDeviceLayoutHashByDeviceId", args: [id]) as Map<String, dynamic>?;

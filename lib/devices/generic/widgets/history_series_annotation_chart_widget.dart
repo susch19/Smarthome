@@ -3,16 +3,17 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 
 class HistorySeriesAnnotationChartWidget extends StatelessWidget {
-  final List<LineSeries> seriesList;
+  final dynamic seriesList;
   final double min;
   final double max;
   final String unit;
   final String valueName;
   final DateTime shownDate;
+  final LoadMoreViewBuilderCallback? loadMoreIndicatorBuilder;
 
   const HistorySeriesAnnotationChartWidget(
       this.seriesList, this.min, this.max, this.unit, this.valueName, this.shownDate,
-      {final Key? key})
+      {final Key? key, this.loadMoreIndicatorBuilder})
       : super(key: key);
 
   @override
@@ -35,9 +36,18 @@ class HistorySeriesAnnotationChartWidget extends StatelessWidget {
             title: AxisTitle(text: valueName)),
         series: seriesList,
         trackballBehavior: TrackballBehavior(
-            enable: true,
-            activationMode: ActivationMode.singleTap,
-            tooltipSettings: const InteractiveTooltip(format: '{point.x} : {point.y}')),
+          enable: true,
+          activationMode: ActivationMode.singleTap,
+          tooltipSettings: const InteractiveTooltip(format: '{point.x} : {point.y}'),
+        ),
+        zoomPanBehavior: ZoomPanBehavior(
+          /// To enable the pinch zooming as true.
+          enablePinching: true,
+          zoomMode: ZoomMode.x,
+          enablePanning: true,
+          enableMouseWheelZooming: true,
+        ),
+        loadMoreIndicatorBuilder: loadMoreIndicatorBuilder,
       );
     });
   }

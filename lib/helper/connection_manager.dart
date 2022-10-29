@@ -14,6 +14,7 @@ import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:synchronized/synchronized.dart';
 import '../signalr/smarthome_protocol.dart';
 import 'package:http/http.dart' as http;
 import 'package:signalr_netcore/iretry_policy.dart';
@@ -85,6 +86,7 @@ class HubConnectionContainer {
 
 class ConnectionManager extends StateNotifier<HubConnectionContainer> {
   static ValueNotifier<IconData> connectionIconChanged = ValueNotifier(Icons.error_outline);
+  static final lock = Lock();
 
   Ref ref;
 
@@ -216,22 +218,24 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
         HubConnectionState.Disconnected);
   }
 
-  void update(final List<Object>? arguments) {
-    final baseModels = ref.read(baseModelProvider.notifier);
-    final oldState = baseModels.state.toList();
-    bool hasChanges = false;
-    for (final a in arguments!) {
-      final updateMap = a as Map;
-      for (var i = 0; i < oldState.length; i++) {
-        final oldModel = oldState[i];
-        if (oldModel.id != updateMap["id"]) continue;
-        final newModel = oldModel.updateFromJson(updateMap as Map<String, dynamic>);
-        if (oldState[i] == newModel) continue;
-        oldState[i] = newModel;
-        hasChanges = true;
+  Future update(final List<Object?>? arguments) async {
+    await lock.synchronized(() async {
+      final baseModels = ref.read(baseModelProvider.notifier);
+      final oldState = baseModels.state.toList();
+      bool hasChanges = false;
+      for (final a in arguments!) {
+        final updateMap = a as Map;
+        for (var i = 0; i < oldState.length; i++) {
+          final oldModel = oldState[i];
+          if (oldModel.id != updateMap["id"]) continue;
+          final newModel = oldModel.updateFromJson(updateMap as Map<String, dynamic>);
+          if (oldState[i] == newModel) continue;
+          oldState[i] = newModel;
+          hasChanges = true;
+        }
       }
-    }
-    if (hasChanges) baseModels.state = oldState;
+      if (hasChanges) baseModels.state = oldState;
+    });
   }
 }
 

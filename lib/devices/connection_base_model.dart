@@ -15,7 +15,7 @@ class ConnectionBaseModel extends BaseModel {
     return null;
   });
 
-  const ConnectionBaseModel(super.id, super.friendlyName, this.isConnected);
+  const ConnectionBaseModel(super.id, super.friendlyName, super.typeName, this.isConnected);
 
   factory ConnectionBaseModel.fromJson(final Map<String, dynamic> json) => _$ConnectionBaseModelFromJson(json);
 

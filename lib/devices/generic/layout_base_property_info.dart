@@ -36,11 +36,12 @@ class LayoutBasePropertyInfo {
       showOnlyInDeveloperMode == other.showOnlyInDeveloperMode &&
       deviceId == other.deviceId &&
       expanded == other.expanded &&
-      precision == other.precision;
+      precision == other.precision &&
+      hashCode == other.hashCode;
 
   @override
   int get hashCode => Object.hash(name, order, textStyle, editInfo, rowNr, unitOfMeasurement, format,
-      showOnlyInDeveloperMode, deviceId, expanded, precision);
+      showOnlyInDeveloperMode, deviceId, expanded, precision, raw);
 
   factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) =>
       _$LayoutBasePropertyInfoFromJson(json)..raw = json;
