@@ -42,7 +42,7 @@ class HeaterModel extends ConnectionBaseModel {
   static final disableLedProvider = Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is! HeaterModel) return false;
-    return baseModel.disableHeating ?? false;
+    return baseModel.disableLed ?? false;
   });
   static final versionProvider = Provider.family<String, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
