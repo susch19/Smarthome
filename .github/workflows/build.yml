@@ -61,8 +61,6 @@ jobs:
     # Checkout smarthome code, recreate missing files, and get packages.
     - name: Checkout smarthome code
       uses: actions/checkout@v2
-      with:
-        fetch-depth: 2
     - run: flutter create . --project-name smarthome
     - run: flutter pub get
     
