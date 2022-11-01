@@ -17,7 +17,7 @@ final versionAndUrlProvider = StateNotifierProvider<UpdateManager, VersionAndUrl
 });
 
 class UpdateManager extends StateNotifier<VersionAndUrl?> {
-  static final Version version = Version(1, 1, 5);
+  static final Version version = Version(1, 2, 0);
   static const int checkEveryHours = 16;
   static final GitHub gitHub = GitHub();
   static final RepositorySlug repositorySlug = RepositorySlug("susch19", "SmartHome");
