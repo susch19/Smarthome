@@ -1,4 +1,4 @@
-name: Draft Github Release
+name: CI Build
 on:
   workflow_dispatch:
     # Enable manual run
@@ -36,9 +36,9 @@ jobs:
     steps:
     # Set up Flutter.
     - name: Clone Flutter repository with master channel
-      uses: subosito/flutter-action@4389e6cbc6cb8a4b18c628ff96ff90be0e926aa8
+      uses: subosito/flutter-action@v2
       with:
-        channel: stable
+        channel: master
 
     - name: Install Linux dependencies
       if: matrix.target == 'Linux'
@@ -61,8 +61,6 @@ jobs:
     # Checkout smarthome code, recreate missing files, and get packages.
     - name: Checkout smarthome code
       uses: actions/checkout@v2
-      with:
-        fetch-depth: 2
     - run: flutter create . --project-name smarthome
     - run: flutter pub get
     
@@ -86,4 +84,12 @@ jobs:
       run: flutter pub run build_runner build  
       
     # Build the application.
-    - run: flutter build -v ${{ matrix.build_target }} --release
+    
+    - name: Build non Android
+      if: matrix.target != 'Android'
+      run: flutter build -v ${{ matrix.build_target }} --release
+    
+    - name: Android Build
+      if: matrix.target == 'Android'
+      run: flutter build -v ${{ matrix.build_target }} --release --no-tree-shake-icons
+    

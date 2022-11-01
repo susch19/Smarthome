@@ -28,24 +28,10 @@ class AboutPage extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final iconColor = AdaptiveTheme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
 
-    Future<String> getCommit() async {
-      return (await rootBundle.loadString('.git/ORIG_HEAD')).trim();
-    }
-
     Future<String> getBranch() async {
       final head = await rootBundle.loadString('.git/HEAD');
       // Skip "ref: refs/heads/"
       return head.split('/').skip(2).join("/").trim();
-    }
-
-    Future<String> getGitDetails() async {
-      final commit = await getCommit();
-      if (settings.showDebugInformation) {
-        final branch = await getBranch();
-        return "$branch\r\n$commit";
-      } else {
-        return commit;
-      }
     }
 
     return Container(
@@ -123,11 +109,11 @@ class AboutPage extends ConsumerWidget {
               }),
           const Divider(),
           FutureBuilder<String>(
-              future: getGitDetails(),
+              future: getBranch(),
               builder: (final context, final AsyncSnapshot<String> snapshot) {
                 return ListTile(
-                    onTap: () =>
-                        HelperMethods.openUrl("https://github.com/susch19/Smarthome/commit/${snapshot.data ?? ""}"),
+                    onTap: () => HelperMethods.openUrl(
+                        "https://github.com/susch19/Smarthome/tree/${snapshot.data ?? "develop"}"),
                     onLongPress: () {
                       Clipboard.setData(ClipboardData(text: snapshot.data));
                       showToast("Details kopiert");
