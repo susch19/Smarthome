@@ -1,4 +1,3 @@
-import 'package:flutter/rendering.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:quiver/core.dart';
 import 'package:smarthome/devices/generic/edit_parameter.dart';
@@ -18,7 +17,7 @@ class PropertyEditInformation {
   String? hubMethod;
   Object? activeValue;
   String? dialog;
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   late Map<String, dynamic> raw;
 
   PropertyEditInformation(

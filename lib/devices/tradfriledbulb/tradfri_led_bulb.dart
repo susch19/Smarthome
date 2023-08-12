@@ -8,8 +8,6 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../device_manager.dart';
-
 class TradfriLedBulb extends Device<TradfriLedBulbModel> {
   TradfriLedBulb(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
@@ -135,18 +133,21 @@ class TradfriLedBulbScreen extends ConsumerWidget {
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Angeschaltet: " + (model.state ? "Ja" : "Nein")),
+          title: Text("Angeschaltet: ${model.state ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
+          title: Text("Verfügbar: ${model.available ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verbindungsqualität: " + (model.linkQuality.toString())),
+          title: Text("Verbindungsqualität: ${model.linkQuality}"),
         ),
         ListTile(
-          title: Text("Helligkeit aktuell " + model.brightness.toStringAsFixed(0)),
+          title: Text("Helligkeit aktuell ${model.brightness.toStringAsFixed(0)}"),
           subtitle: GestureDetector(
             child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                  trackShape: GradientRoundedRectSliderTrackShape(
+                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
               child: Consumer(builder: (final context, final ref, final child) {
                 final brightness = ref.watch(_brightnessProvider(device));
                 return Slider(
@@ -160,9 +161,6 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                   onChangeEnd: (final c) => changeBrightness(c, ref),
                 );
               }),
-              data: SliderTheme.of(context).copyWith(
-                  trackShape: GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
             ),
           ),
         ),
@@ -245,7 +243,7 @@ class RGB {
 
   String _toRadixBase16(final int val) {
     String ret = val.toRadixString(16);
-    if (ret.length == 1) ret = "0" + ret;
+    if (ret.length == 1) ret = "0$ret";
     return ret;
   }
 

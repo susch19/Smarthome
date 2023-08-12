@@ -11,14 +11,10 @@ import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-// import 'package:charts_flutter/flutter.dart' as charts;
 
 import 'package:smarthome/icons/icons.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import '../device_manager.dart';
 import '../../helper/datetime_helper.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
@@ -73,7 +69,7 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
                     children: [
                       Consumer(
                         builder: (final context, final ref, final child) {
-                          return Text((ref.watch(TempSensorModel.humidityProvider(id)).toStringAsFixed(0) + " %"),
+                          return Text(("${ref.watch(TempSensorModel.humidityProvider(id)).toStringAsFixed(0)} %"),
                               style: const TextStyle());
                         },
                       ),
@@ -82,7 +78,7 @@ class XiaomiTempSensor extends Device<TempSensorModel> {
                       ),
                       Consumer(
                         builder: (final context, final ref, final child) {
-                          return Text((ref.watch(TempSensorModel.pressureProvider(id)).toStringAsFixed(0) + " hPa"),
+                          return Text(("${ref.watch(TempSensorModel.pressureProvider(id)).toStringAsFixed(0)} hPa"),
                               style: const TextStyle());
                         },
                       ),
@@ -198,7 +194,7 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
           children: (DeviceManager.showDebugInformation
                   ? <Widget>[
                       ListTile(
-                        title: Text("ID: " + model.id.toRadixString(16)),
+                        title: Text("ID: ${model.id.toRadixString(16)}"),
                       ),
                     ]
                   : <Widget>[]) +
@@ -207,22 +203,22 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
                   title: Text(model.friendlyName),
                 ),
                 ListTile(
-                  title: Text("Temperature: " + model.temperature.toStringAsFixed(2) + " °C"),
+                  title: Text("Temperature: ${model.temperature.toStringAsFixed(2)} °C"),
                 ),
                 ListTile(
-                  title: Text("Luftdruck: " + model.pressure.toStringAsFixed(1) + " kPa"),
+                  title: Text("Luftdruck: ${model.pressure.toStringAsFixed(1)} kPa"),
                 ),
                 ListTile(
-                  title: Text("Luftfeuchtigkeit: " + model.humidity.toStringAsFixed(2) + " %"),
+                  title: Text("Luftfeuchtigkeit: ${model.humidity.toStringAsFixed(2)} %"),
                 ),
                 ListTile(
-                  title: Text("Battery: " + model.battery.toStringAsFixed(0) + " %"),
+                  title: Text("Battery: ${model.battery.toStringAsFixed(0)} %"),
                 ),
                 ListTile(
-                  title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
+                  title: Text("Verfügbar: ${model.available ? "Ja" : "Nein"}"),
                 ),
                 ListTile(
-                  title: Text("Zuletzt empfangen: " + model.lastReceived.toDate()),
+                  title: Text("Zuletzt empfangen: ${model.lastReceived.toDate()}"),
                 ),
               ],
         );
@@ -272,13 +268,9 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
       direction: Axis.vertical,
       children: <Widget>[
         Expanded(
-            child: Text("Daten werden geladen oder sind nicht vorhanden für " +
-                currentShownTime.day.toString() +
-                "." +
-                currentShownTime.month.toString() +
-                "." +
-                currentShownTime.year.toString())),
+            child: Text("Daten werden geladen oder sind nicht vorhanden für ${currentShownTime.day}.${currentShownTime.month}.${currentShownTime.year}")),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Expanded(
                 child: MaterialButton(
@@ -299,7 +291,6 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
               },
             )),
           ],
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         )
       ],
     );
@@ -334,12 +325,12 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
             h.historyRecords
                 .where((final x) => x.value != null)
                 .map((final x) => x.value!)
-                .minBy(10000, (e) => e)
+                .minBy(10000, (final e) => e)
                 .toDouble(),
             h.historyRecords
                 .where((final x) => x.value != null)
                 .map((final x) => x.value!)
-                .maxBy(0, (e) => e)
+                .maxBy(0, (final e) => e)
                 .toDouble(),
             unit,
             valueName,
@@ -347,6 +338,7 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
           ),
         ),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Expanded(
                 child: MaterialButton(
@@ -367,13 +359,12 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
               },
             )),
           ],
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         )
       ],
     );
   }
 
-  void _openDatePicker(DateTime initial) {
+  void _openDatePicker(final DateTime initial) {
     // showDatePicker is a pre-made funtion of Flutter
     showDatePicker(context: context, initialDate: initial, firstDate: DateTime(2018), lastDate: DateTime.now())
         .then((final pickedDate) {
@@ -429,7 +420,7 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
             maximum: (max + (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
             interval: (((max - min) < 10 ? 10 : (max - min)) / 10).roundToDouble(),
             axisLine: const AxisLine(width: 0),
-            labelFormat: '{value}' + unit,
+            labelFormat: '{value}$unit',
             majorTickLines: const MajorTickLines(size: 0),
             title: AxisTitle(text: valueName)),
         series: seriesList,

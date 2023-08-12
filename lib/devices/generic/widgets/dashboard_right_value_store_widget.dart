@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
-import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/generic_device.dart';
 import 'package:smarthome/helper/settings_manager.dart';
-import 'package:smarthome/icons/icons.dart';
 import 'package:tuple/tuple.dart';
 
 class DashboardRightValueStoreWidget extends ConsumerWidget {

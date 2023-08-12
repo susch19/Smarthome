@@ -20,7 +20,7 @@ class GroupDevices extends ConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Geräte Gruppe " + groupName),
+        title: Text("Geräte Gruppe $groupName"),
       ),
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
@@ -98,7 +98,7 @@ class GroupDevices extends ConsumerWidget {
     if (!isNewGroup && modifiedDevices.isEmpty) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!.copyWith(color: theme.textTheme.caption!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!.copyWith(color: theme.textTheme.bodySmall!.color);
 
     return await (showDialog<bool>(
           context: context,

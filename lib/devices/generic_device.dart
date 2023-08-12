@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:smarthome/controls/blurry_card.dart';
@@ -15,20 +12,16 @@ import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/generic/widgets/edits/basic_edit_types.dart';
 import 'package:smarthome/devices/generic/widgets/edits/gauge_edit.dart';
-import 'package:smarthome/devices/heater/heater_config.dart';
-import 'package:smarthome/devices/heater/temp_scheduling.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/settings_manager.dart';
-import 'package:smarthome/icons/icons.dart';
 import 'package:smarthome/models/message.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
-import '../controls/gradient_rounded_rect_slider_track_shape.dart';
 import '../helper/theme_manager.dart';
 
 class GenericDevice extends Device<BaseModel> {
@@ -78,7 +71,7 @@ class GenericDevice extends Device<BaseModel> {
     );
   }
 
-  Widget getEditWidget(final BuildContext context, final LayoutBasePropertyInfo e, final ValueStore valueModel,
+  Widget getEditWidget(final BuildContext context, final LayoutBasePropertyInfo e, final ValueStore? valueModel,
           final WidgetRef ref) =>
       GenericDevice.getEditWidgetFor(context, id, e, valueModel, ref);
 
@@ -381,7 +374,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                         margin: const EdgeInsets.only(top: 50),
                         child: Text(
                           'Lade weitere History Daten...',
-                          style: Theme.of(context).textTheme.headline6,
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
                       Container(

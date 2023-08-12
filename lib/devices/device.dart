@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:quiver/core.dart';
 // import 'package:signalr_client/signalr_client.dart';
@@ -16,7 +15,6 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/icons/icon_manager.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
-import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/main.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,7 +83,6 @@ abstract class Device<T extends BaseModel> {
 
   final Random r = Random();
 
-  @mustCallSuper
   Device(this.id, this.typeName, {final IconData? iconData, final Uint8List? iconBytes}) {
     if (iconData != null) {
       this.iconData = iconData;
@@ -111,7 +108,7 @@ abstract class Device<T extends BaseModel> {
         child: Center(
           child: SvgPicture.memory(
             list,
-            color: brightness == Brightness.light ? Colors.black : Colors.white,
+            theme: SvgTheme(currentColor: brightness == Brightness.light ? Colors.black : Colors.white),
           ),
         ),
       );
@@ -119,7 +116,7 @@ abstract class Device<T extends BaseModel> {
       return Center(
         child: SvgPicture.memory(
           list,
-          color: brightness == Brightness.light ? Colors.black : Colors.white,
+          theme: SvgTheme(currentColor: brightness == Brightness.light ? Colors.black : Colors.white),
         ),
       );
     }

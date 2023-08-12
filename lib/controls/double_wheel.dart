@@ -153,12 +153,12 @@ class WheelChooser extends StatefulWidget {
   }
 
   @override
-  _WheelChooserState createState() {
-    return _WheelChooserState();
+  WheelChooserState createState() {
+    return WheelChooserState();
   }
 }
 
-class _WheelChooserState extends State<WheelChooser> {
+class WheelChooserState extends State<WheelChooser> {
   FixedExtentScrollController? fixedExtentScrollController;
   int? currentPosition;
   @override
@@ -193,10 +193,10 @@ class _WheelChooserState extends State<WheelChooser> {
               diameterRatio: widget.diameter,
               controller: fixedExtentScrollController,
               physics: const FixedExtentScrollPhysics(),
-              children: _convertListItems() ?? _buildListItems(),
               useMagnifier: true,
               magnification: widget.magnification,
               itemExtent: widget.itemSize,
+              children: _convertListItems() ?? _buildListItems(),
             )));
   }
 
@@ -209,7 +209,7 @@ class _WheelChooserState extends State<WheelChooser> {
           child: Text(
             widget.datas![i] is double ? widget.datas![i].toStringAsFixed(1) : widget.datas![i].toString(),
             textAlign: TextAlign.center,
-            textScaleFactor: 1.5,
+            textScaler: const TextScaler.linear(1.5),
             style: i == currentPosition ? widget.selectTextStyle : widget.unSelectTextStyle,
           ),
         ),

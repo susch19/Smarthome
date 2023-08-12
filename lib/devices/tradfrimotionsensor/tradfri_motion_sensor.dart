@@ -3,7 +3,6 @@ import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/icons.dart';
-import '../device_manager.dart';
 import '../../helper/datetime_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -124,22 +123,22 @@ class _TradfriMotionSensorScreenState extends ConsumerState<TradfriMotionSensorS
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Blockiert: " + (model.occupancy ? "Ja" : "Nein")),
+          title: Text("Blockiert: ${model.occupancy ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Letzte Bewegung: " + model.lastReceived.subtract(Duration(seconds: model.noMotion)).toDate()),
+          title: Text("Letzte Bewegung: ${model.lastReceived.subtract(Duration(seconds: model.noMotion)).toDate()}"),
         ),
         ListTile(
-          title: Text("Battery: " + model.battery.toStringAsFixed(0) + " %"),
+          title: Text("Battery: ${model.battery.toStringAsFixed(0)} %"),
         ),
         ListTile(
-          title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
+          title: Text("Verfügbar: ${model.available ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verbindungsqualität: " + (model.linkQuality.toString())),
+          title: Text("Verbindungsqualität: ${model.linkQuality}"),
         ),
         ListTile(
-          title: Text("Zuletzt empfangen: " + model.lastReceived.toDate()),
+          title: Text("Zuletzt empfangen: ${model.lastReceived.toDate()}"),
         ),
       ],
     );

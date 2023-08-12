@@ -85,7 +85,7 @@ class Heater extends Device<HeaterModel> {
           style: TextStyle(fontWeight: FontWeight.normal),
         ),
       ]),
-      Consumer(builder: (context, ref, child) {
+      Consumer(builder: (final context, final ref, final child) {
         final showDebug = ref.watch(debugInformationEnabledProvider);
         return !showDebug
             ? Container()
@@ -101,7 +101,7 @@ class Heater extends Device<HeaterModel> {
               );
       }),
       Consumer(
-        builder: (context, ref, child) {
+        builder: (final context, final ref, final child) {
           final showDebug = ref.watch(debugInformationEnabledProvider);
           return showDebug ? Text(id.toString()) : Container();
         },
@@ -128,7 +128,7 @@ class HeaterScreen extends ConsumerStatefulWidget {
 
 class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   double? temp = 11;
-  String tempString() => temp!.toStringAsFixed(1) + "°C";
+  String tempString() => "${temp!.toStringAsFixed(1)}°C";
   TextEditingController? textEditingController;
   String _annotationValue = '9.0';
   double _value = 9.0;
@@ -225,7 +225,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                   final temperature = ref.watch(HeaterModel.temperatureProvider(widget.device.id));
                   return Text(temperature == null
                       ? "Keine Daten vorliegend"
-                      : dayOfWeekToStringMap[temperature.dayOfWeek]! + " " + temperature.timeOfDay.format(context));
+                      : "${dayOfWeekToStringMap[temperature.dayOfWeek]!} ${temperature.timeOfDay.format(context)}");
                 },
               ),
             ],
@@ -242,13 +242,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 final currentCalibration = ref.watch(HeaterModel.currentCalibrationProvider(widget.device.id));
                 return Text(currentCalibration?.temperature == null
                     ? "Kein Ziel"
-                    : currentCalibration!.temperature.toStringAsFixed(1) +
-                        "°C " +
-                        "(" +
-                        dayOfWeekToStringMap[currentCalibration.dayOfWeek]! +
-                        " " +
-                        currentCalibration.timeOfDay.format(context) +
-                        ")");
+                    : "${currentCalibration!.temperature.toStringAsFixed(1)}°C (${dayOfWeekToStringMap[currentCalibration.dayOfWeek]!} ${currentCalibration.timeOfDay.format(context)})");
               }),
             ],
           ),
@@ -514,11 +508,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                                             ),
                                             Text(
-                                                "°C " "(" +
-                                                    dayOfWeekToStringMap[temperature.dayOfWeek]! +
-                                                    " " +
-                                                    temperature.timeOfDay.format(context) +
-                                                    ")",
+                                                "°C (${dayOfWeekToStringMap[temperature.dayOfWeek]!} ${temperature.timeOfDay.format(context)})",
                                                 style: const TextStyle(fontSize: 24))
                                           ]);
                                   },
@@ -545,11 +535,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                                             ),
                                             Text(
-                                              "°C " "(" +
-                                                  dayOfWeekToStringMap[currentConfig.dayOfWeek]! +
-                                                  " " +
-                                                  currentConfig.timeOfDay.format(context) +
-                                                  ")",
+                                              "°C (${dayOfWeekToStringMap[currentConfig.dayOfWeek]!} ${currentConfig.timeOfDay.format(context)})",
                                               style: const TextStyle(fontSize: 24),
                                             ),
                                           ],

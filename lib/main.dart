@@ -473,7 +473,7 @@ class MyHomePage extends ConsumerWidget {
     final dialog = SimpleDialog(
       title: Consumer(
         builder: (final context, final ref, final child) {
-          return Text("Gerät " + (ref.watch(BaseModel.friendlyNameProvider(d.id))));
+          return Text("Gerät ${ref.watch(BaseModel.friendlyNameProvider(d.id))}");
         },
       ),
       children: actions,
@@ -482,8 +482,6 @@ class MyHomePage extends ConsumerWidget {
   }
 
   void removeDevice(final BuildContext context, final WidgetRef ref, final int id, {final bool pop = true}) {
-    final deviceId = ref.read(deviceProvider.notifier).removeDevice(id);
-
     if (pop) Navigator.pop(context);
   }
 
@@ -536,7 +534,7 @@ class MyHomePage extends ConsumerWidget {
       if (!devices.any((final x) => x.id == dev.id)) {
         devicesToSelect.add(
           SimpleDialogOption(
-            child: Text((dev.friendlyName ?? dev.id.toString()) + ": " + dev.typeName),
+            child: Text("${dev.friendlyName ?? dev.id.toString()}: ${dev.typeName}"),
             onPressed: () async {
               await addDevice(dev, ref);
               Navigator.pop(context);
@@ -560,8 +558,8 @@ class MyHomePage extends ConsumerWidget {
     }
 
     final dialog = SimpleDialog(
-      children: devicesToSelect,
       title: Text((devicesToSelect.isEmpty ? "No new Devices found" : "Add new Smarthome Device")),
+      children: devicesToSelect,
     );
     showDialog(context: context, builder: (final b) => dialog);
   }

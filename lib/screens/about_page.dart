@@ -8,7 +8,6 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
 import 'package:smarthome/models/version_and_url.dart';
 
-import '../helper/settings_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AboutPage extends ConsumerWidget {
@@ -25,7 +24,6 @@ class AboutPage extends ConsumerWidget {
   }
 
   Widget buildBody(final BuildContext context, final WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
     final iconColor = AdaptiveTheme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
 
     Future<String> getBranch() async {
@@ -115,7 +113,7 @@ class AboutPage extends ConsumerWidget {
                     onTap: () => HelperMethods.openUrl(
                         "https://github.com/susch19/Smarthome/tree/${snapshot.data ?? "develop"}"),
                     onLongPress: () {
-                      Clipboard.setData(ClipboardData(text: snapshot.data));
+                      Clipboard.setData(ClipboardData(text: snapshot.data!));
                       showToast("Details kopiert");
                     },
                     title: Text(

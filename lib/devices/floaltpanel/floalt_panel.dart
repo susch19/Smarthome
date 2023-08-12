@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbeelamp/zigbee_lamp.dart';
 
-import '../device_manager.dart';
-
 class FloaltPanel extends ZigbeeLamp {
   FloaltPanel(final int id, final String typeName, final IconData icon) : super(id, typeName, icon);
 

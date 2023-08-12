@@ -3,12 +3,15 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 
 class ThemeManager {
-  static ThemeData getDarkTheme() {
+  static ThemeData getDarkTheme({final bool useMaterial3 = false}) {
     return ThemeData(
+      useMaterial3: useMaterial3,
+      // colorSchemeSeed: Colors.blue,
       brightness: Brightness.dark,
+      secondaryHeaderColor: Colors.indigo,
       dialogBackgroundColor: Colors.indigo.shade900.withOpacity(0.95),
       cardTheme: CardTheme(color: Colors.indigo.shade800.withOpacity(0.95), shadowColor: Colors.black38),
-      backgroundColor: Colors.indigo.shade800.withOpacity(0.95),
+      // backgroundColor: Colors.indigo.shade800.withOpacity(0.95),
       sliderTheme: const SliderThemeData(thumbColor: Colors.tealAccent, activeTrackColor: Colors.tealAccent),
       canvasColor: Colors.indigo.shade800.withOpacity(0.95),
       popupMenuTheme: PopupMenuThemeData(
@@ -19,7 +22,7 @@ class ThemeManager {
         foregroundColor: MaterialStateProperty.resolveWith(_getColor),
       )),
       primarySwatch: Colors.blue,
-      textTheme: const TextTheme(subtitle1: TextStyle(decorationColor: Colors.teal)),
+      textTheme: const TextTheme(titleMedium: TextStyle(decorationColor: Colors.teal)),
       colorScheme: ColorScheme.dark(
           primary: Colors.blue,
           secondary: Colors.teal,
@@ -39,13 +42,13 @@ class ThemeManager {
     );
   }
 
-  static ThemeData getLightTheme() {
+  static ThemeData getLightTheme({final bool useMaterial3 = false}) {
     final Color indigoColor = Colors.indigo.shade50;
     return ThemeData(
+      useMaterial3: useMaterial3,
       brightness: Brightness.light,
       dialogBackgroundColor: indigoColor.withOpacity(0.95),
       cardTheme: CardTheme(color: indigoColor.withOpacity(0.95), shadowColor: Colors.white54),
-      backgroundColor: indigoColor.withOpacity(0.95),
       sliderTheme:
           SliderThemeData(thumbColor: Colors.tealAccent.shade100, activeTrackColor: Colors.tealAccent.shade100),
       textButtonTheme: TextButtonThemeData(
@@ -55,14 +58,7 @@ class ThemeManager {
       popupMenuTheme: PopupMenuThemeData(
         color: Colors.indigo.shade100.withOpacity(0.95),
       ),
-      primarySwatch: Colors.lightBlue,
-      textTheme: TextTheme(subtitle1: TextStyle(decorationColor: Colors.tealAccent.shade100)),
-      colorScheme: ColorScheme.light(
-          primary: Colors.lightBlue.shade200,
-          secondary: Colors.tealAccent.shade100,
-          background: Colors.indigo.shade200,
-          surface: indigoColor,
-          onPrimary: Colors.black),
+      textTheme: TextTheme(titleMedium: TextStyle(decorationColor: Colors.tealAccent.shade100)),
       chipTheme: ChipThemeData(
           backgroundColor: indigoColor.withOpacity(0.95),
           brightness: Brightness.light,
@@ -71,7 +67,12 @@ class ThemeManager {
           padding: const EdgeInsetsDirectional.all(4),
           secondaryLabelStyle: const TextStyle(color: Colors.green),
           secondarySelectedColor: Colors.indigo.withOpacity(0.95),
-          selectedColor: Colors.indigo),
+          selectedColor: Colors.indigo), colorScheme: ColorScheme.light(
+          primary: Colors.lightBlue.shade200,
+          secondary: Colors.tealAccent.shade100,
+          background: Colors.indigo.shade200,
+          surface: indigoColor,
+          onPrimary: Colors.black).copyWith(primarySwatch: Colors.lightBlue, background: indigoColor.withOpacity(0.95)),
     );
   }
 

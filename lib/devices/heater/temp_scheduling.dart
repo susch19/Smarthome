@@ -72,7 +72,7 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
     if (!_saveNeeded) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!.copyWith(color: theme.textTheme.caption!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!.copyWith(color: theme.textTheme.bodySmall!.color);
 
     return await (showDialog<bool>(
             context: context,
@@ -211,7 +211,7 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
                         margin: const EdgeInsets.symmetric(horizontal: 8.0),
                       ),
                       Text(
-                        x.item2!.toStringAsFixed(1) + "°C",
+                        "${x.item2!.toStringAsFixed(1)}°C",
                         style: const TextStyle(fontSize: 18),
                       ),
                     ],
@@ -335,7 +335,7 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
   static List<DropdownMenuItem> buildItems() {
     final menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
-      menuItems.add(DropdownMenuItem(child: Text(d.toStringAsFixed(1)), value: (d * 10).round()));
+      menuItems.add(DropdownMenuItem(value: (d * 10).round(), child: Text(d.toStringAsFixed(1))));
     }
     return menuItems;
   }

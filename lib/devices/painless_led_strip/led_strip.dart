@@ -464,6 +464,9 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                   subtitle: Text("Brightness ${res.toInt().toString()}"),
                   title: GestureDetector(
                     child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                          trackShape: GradientRoundedRectSliderTrackShape(
+                              LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
                       child: Slider(
                         value: res.toDouble(),
                         onChanged: (final d) {
@@ -473,9 +476,6 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                         max: 255.0,
                         label: '${res.round()}',
                       ),
-                      data: SliderTheme.of(context).copyWith(
-                          trackShape: GradientRoundedRectSliderTrackShape(
-                              LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
                     ),
                   ),
                 );
@@ -549,7 +549,7 @@ class RGBW {
 
   String _toRadixBase16(final int val) {
     String ret = val.toRadixString(16);
-    if (ret.length == 1) ret = "0" + ret;
+    if (ret.length == 1) ret = "0$ret";
     return ret;
   }
 

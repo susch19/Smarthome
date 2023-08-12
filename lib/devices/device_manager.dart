@@ -123,10 +123,6 @@ class DeviceManager extends StateNotifier<List<Device>> {
     instance = this;
     _fetchIds();
   }
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   static final customGroupNameProvider = StateProvider.family<String, String>((final ref, final name) {
     return _groupNames[name] ?? name;
@@ -171,7 +167,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     _syncDevices();
   }
 
-  removeDevice(int id) {
+  removeDevice(final int id) {
     _deviceIds.remove(id);
     _syncDevices();
   }
@@ -386,8 +382,8 @@ class DeviceManager extends StateNotifier<List<Device>> {
     final removedDevices = existingDeviceIdsSet.difference(deviceIdsSet);
 
     _diffIds = [
-      for (var id in newDevices) DiffIdModel(id, Action.added),
-      for (var id in removedDevices) DiffIdModel(id, Action.removed),
+      for (final id in newDevices) DiffIdModel(id, Action.added),
+      for (final id in removedDevices) DiffIdModel(id, Action.removed),
     ];
 
     ref.watch(valueStoreProvider);

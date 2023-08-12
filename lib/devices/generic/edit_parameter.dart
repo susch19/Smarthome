@@ -12,7 +12,7 @@ class EditParameter {
   List<Object?>? parameters;
   int? id;
   MessageType? messageType;
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   late Map<String, dynamic> raw;
 
   EditParameter(this.command, this.value, this.displayName, this.parameters, this.id, this.messageType);

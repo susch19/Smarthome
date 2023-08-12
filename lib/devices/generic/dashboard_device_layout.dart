@@ -1,6 +1,3 @@
-import 'dart:collection';
-
-import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:quiver/core.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';

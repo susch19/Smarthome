@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:json_annotation/json_annotation.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 
@@ -18,7 +16,7 @@ class LayoutBasePropertyInfo {
   int? deviceId;
   bool? expanded;
   int? precision;
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   late Map<String, dynamic> raw;
 
   LayoutBasePropertyInfo(this.name, this.order);
