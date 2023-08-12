@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
@@ -84,7 +82,7 @@ class HistoryConfigureScreen extends ConsumerWidget {
                         .map((final key, final values) {
                           final ids = values.map((final e) => e["id"] as int).toList(growable: true);
                           final props = values
-                              .mapMany((e) => e.keys.where((final element) =>
+                              .mapMany((final e) => e.keys.where((final element) =>
                                   element != "id" && element != "typeName" && element != "friendlyName"))
                               .distinct()
                               .toList();
@@ -157,8 +155,8 @@ class HistoryConfigureScreen extends ConsumerWidget {
                 loading: () => [const Text("Loading...")])),
       ),
       onRefresh: () async {
-        ref.invalidate(_serverDevices.future);
-        ref.invalidate(_historyProperties.future);
+        ref.invalidate(_serverDevices);
+        ref.invalidate(_historyProperties);
       },
     );
   }

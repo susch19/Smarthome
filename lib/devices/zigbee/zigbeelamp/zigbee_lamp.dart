@@ -12,7 +12,6 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../device_manager.dart';
 import 'zigbee_lamp_model.dart';
 
 class ZigbeeLamp extends Device<ZigbeeLampModel> {
@@ -146,20 +145,23 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Angeschaltet: " + (ref.watch(ZigbeeLampModel.stateProvider(widget.device.id)) ? "Ja" : "Nein")),
+          title: Text("Angeschaltet: ${ref.watch(ZigbeeLampModel.stateProvider(widget.device.id)) ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verfügbar: " + (ref.watch(ZigbeeModel.availableProvider(widget.device.id)) ? "Ja" : "Nein")),
-        ),
-        ListTile(
-          title:
-              Text("Verbindungsqualität: " + (ref.watch(ZigbeeModel.linkQualityProvider(widget.device.id)).toString())),
+          title: Text("Verfügbar: ${ref.watch(ZigbeeModel.availableProvider(widget.device.id)) ? "Ja" : "Nein"}"),
         ),
         ListTile(
           title:
-              Text("Helligkeit " + ref.watch(ZigbeeLampModel.brightnessProvider(widget.device.id)).toStringAsFixed(0)),
+              Text("Verbindungsqualität: ${ref.watch(ZigbeeModel.linkQualityProvider(widget.device.id))}"),
+        ),
+        ListTile(
+          title:
+              Text("Helligkeit ${ref.watch(ZigbeeLampModel.brightnessProvider(widget.device.id)).toStringAsFixed(0)}"),
           subtitle: GestureDetector(
             child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                  trackShape: GradientRoundedRectSliderTrackShape(
+                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
               child: Consumer(
                 builder: (final context, final ref, final child) {
                   final brightness = ref.watch(_brightnessProvider(widget.device));
@@ -175,26 +177,25 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
                   );
                 },
               ),
-              data: SliderTheme.of(context).copyWith(
-                  trackShape: GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
             ),
             onTapCancel: () =>
                 changeBrightness(ref.watch(ZigbeeLampModel.brightnessProvider(widget.device.id)).toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Farbtemparatur " +
-              (ref.watch(ZigbeeLampModel.colorTempProvider(widget.device.id)) - 204).toStringAsFixed(0)),
+          title: Text("Farbtemparatur ${(ref.watch(ZigbeeLampModel.colorTempProvider(widget.device.id)) - 204).toStringAsFixed(0)}"),
           subtitle: GestureDetector(
             child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                  trackShape: const GradientRoundedRectSliderTrackShape(
+                      LinearGradient(colors: [Color.fromARGB(255, 255, 209, 163), Color.fromARGB(255, 255, 147, 44)]))),
               child: Consumer(
                 builder: (final context, final ref, final child) {
-                  final _colorTempClampledProvider = Provider<double>((final ref) {
+                  final colorTempClampledProvider = Provider<double>((final ref) {
                     final colorTemp = ref.watch(_colorTemp(widget.device));
                     return ((colorTemp - 204).clamp(0, 204)).toDouble();
                   });
-                  final colorTemp = ref.watch(_colorTempClampledProvider);
+                  final colorTemp = ref.watch(colorTempClampledProvider);
                   return Slider(
                     value: colorTemp,
                     onChanged: (final d) {
@@ -207,18 +208,13 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
                   );
                 },
               ),
-              data: SliderTheme.of(context).copyWith(
-                  trackShape: const GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Color.fromARGB(255, 255, 209, 163), Color.fromARGB(255, 255, 147, 44)]))),
             ),
             onTapCancel: () =>
                 changeColorTemp(ref.watch(ZigbeeLampModel.colorTempProvider(widget.device.id)).toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Übergangszeit " +
-              (ref.watch(ZigbeeLampModel.transitionTimeProvider(widget.device.id)) ?? 0).toStringAsFixed(1) +
-              " Sekunden"),
+          title: Text("Übergangszeit ${(ref.watch(ZigbeeLampModel.transitionTimeProvider(widget.device.id)) ?? 0).toStringAsFixed(1)} Sekunden"),
           subtitle: GestureDetector(
             child: Consumer(builder: (final context, final ref, final child) {
               final transitionTime = ref.watch(_transitionTime(widget.device));

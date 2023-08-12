@@ -47,15 +47,15 @@ class UpdateManager extends StateNotifier<VersionAndUrl?> {
         InitializationSettings(android: initializationSettingsAndroid);
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onSelectNotification: (final String? payload) {
-      if (payload != null) {
-        HelperMethods.openUrl(payload);
+        onDidReceiveNotificationResponse: (final details) {
+      if (details.payload != null) {
+        HelperMethods.openUrl(details.payload!);
       }
     });
   }
 
   static Future<void> checkForNewestVersion() async {
-    print("showUpdateNotification called " + (lastChecked?.toString() ?? "lastChecked is null"));
+    print("showUpdateNotification called ${lastChecked?.toString() ?? "lastChecked is null"}");
     // TODO: at a later point maybe schedule this notification to be shown every x hours
     // TODO: maybe also put the check every x hours in the settings
     if (lastChecked == null || DateTime.now().difference(lastChecked!).inHours > checkEveryHours) {

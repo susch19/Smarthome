@@ -145,7 +145,7 @@ extension Iterables<E> on Iterable<E> {
     return map;
   }
 
-  num minBy(num initial, final num Function(E element) func) {
+  num minBy(final num initial, final num Function(E element) func) {
     num min = initial;
     for (final item in [...this]) {
       final ret = func(item);
@@ -154,7 +154,7 @@ extension Iterables<E> on Iterable<E> {
     return min;
   }
 
-  num maxBy(num initial, final num Function(E element) func) {
+  num maxBy(final num initial, final num Function(E element) func) {
     num max = initial;
     for (final item in [...this]) {
       final ret = func(item);

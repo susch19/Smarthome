@@ -47,7 +47,7 @@ class BaseModel {
   final String friendlyName;
   final String typeName;
 
-  // @JsonKey(ignore: true)
+  // @JsonKey(includeFromJson: false, includeToJson: false)
   final List<String> typeNames;
 
   @protected

@@ -9,8 +9,6 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../device_manager.dart';
-
 class OsramPlug extends Device<ZigbeeSwitchModel> {
   OsramPlug(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
@@ -92,13 +90,13 @@ class OsramPlugScreen extends ConsumerWidget {
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Angeschaltet: " + (state ? "Ja" : "Nein")),
+          title: Text("Angeschaltet: ${state ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verfügbar: " + (available ? "Ja" : "Nein")),
+          title: Text("Verfügbar: ${available ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verbindungsqualität: " + (linkQuality.toString())),
+          title: Text("Verbindungsqualität: $linkQuality"),
         ),
       ],
     );

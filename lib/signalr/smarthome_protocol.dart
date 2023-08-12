@@ -13,7 +13,6 @@ import 'package:signalr_netcore/text_message_format.dart';
 import 'package:signalr_netcore/utils.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:smarthome/cloud/app_cloud_configuration.dart';
-import 'package:archive/archive_io.dart';
 
 class SmarthomeProtocol implements IHubProtocol {
   // Properties
@@ -56,7 +55,7 @@ class SmarthomeProtocol implements IHubProtocol {
 
         final inputWithoutLen = input.sublist(lastIndex + 20, lastIndex + len + 20);
         lastIndex = lastIndex + len + 20;
-        final decrypted;
+        final List<int> decrypted;
         try {
           decrypted = encrypter.decryptBytes(Encrypted(inputWithoutLen), iv: iv);
         } catch (e) {

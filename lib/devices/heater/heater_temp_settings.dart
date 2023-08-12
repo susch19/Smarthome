@@ -1,4 +1,3 @@
-import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
@@ -25,7 +24,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   int selected = 0;
   double _value = 21.0;
   String _annotationValue = '21.0';
-  late String initialDate;
+  late TimeOfDay initialDate;
 
   @override
   void initState() {
@@ -33,15 +32,15 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
     heaterConfigs = widget.configs;
     selected = widget.configs.bitOr((final x) => dayOfWeekToFlagMap[x.dayOfWeek]!);
     _setPointerValue(widget.timeTemp.item2!);
-    initialDate =
-        "${widget.timeTemp.item1!.hour.toString().padLeft(2, "0")}:${widget.timeTemp.item1!.minute.toString().padLeft(2, "0")}";
+    initialDate = widget.timeTemp.item1!;
+    //"${widget.timeTemp.item1!.hour.toString().padLeft(2, "0")}:${widget.timeTemp.item1!.minute.toString().padLeft(2, "0")}";
   }
 
   Future<bool> _onWillPop() async {
     if (!_saveNeeded) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subtitle1!.copyWith(color: theme.textTheme.caption!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!.copyWith(color: theme.textTheme.bodySmall!.color);
 
     return await (showDialog<bool>(
             context: context,
@@ -78,11 +77,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
         return true;
       }
       final configs = <HeaterConfig>[];
-      final time = initialDate.split(":");
-
-      final int hour = int.parse(time[0]);
-      final int minute = int.parse(time[1]);
-      final tod = TimeOfDay(hour: hour, minute: minute);
+      final tod = initialDate;
       for (int i = 0; i < 7; i++) {
         final flag = 1 << (i + 1);
 
@@ -120,6 +115,15 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
     });
   }
 
+  Future displayTimePicker(
+      final BuildContext context, final TimeOfDay initalTime, final Function(TimeOfDay time) selectedValue) async {
+    final time = await showTimePicker(context: context, initialTime: initalTime);
+
+    if (time != null) {
+      selectedValue(time);
+    }
+  }
+
   @override
   Widget build(final BuildContext context) {
     return Scaffold(
@@ -144,16 +148,22 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
               Wrap(
                 children: weekdayChips(),
               ),
-              DateTimePicker(
-                initialValue: initialDate,
-                type: DateTimePickerType.time,
-                textAlign: TextAlign.center,
-                onChanged: (final val) {
-                  initialDate = val;
-                  _saveNeeded = true;
-                },
-                style: const TextStyle(fontSize: 24),
+              Container(
+                margin: const EdgeInsets.only(top: 32.0),
+                child: ElevatedButton(
+                    onPressed: () => displayTimePicker(context, initialDate, ((final time) => initialDate = time)),
+                    child: Text("$initialDate")),
               ),
+              // DateTimePicker(
+              //   initialValue: initialDate,
+              //   type: DateTimePickerType.time,
+              //   textAlign: TextAlign.center,
+              //   onChanged: (final val) {
+              //     initialDate = val;
+              //     _saveNeeded = true;
+              //   },
+              //   style: const TextStyle(fontSize: 24),
+              // ),
               Container(
                 margin: const EdgeInsets.only(top: 16.0),
                 child: Stack(
@@ -309,7 +319,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
               showCheckmark: false,
               labelStyle: TextStyle(
                 color: (selected & (dayOfWeekStringToFlagMap[value] ?? 0) < 1
-                    ? Theme.of(context).textTheme.bodyText1!.color
+                    ? Theme.of(context).textTheme.bodyLarge!.color
                     : (Theme.of(context).colorScheme.secondary.computeLuminance() > 0.5 ? Colors.black : Colors.white)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
@@ -328,7 +338,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   static List<DropdownMenuItem> buildItems() {
     final menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
-      menuItems.add(DropdownMenuItem(child: Text(d.toStringAsFixed(1)), value: (d * 10).round()));
+      menuItems.add(DropdownMenuItem(value: (d * 10).round(), child: Text(d.toStringAsFixed(1))));
     }
     return menuItems;
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:smarthome/controls/controls_exporter.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/detail_property_info.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
@@ -23,38 +22,24 @@ class DetailValueStoreWidget extends ConsumerWidget {
     if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
       return Container();
     }
-    if (valueModel == null) {
-      return Text(
-        (e.displayName ?? "") + (e.unitOfMeasurement ?? ""),
-        style: e.textStyle?.toTextStyle(),
-      );
-    }
+
+    final text = Text(
+      (e.displayName ?? "") +
+          (valueModel?.getValueAsString(format: e.format, precision: e.precision ?? 1) ?? "") +
+          (e.unitOfMeasurement ?? ""),
+      style: e.textStyle?.toTextStyle(),
+    );
 
     Widget ret;
     if (e.editInfo != null) {
-      ret = device.getEditWidget(context, e, valueModel, ref);
-      // return ListTile(
-      //     leading: Text(
-      //       (e.displayName ?? ""),
-      //       style: e.textStyle?.toTextStyle(),
-      //     ),
-      //     title: device.getEditWidget(e, valueModel, ref));
-    } else {
-      ret = Text(
-        (e.displayName ?? "") +
-            valueModel.getValueAsString(format: e.format, precision: e.precision ?? 1) +
-            (e.unitOfMeasurement ?? ""),
-        style: e.textStyle?.toTextStyle(),
+      ret = Row(
+        children: [text, device.getEditWidget(context, e, valueModel, ref)],
       );
+      ret = device.getEditWidget(context, e, valueModel, ref);
+    } else {
+      ret = text;
     }
 
     return ret;
-
-    // return ListTile(
-    //   title: Text(
-    //     (e.displayName ?? "") + valueModel.getValueAsString(format: e.format) + (e.unitOfMeasurement ?? ""),
-    //     style: e.textStyle?.toTextStyle(),
-    //   ),
-    // );
   }
 }

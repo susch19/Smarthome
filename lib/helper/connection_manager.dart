@@ -2,14 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:json_annotation/json_annotation.dart';
 // import 'package:signalr_core/signalr_core.dart';
 // import 'package:signalr_core/signalr_core.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import 'package:logging/logging.dart';
 import 'package:smarthome/cloud/app_cloud_configuration.dart';
 import 'package:smarthome/devices/base_model.dart';
-import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
@@ -68,7 +66,7 @@ class ApiService {
   Future<AppCloudConfiguration?> getSecurityConfig(final String host, final int port) async {
     try {
       final response =
-          await http.get(Uri(scheme: "http", host: host, port: port, path: "/Security")).timeout(Duration(seconds: 10));
+          await http.get(Uri(scheme: "http", host: host, port: port, path: "/Security")).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         return AppCloudConfiguration.fromJson(jsonDecode(response.body));
       }

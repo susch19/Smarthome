@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/generic/layout_base_property_info.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';

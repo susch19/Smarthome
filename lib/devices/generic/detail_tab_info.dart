@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:quiver/core.dart';
 import 'package:smarthome/devices/generic/linked_device_tab.dart';
 
 part 'detail_tab_info.g.dart';

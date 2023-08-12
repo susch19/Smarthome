@@ -7,8 +7,6 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../device_manager.dart';
-
 class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
   TradfriControlOutlet(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
 
@@ -98,13 +96,13 @@ class _TradfriControlOutletScreenState extends ConsumerState<TradfriControlOutle
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Angeschaltet: " + (model.state ? "Ja" : "Nein")),
+          title: Text("Angeschaltet: ${model.state ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verfügbar: " + (model.available ? "Ja" : "Nein")),
+          title: Text("Verfügbar: ${model.available ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verbindungsqualität: " + (model.linkQuality.toString())),
+          title: Text("Verbindungsqualität: ${model.linkQuality}"),
         ),
       ],
     );

@@ -62,7 +62,7 @@ class GaugeEdit {
       stops = [0.3, 0.5, 1];
     }
 
-    List<Tuple3<String, String, String>> displays = [];
+    final List<Tuple3<String, String, String>> displays = [];
     if (info.raw.containsKey("Displays")) {
       final displayInfos = info.raw["Displays"] as List<dynamic>;
       for (final di in displayInfos) {
@@ -230,7 +230,7 @@ class GaugeEdit {
   }
 
   static void _setPointerValue(final double value, final int deviceId, final String key, final WidgetRef ref) {
-    final curValue = ref.read(_newValueProvider(Tuple2(deviceId, key)).state);
+    final curValue = ref.read(_newValueProvider(Tuple2(deviceId, key)).notifier);
     curValue.state = (value.clamp(5, 35) * 10).roundToDouble() / 10;
   }
 }

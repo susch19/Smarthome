@@ -1,6 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 // ignore: unnecessary_import
-import 'package:smarthome/devices/generic/enums.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/layout_base_property_info.dart';
 

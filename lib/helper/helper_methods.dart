@@ -1,7 +1,7 @@
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class HelperMethods {
   static void openUrl(final String url) async {
-    await launch(url);
+    await launchUrlString(url);
   }
 }

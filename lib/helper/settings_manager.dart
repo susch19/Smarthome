@@ -47,8 +47,6 @@ class SettingsManager extends StateNotifier<Settings> {
   }
 
   static void setGroupingEnabled(final bool newState) {
-    if (_instance == null) return;
-
     final state = _instance;
 
     state.state = state.state.copyWith(groupingEnabled: newState);

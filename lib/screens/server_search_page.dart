@@ -53,12 +53,12 @@ class ServerSearchScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
+                          padding: const EdgeInsets.only(top: 16.0),
                           child: const SizedBox(
                             width: 40.0,
                             height: 40.0,
                             child: CircularProgressIndicator(),
                           ),
-                          padding: const EdgeInsets.only(top: 16.0),
                         )
                       ],
                     )
@@ -113,8 +113,8 @@ class ServerSearchScreen extends ConsumerWidget {
           ],
         ),
         Container(
-          child: e.debug ? const Text("❗ Testserver, betreten auf eigene Gefahr") : Container(),
           margin: const EdgeInsets.symmetric(vertical: 8.0),
+          child: e.debug ? const Text("❗ Testserver, betreten auf eigene Gefahr") : Container(),
         ),
         Consumer(
           builder: (final context, final ref, final child) {

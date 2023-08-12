@@ -12,9 +12,9 @@ class AppCloudConfiguration {
   String key;
   String id;
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   bool loadedFromPersistentStorage = false;
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   late Uint8List keyBytes;
 
   AppCloudConfiguration(
