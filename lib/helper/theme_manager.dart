@@ -67,12 +67,14 @@ class ThemeManager {
           padding: const EdgeInsetsDirectional.all(4),
           secondaryLabelStyle: const TextStyle(color: Colors.green),
           secondarySelectedColor: Colors.indigo.withOpacity(0.95),
-          selectedColor: Colors.indigo), colorScheme: ColorScheme.light(
-          primary: Colors.lightBlue.shade200,
-          secondary: Colors.tealAccent.shade100,
-          background: Colors.indigo.shade200,
-          surface: indigoColor,
-          onPrimary: Colors.black).copyWith(primarySwatch: Colors.lightBlue, background: indigoColor.withOpacity(0.95)),
+          selectedColor: Colors.indigo),
+      colorScheme: ColorScheme.light(
+              primary: Colors.lightBlue.shade200,
+              secondary: Colors.tealAccent.shade100,
+              background: Colors.indigo.shade200,
+              surface: indigoColor,
+              onPrimary: Colors.black)
+          .copyWith(primary: Colors.lightBlue, background: indigoColor.withOpacity(0.95)),
     );
   }
 

@@ -108,7 +108,8 @@ abstract class Device<T extends BaseModel> {
         child: Center(
           child: SvgPicture.memory(
             list,
-            theme: SvgTheme(currentColor: brightness == Brightness.light ? Colors.black : Colors.white),
+            colorFilter:
+                ColorFilter.mode(brightness == Brightness.light ? Colors.black : Colors.white, BlendMode.srcIn),
           ),
         ),
       );
@@ -116,7 +117,7 @@ abstract class Device<T extends BaseModel> {
       return Center(
         child: SvgPicture.memory(
           list,
-          theme: SvgTheme(currentColor: brightness == Brightness.light ? Colors.black : Colors.white),
+          colorFilter: ColorFilter.mode(brightness == Brightness.light ? Colors.black : Colors.white, BlendMode.srcIn),
         ),
       );
     }
