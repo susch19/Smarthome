@@ -8,7 +8,7 @@ part 'base_model.g.dart';
 
 final baseModelProvider = StateProvider<List<BaseModel>>((final ref) => []);
 
-final baseModelASMapProvider = StateProvider<Map<int, BaseModel>>(
+final baseModelASMapProvider = Provider<Map<int, BaseModel>>(
     (final ref) => ref.watch(baseModelProvider).toMap((final bm) => bm.id, (final bm) => bm));
 
 final baseModelFriendlyNamesMapProvider = Provider<Map<int, String>>((final ref) {

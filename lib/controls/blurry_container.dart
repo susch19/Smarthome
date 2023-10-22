@@ -3,17 +3,21 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/helper/preference_manager.dart';
 
-const double kBlur = 1.0;
 const EdgeInsetsGeometry kDefaultPadding = EdgeInsets.all(0);
 const EdgeInsetsGeometry kDefaultMargin = EdgeInsets.all(0);
 const Color kDefaultColor = Colors.transparent;
 const BorderRadius kBorderRadius = BorderRadius.all(Radius.circular(10));
 const BlendMode kblendMode = BlendMode.srcOver;
 
-class BlurryContainer extends StatelessWidget {
+final blurryContainerBlurProvider = StateProvider<double>((ref) {
+  return PreferencesManager.instance.getDouble("BlurryContainerBlur") ?? 0;
+});
+
+class BlurryContainer extends ConsumerWidget {
   final Widget? child;
-  final double blur;
   final EdgeInsetsGeometry padding;
   final Color color;
   final EdgeInsetsGeometry margin;
@@ -22,7 +26,6 @@ class BlurryContainer extends StatelessWidget {
 
   const BlurryContainer(
       {this.child,
-      this.blur = 5,
       this.padding = kDefaultPadding,
       this.color = kDefaultColor,
       this.borderRadius = kBorderRadius,
@@ -32,19 +35,20 @@ class BlurryContainer extends StatelessWidget {
       : super(key: key);
 
   @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final blur = ref.watch(blurryContainerBlurProvider);
     return ClipRRect(
       borderRadius: borderRadius,
-      child: BackdropFilter(
-        blendMode: blendMode,
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: padding,
-          margin: margin,
-          color: color,
-          child: child,
-        ),
+      // child: BackdropFilter(
+      //   blendMode: blendMode,
+      //   filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+      child: Container(
+        padding: padding,
+        margin: margin,
+        color: color,
+        child: child,
       ),
+      // ),
     );
   }
 }

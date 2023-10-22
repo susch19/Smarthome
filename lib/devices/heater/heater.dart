@@ -9,6 +9,7 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
+import 'package:smarthome/devices/heater/log_screen.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
@@ -196,6 +197,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
         res.item2.map((final f) => jsonEncode(f)).toList(), ref.read(hubConnectionProvider));
   }
 
+  _pushLogView(final BuildContext context) async {
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (final BuildContext context) => LogScreen(HeaterModel.logsProvider, heater.id),
+            fullscreenDialog: true));
+  }
+
   buildColumnView(final double width, final double value) {
     return Column(
       children: [
@@ -255,10 +264,12 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                     Container(
                         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
                         child: const Icon(Icons.receipt)),
-                    Consumer(builder: (final context, final ref, final child) {
-                      final version = ref.watch(HeaterModel.versionProvider(widget.device.id));
-                      return Text(version);
-                    }),
+                    Consumer(
+                      builder: (final context, final ref, final child) {
+                        final version = ref.watch(HeaterModel.versionProvider(widget.device.id));
+                        return Text(version);
+                      },
+                    ),
                   ],
                 ),
               )
@@ -383,6 +394,24 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 TextButton(
                   onPressed: () => _pushTempSettings(context),
                   child: const Text("Temperatur Einstellungen"),
+                ),
+              ],
+            ),
+          ),
+        ),
+        BlurryCard(
+          margin: const EdgeInsets.only(left: 8, right: 8, top: 8),
+          child: MaterialButton(
+            onPressed: () => _pushLogView(context),
+            child: Row(
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: const Icon(Icons.settings),
+                ),
+                TextButton(
+                  onPressed: () => _pushLogView(context),
+                  child: const Text("Logs"),
                 ),
               ],
             ),

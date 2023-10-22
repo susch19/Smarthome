@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 // import 'package:file_picker/file_picker.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,10 +30,70 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:tuple/tuple.dart';
 
 import 'controls/expandable_fab.dart';
 import 'helper/connection_manager.dart';
+
+part 'main.g.dart';
+
+//Implement https://developer.android.com/develop/ui/views/device-control as a seperate build
+//Because having support for android kitkat is still wanted
+
+final _brightnessChangeProvider =
+    ChangeNotifierProvider.family<AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
+  return AdaptiveThemeModeWatcher(b);
+});
+
+final _addItemSelectorProvider = StateProvider.family<bool, int>(
+  (ref, arg) {
+    return false;
+  },
+);
+
+@riverpod
+Brightness brightness(final BrightnessRef ref, final AdaptiveThemeManager b) {
+  final brightness = ref.watch(_brightnessChangeProvider(b)).brightness;
+  return brightness;
+}
+
+final _searchProvider = StateProvider<String>(((final ref) => ""));
+
+final searchTextProvider = StateProvider<String>(((final ref) {
+  final enabled = ref.watch(searchEnabledProvider);
+  final text = ref.watch(_searchProvider);
+  if (!enabled) return "";
+  return text;
+}));
+final searchEnabledProvider = StateProvider<bool>(((final ref) => false));
+
+@riverpod
+Widget getTitleWidget(final GetTitleWidgetRef ref) {
+  final enabled = ref.watch(searchEnabledProvider);
+
+  if (!enabled) return const Text("Smart Home App");
+
+  return TextField(
+      decoration: const InputDecoration(hintText: "Suche"),
+      // onSubmitted: (x) => _searchProducts(x, 1),
+      autofocus: true,
+      onChanged: (final s) => ref.watch(searchTextProvider.notifier).state = s);
+}
+
+@riverpod
+List<Device> filteredDevices(final FilteredDevicesRef ref) {
+  final searchText = ref.watch(searchTextProvider).toLowerCase();
+
+  final devices = ref.watch(sortedDeviceProvider);
+  if (searchText.isEmpty) return devices;
+
+  return devices
+      .where((final element) =>
+          element.typeName.toLowerCase().contains(searchText) ||
+          (ref.read(element.baseModelTProvider(element.id))?.friendlyName.toLowerCase().contains(searchText) ?? false))
+      .toList();
+}
 
 class CustomScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -65,17 +126,6 @@ void main() async {
   });
   UpdateManager.initialize();
 }
-
-final _brightnessChangeProvider =
-    ChangeNotifierProvider.family<AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
-  return AdaptiveThemeModeWatcher(b);
-});
-
-final brightnessProvider = Provider.family<Brightness, AdaptiveThemeManager>((final ref, final b) {
-  final brightness = ref.watch(_brightnessChangeProvider(b)).brightness;
-  print("Brighntess changed");
-  return brightness;
-});
 
 class AdaptiveThemeModeWatcher extends ChangeNotifier {
   late Brightness brightness;
@@ -145,9 +195,13 @@ class InfoIconProvider extends StateNotifier<IconData> with WidgetsBindingObserv
 
   @override
   void didChangeAppLifecycleState(final AppLifecycleState state) {
-    if (state.index == 0) {
+    if (kIsWeb || !(defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+      return;
+    }
+
+    if (state == AppLifecycleState.resumed) {
       ref.read(hubConnectionProvider.notifier).newHubConnection();
-    } else if (state.index == 2) {
+    } else if (state == AppLifecycleState.paused) {
       this.state = Icons.error_outline;
       final connection = ref.watch(hubConnectionProvider);
       // if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
@@ -168,6 +222,7 @@ final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
 
 final maxCrossAxisExtentProvider = StateProvider<double>((final _) =>
     PreferencesManager.instance.getDouble("DashboardCardSize") ?? (!kIsWeb && Platform.isAndroid ? 370 : 300));
+
 final _groupCollapsedProvider = StateProvider.family<bool, String>((final _, final __) => false);
 
 class MyHomePage extends ConsumerWidget {
@@ -175,8 +230,10 @@ class MyHomePage extends ConsumerWidget {
   final String? title;
 
   Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
-    final deviceGroupsRaw = ref.watch(sortedDeviceProvider);
-    final deviceGroups = deviceGroupsRaw.groupManyBy((final x) => ref.watch(Device.groupsByIdProvider(x.id)));
+    final deviceGroupsRaw = ref.watch(filteredDevicesProvider);
+    final deviceGroupsMap = deviceGroupsRaw.groupManyBy((final x) => ref.watch(Device.groupsByIdProvider(x.id)));
+    final deviceGroups = deviceGroupsMap.entries.sorted((final a, final b) => b.value.length.compareTo(a.value.length));
+
     final versionAndUrl = ref.watch(versionAndUrlProvider);
     if (versionAndUrl != null) {
       WidgetsBinding.instance.addPostFrameCallback((final _) async {
@@ -194,21 +251,18 @@ class MyHomePage extends ConsumerWidget {
               return Consumer(
                 builder: (final context, final ref, final child) {
                   return MasonryGridView.extent(
-                    maxCrossAxisExtent:
-                        ref.watch(maxCrossAxisExtentProvider), //!kIsWeb && Platform.isAndroid ? 370 : 300,
+                    maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
                     itemCount: deviceGroups.length,
                     itemBuilder: (final context, final i) {
                       final deviceGroup = deviceGroups.elementAt(i);
-                      if (deviceGroup == null) return const Text("Empty Entry");
+                      //if (deviceGroup == null) return const Text("Empty Entry");
                       return Container(
                         margin: const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
                         child: getDashboardCard(deviceGroup, ref),
                       );
                     },
-
-                    // staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1)
                   );
                 },
               );
@@ -222,7 +276,7 @@ class MyHomePage extends ConsumerWidget {
 
   Widget buildBody(final BuildContext context, final WidgetRef ref) {
     ref.watch(valueStoreProvider);
-    final devices = ref.watch(sortedDeviceProvider);
+    final devices = ref.watch(filteredDevicesProvider);
     return Container(
       decoration: ThemeManager.getBackgroundDecoration(context),
       child: RefreshIndicator(
@@ -396,9 +450,15 @@ class MyHomePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Smart Home App"),
+        title: ref.watch(getTitleWidgetProvider),
         leading: IconButton(icon: Icon(ref.watch(infoIconProvider)), onPressed: () => refresh(ref)),
         actions: <Widget>[
+          IconButton(
+              onPressed: () {
+                final notifier = ref.watch(searchEnabledProvider.notifier);
+                notifier.state = !notifier.state;
+              },
+              icon: ref.watch(searchEnabledProvider) ? const Icon(Icons.cancel_outlined) : const Icon(Icons.search)),
           PopupMenuButton<String>(
             child: const Icon(Icons.sort),
             onSelected: (final v) => selectedSort(ref, v),
@@ -483,6 +543,9 @@ class MyHomePage extends ConsumerWidget {
 
   void removeDevice(final BuildContext context, final WidgetRef ref, final int id, {final bool pop = true}) {
     if (pop) Navigator.pop(context);
+
+    final devices = ref.read(deviceProvider.notifier);
+    devices.removeDevice(id);
   }
 
   renameDevice(final BuildContext context, final WidgetRef ref, final Device x) {
@@ -533,11 +596,25 @@ class MyHomePage extends ConsumerWidget {
     for (final dev in serverDevicesList) {
       if (!devices.any((final x) => x.id == dev.id)) {
         devicesToSelect.add(
-          SimpleDialogOption(
-            child: Text("${dev.friendlyName ?? dev.id.toString()}: ${dev.typeName}"),
-            onPressed: () async {
-              await addDevice(dev, ref);
-              Navigator.pop(context);
+          Consumer(
+            builder: (final context, final ref, final child) {
+              final selected = ref.watch(_addItemSelectorProvider(dev.id));
+              return SimpleDialogOption(
+                child: Row(
+                  children: [
+                    Checkbox(
+                        value: selected,
+                        onChanged: (c) {
+                          ref.watch(_addItemSelectorProvider(dev.id).notifier).state = !selected;
+                        }),
+                    Text(dev.friendlyName ?? dev.id.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(": ${dev.typeName}")
+                  ],
+                ),
+                onPressed: () async {
+                  ref.watch(_addItemSelectorProvider(dev.id).notifier).state = !selected;
+                },
+              );
             },
           ),
         );
@@ -547,12 +624,28 @@ class MyHomePage extends ConsumerWidget {
       devicesToSelect.insert(
         0,
         SimpleDialogOption(
-          child: const Text("Subscribe to all"),
+          child: const Text("Select all"),
           onPressed: () async {
-            ref.read(deviceProvider.notifier).subscribeToDevices(serverDevicesList.map((final e) => e.id).toList());
-            // }
-            Navigator.pop(context);
+            for (final dev in serverDevicesList) {
+              ref.watch(_addItemSelectorProvider(dev.id).notifier).state = true;
+            }
           },
+        ),
+      );
+      devicesToSelect.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            SimpleDialogOption(
+              child: MaterialButton(
+                onPressed: () => subscribeTo(context, ref, serverDevicesList),
+                child: const Text("Subscribe to selected"),
+              ),
+              onPressed: () {
+                subscribeTo(context, ref, serverDevicesList);
+              },
+            ),
+          ],
         ),
       );
     }
@@ -562,6 +655,19 @@ class MyHomePage extends ConsumerWidget {
       children: devicesToSelect,
     );
     showDialog(context: context, builder: (final b) => dialog);
+  }
+
+  void subscribeTo(final BuildContext context, final WidgetRef ref, final List<DeviceOverviewModel> serverDevicesList) {
+    final List<int> selectedIds = [];
+    for (final dev in serverDevicesList) {
+      final notifier = ref.read(_addItemSelectorProvider(dev.id).notifier);
+      if (notifier.state) {
+        selectedIds.add(dev.id);
+        notifier.state = false;
+      }
+    }
+    ref.read(deviceProvider.notifier).subscribeToDevices(selectedIds);
+    Navigator.pop(context);
   }
 
   void refresh(final WidgetRef ref) {
