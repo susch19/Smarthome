@@ -95,10 +95,10 @@ class TradfriMotionSensorScreen extends ConsumerStatefulWidget {
   const TradfriMotionSensorScreen(this.device, {final Key? key}) : super(key: key);
 
   @override
-  _TradfriMotionSensorScreenState createState() => _TradfriMotionSensorScreenState();
+  TradfriMotionSensorScreenState createState() => TradfriMotionSensorScreenState();
 }
 
-class _TradfriMotionSensorScreenState extends ConsumerState<TradfriMotionSensorScreen> {
+class TradfriMotionSensorScreenState extends ConsumerState<TradfriMotionSensorScreen> {
   DateTime dateTime = DateTime.now();
 
   @override
