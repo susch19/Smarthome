@@ -18,6 +18,7 @@ class HeaterModel extends ConnectionBaseModel {
   final String? version;
   final bool? disableLed;
   final bool? disableHeating;
+  final String? logs;
 
   static final temperatureProvider = Provider.family<HeaterConfig?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
@@ -54,6 +55,11 @@ class HeaterModel extends ConnectionBaseModel {
     if (baseModel is! HeaterModel) return null;
     return baseModel.xiaomiTempSensor;
   });
+  static final logsProvider = Provider.family<String, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is! HeaterModel) return "";
+    return baseModel.logs ?? "";
+  });
 
   const HeaterModel(
     final int id,
@@ -67,6 +73,7 @@ class HeaterModel extends ConnectionBaseModel {
     this.version,
     this.disableLed,
     this.disableHeating,
+    this.logs,
   ) : super(id, friendlyName, typeName, isConnected);
 
   factory HeaterModel.fromJson(final Map<String, dynamic> json) => _$HeaterModelFromJson(json);
@@ -100,11 +107,12 @@ class HeaterModel extends ConnectionBaseModel {
       xiaomiTempSensor == other.xiaomiTempSensor &&
       currentCalibration == other.currentCalibration &&
       currentConfig == other.currentConfig &&
-      temperature == other.temperature;
+      temperature == other.temperature &&
+      logs == other.logs;
 
   @override
   int get hashCode => Object.hash(id, friendlyName, disableHeating, disableLed, version, xiaomiTempSensor,
-      currentCalibration, currentConfig, temperature);
+      currentCalibration, currentConfig, temperature, logs);
 
   HeaterModel copyWith(
       {final int? id,
@@ -117,19 +125,20 @@ class HeaterModel extends ConnectionBaseModel {
       final int? xiaomiTempSensor,
       final HeaterConfig? temperature,
       final HeaterConfig? currentConfig,
-      final HeaterConfig? currentCalibration}) {
+      final HeaterConfig? currentCalibration,
+      final String? logs}) {
     return HeaterModel(
-      id ?? this.id,
-      friendlyName ?? this.friendlyName,
-      typeName ?? this.typeName,
-      isConnected ?? this.isConnected,
-      temperature ?? this.temperature,
-      xiaomiTempSensor ?? this.xiaomiTempSensor,
-      currentConfig ?? this.currentConfig,
-      currentCalibration ?? this.currentCalibration,
-      version ?? this.version,
-      disableLed ?? this.disableLed,
-      disableHeating ?? this.disableHeating,
-    );
+        id ?? this.id,
+        friendlyName ?? this.friendlyName,
+        typeName ?? this.typeName,
+        isConnected ?? this.isConnected,
+        temperature ?? this.temperature,
+        xiaomiTempSensor ?? this.xiaomiTempSensor,
+        currentConfig ?? this.currentConfig,
+        currentCalibration ?? this.currentCalibration,
+        version ?? this.version,
+        disableLed ?? this.disableLed,
+        disableHeating ?? this.disableHeating,
+        logs ?? this.logs);
   }
 }

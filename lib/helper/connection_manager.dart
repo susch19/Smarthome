@@ -65,8 +65,9 @@ final cloudConfigProvider = FutureProvider<AppCloudConfiguration?>((final ref) a
 class ApiService {
   Future<AppCloudConfiguration?> getSecurityConfig(final String host, final int port) async {
     try {
-      final response =
-          await http.get(Uri(scheme: "http", host: host, port: port, path: "/Security")).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(Uri(scheme: "http", host: host, port: port, path: "/Security"))
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         return AppCloudConfiguration.fromJson(jsonDecode(response.body));
       }
@@ -206,7 +207,6 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
             // .configureLogging(Logger("SignalR - hub"))
             // .withHubProtocol(JsonHubProtocol())
             .withHubProtocol(SmarthomeProtocol())
-
             // .withHubProtocol(MessagePackHubProtocol())
             // .withAutomaticReconnect(PermanentRetryPolicy())
             .withAutomaticReconnect(

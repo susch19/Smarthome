@@ -13,7 +13,6 @@ const EdgeInsets defaultMargin = EdgeInsets.all(0);
 class BlurryCard extends StatelessWidget {
   final Widget? child;
   final BorderRadius borderRadius;
-  final double blur;
   final MaterialColor lightColor;
   final MaterialColor darkColor;
   final Color lightShadowColor;
@@ -23,7 +22,6 @@ class BlurryCard extends StatelessWidget {
       {final Key? key,
       this.child,
       this.borderRadius = defaultBorderRadius,
-      this.blur = 5,
       this.lightColor = defaultLightColor,
       this.darkColor = defaultBlackColor,
       this.lightShadowColor = defaultLightShadowColor,
@@ -41,7 +39,6 @@ class BlurryCard extends StatelessWidget {
           color: AdaptiveTheme.of(context).brightness == Brightness.light
               ? defaultLightShadowColor
               : defaultDarkShadowColor,
-          blur: blur,
           child: Card(
             color: Colors.transparent,
             shadowColor: Colors.transparent,

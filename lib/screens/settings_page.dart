@@ -119,6 +119,25 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 },
               ),
             ),
+            // ListTile(
+            //   leading: const Text("Dashboard unschärfe"),
+            //   title: Consumer(
+            //     builder: (final context, final ref, final child) {
+            //       return Slider(
+            //         value: ref.watch(blurryContainerBlurProvider),
+            //         max: 10,
+            //         divisions: 100,
+            //         onChangeEnd: (final value) {
+            //           ref.read(blurryContainerBlurProvider.notifier).state = value;
+            //           PreferencesManager.instance.setDouble("BlurryContainerBlur", value);
+            //         },
+            //         onChanged: (final a) {
+            //           ref.read(blurryContainerBlurProvider.notifier).state = a;
+            //         },
+            //       );
+            //     },
+            //   ),
+            // ),
             const Divider(),
             const ListTile(
               title: Text(
