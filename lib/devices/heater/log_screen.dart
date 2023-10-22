@@ -11,8 +11,8 @@ class LogScreen extends ConsumerWidget {
   LogScreen(this._logs, this._id, {final Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final _logsArray = ref.watch(_logs(_id)).split('\n');
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final logsArray = ref.watch(_logs(_id)).split('\n');
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -20,7 +20,7 @@ class LogScreen extends ConsumerWidget {
       ),
       body: Container(
           decoration: ThemeManager.getBackgroundDecoration(context),
-          child: ListView(padding: const EdgeInsets.all(16.0), children: _logsArray.map(_logLineWidget).toList())),
+          child: ListView(padding: const EdgeInsets.all(16.0), children: logsArray.map(_logLineWidget).toList())),
     );
   }
 

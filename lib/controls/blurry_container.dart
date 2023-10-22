@@ -1,7 +1,5 @@
 //Copied from https://github.com/ranjeetrocky/blurry_container
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/helper/preference_manager.dart';
@@ -12,7 +10,7 @@ const Color kDefaultColor = Colors.transparent;
 const BorderRadius kBorderRadius = BorderRadius.all(Radius.circular(10));
 const BlendMode kblendMode = BlendMode.srcOver;
 
-final blurryContainerBlurProvider = StateProvider<double>((ref) {
+final blurryContainerBlurProvider = StateProvider<double>((final ref) {
   return PreferencesManager.instance.getDouble("BlurryContainerBlur") ?? 0;
 });
 
@@ -36,19 +34,14 @@ class BlurryContainer extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final blur = ref.watch(blurryContainerBlurProvider);
     return ClipRRect(
       borderRadius: borderRadius,
-      // child: BackdropFilter(
-      //   blendMode: blendMode,
-      //   filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
       child: Container(
         padding: padding,
         margin: margin,
         color: color,
         child: child,
       ),
-      // ),
     );
   }
 }

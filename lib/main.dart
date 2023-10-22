@@ -46,11 +46,7 @@ final _brightnessChangeProvider =
   return AdaptiveThemeModeWatcher(b);
 });
 
-final _addItemSelectorProvider = StateProvider.family<bool, int>(
-  (ref, arg) {
-    return false;
-  },
-);
+final _addItemSelectorProvider = StateProvider.family<bool, int>((final ref, final arg) => false);
 
 @riverpod
 Brightness brightness(final BrightnessRef ref, final AdaptiveThemeManager b) {
