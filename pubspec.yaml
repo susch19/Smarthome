@@ -7,7 +7,7 @@ description: Controlling Smarthome devices with AppBroker.
 # Both the version and the builder number may be overridden in flutter
 # build by specifying --build-name and --build-number, respectively.
 # Read more about versioning at semver.org.
-version: 1.2.2+0
+version: 1.2.3+0
 
 environment:
   sdk: ">=2.17.0"

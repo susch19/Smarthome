@@ -17,7 +17,7 @@ final versionAndUrlProvider = StateNotifierProvider<UpdateManager, VersionAndUrl
 });
 
 class UpdateManager extends StateNotifier<VersionAndUrl?> {
-  static final Version version = Version(1, 2, 2);
+  static final Version version = Version(1, 2, 3);
   static const int checkEveryHours = 16;
   static final GitHub gitHub = GitHub();
   static final RepositorySlug repositorySlug = RepositorySlug("susch19", "SmartHome");
@@ -115,51 +115,36 @@ class UpdateManager extends StateNotifier<VersionAndUrl?> {
     return v;
   }
 
-  static Future<bool> isNewVersionAvailable() async {
-    final newVersion = await _getNewVersion();
-    return _isNewVersionAvailable(newVersion);
-  }
-
-  static Future<bool> _isNewVersionAvailable(final Version? newVersion) async {
-    return newVersion != null && newVersion > version;
-  }
-
   static Future<VersionAndUrl?> getVersionAndUrl() async {
-    final v = await _getNewVersion();
-    if (v == null) return null;
+    final release = await gitHub.repositories.getLatestRelease(repositorySlug);
+    Version latestVersion;
+    try {
+      latestVersion = Version.parse(release.tagName!.replaceFirst(versionRegExp, ''));
+    } catch (e) {
+      return null;
+    }
 
-    final newVersionAvailable = await _isNewVersionAvailable(v);
+    final asset = _extractUrl(release);
 
-    if (newVersionAvailable) {
-      return VersionAndUrl(v, false, await _newVersionUrl());
+    if (asset != null && latestVersion > version) {
+      return VersionAndUrl(latestVersion, false, asset.browserDownloadUrl);
     } else {
-      return VersionAndUrl(v, true, null);
+      return VersionAndUrl(latestVersion, true, null);
     }
   }
 
-  static Future<Version?> _getNewVersion() {
-    return gitHub.repositories.listTags(repositorySlug).asyncMap((final element) {
-      try {
-        return Version.parse(element.name.replaceFirst(versionRegExp, ''));
-      } catch (e) {
-        // TODO: log
-        return null;
-      }
-    }).firstWhere((final element) => (element ?? Version(0, 0, 0)) > version, orElse: () => version);
-  }
-
-  static Future<String?> _newVersionUrl() async {
-    final release = await gitHub.repositories.getLatestRelease(repositorySlug);
+  static ReleaseAsset? _extractUrl(final Release release) {
     return release.assets?.firstWhere((final element) {
+      if (element.name == null) return false;
       if (Platform.isAndroid) {
-        return element.contentType == "application/vnd.android.package-archive";
+        return element.name!.contains("Android");
       } else if (Platform.isWindows) {
-        return element.contentType == "application/zip";
+        return element.name!.contains("Windows");
       } else if (Platform.isLinux) {
-        return element.contentType == "application/gzip";
+        return element.name!.contains("Linux");
       } else {
         return false;
       }
-    }).browserDownloadUrl;
+    });
   }
 }
