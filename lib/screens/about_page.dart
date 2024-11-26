@@ -11,7 +11,7 @@ import 'package:smarthome/models/version_and_url.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AboutPage extends ConsumerWidget {
-  const AboutPage({final Key? key}) : super(key: key);
+  const AboutPage({super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
@@ -24,7 +24,9 @@ class AboutPage extends ConsumerWidget {
   }
 
   Widget buildBody(final BuildContext context, final WidgetRef ref) {
-    final iconColor = AdaptiveTheme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
+    final iconColor = AdaptiveTheme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
 
     Future<String> getBranch() async {
       final head = await rootBundle.loadString('.git/HEAD');
@@ -89,7 +91,8 @@ class AboutPage extends ConsumerWidget {
           ),
           FutureBuilder<VersionAndUrl?>(
               future: UpdateManager.getVersionAndUrl(),
-              builder: (final context, final AsyncSnapshot<VersionAndUrl?> snapshot) {
+              builder: (final context,
+                  final AsyncSnapshot<VersionAndUrl?> snapshot) {
                 return ListTile(
                     title: Row(children: [
                       Text(UpdateManager.getVersionString(snapshot.data)),
@@ -128,14 +131,17 @@ class AboutPage extends ConsumerWidget {
               width: 32,
             ),
             title: const Text("Schau doch mal in den Code auf GitHub rein"),
-            onTap: () => HelperMethods.openUrl("https://github.com/susch19/smarthome"),
+            onTap: () =>
+                HelperMethods.openUrl("https://github.com/susch19/smarthome"),
           ),
           const Divider(),
           ListTile(
-            leading: SvgPicture.asset("assets/vectors/smarthome_icon.svg", width: 32),
-            title: const Text("Wer hat dieses schicke Icon gemacht? Finde es heraus!"),
-            onTap: () =>
-                HelperMethods.openUrl("https://iconarchive.com/show/flatwoken-icons-by-alecive/Apps-Home-icon.html"),
+            leading: SvgPicture.asset("assets/vectors/smarthome_icon.svg",
+                width: 32),
+            title: const Text(
+                "Wer hat dieses schicke Icon gemacht? Finde es heraus!"),
+            onTap: () => HelperMethods.openUrl(
+                "https://iconarchive.com/show/flatwoken-icons-by-alecive/Apps-Home-icon.html"),
           ),
           // Divider(),
           // ListTile(

@@ -12,5 +12,12 @@ class ServerRecord {
   DateTime lastChecked;
 
   ServerRecord(
-      this.name, this.clusterId, this.fqdn, this.reachableAddresses, this.minAppVersion, this.debug, this.lastChecked);
+    this.name,
+    this.clusterId,
+    this.fqdn,
+    this.reachableAddresses,
+    this.minAppVersion,
+    this.debug,
+    this.lastChecked,
+  );
 }

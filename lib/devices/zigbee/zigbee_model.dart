@@ -11,15 +11,18 @@ class ZigbeeModel extends ConnectionBaseModel {
   final DateTime lastReceived;
   final int linkQuality;
 
-  static final availableProvider = Provider.family<bool, int>((final ref, final id) {
+  static final availableProvider =
+      Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeModel).available;
   });
-  static final lastReceivedProvider = Provider.family<DateTime, int>((final ref, final id) {
+  static final lastReceivedProvider =
+      Provider.family<DateTime, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeModel).lastReceived;
   });
-  static final linkQualityProvider = Provider.family<int, int>((final ref, final id) {
+  static final linkQualityProvider =
+      Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeModel).linkQuality;
   });
@@ -27,9 +30,10 @@ class ZigbeeModel extends ConnectionBaseModel {
   @override
   bool get isConnected => available;
 
-  const ZigbeeModel(super.id, super.friendlyName, super.typeName, super.isConnected, this.available, this.lastReceived,
-      this.linkQuality);
-  factory ZigbeeModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeModelFromJson(json);
+  const ZigbeeModel(super.id, super.friendlyName, super.typeName,
+      super.isConnected, this.available, this.lastReceived, this.linkQuality);
+  factory ZigbeeModel.fromJson(final Map<String, dynamic> json) =>
+      _$ZigbeeModelFromJson(json);
 
   @override
   Map<String, dynamic> toJson() => _$ZigbeeModelToJson(this);
@@ -58,5 +62,6 @@ class ZigbeeModel extends ConnectionBaseModel {
       linkQuality == other.linkQuality;
 
   @override
-  int get hashCode => Object.hash(super.hashCode, available, lastReceived, linkQuality);
+  int get hashCode =>
+      Object.hash(super.hashCode, available, lastReceived, linkQuality);
 }

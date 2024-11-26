@@ -1,41 +1,44 @@
 // ignore_for_file: unused_import
 
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:synchronized/synchronized.dart';
-import 'package:tuple/tuple.dart';
 
+part 'store_service.g.dart';
 // final valueStoreProvider = StateNotifierProvider<StoreService, List<ValueStore>>((final ref) => StoreService());
 
 // final _valueStoreProvider = StateProvider<Map<int, List<ValueStore>>>((final ref) {
 //   StoreService(ref);
 //   return StoreService._stores;
 // });
-final valueStoreProvider = StateNotifierProvider<StoreService, Map<int, List<ValueStore>>>((final ref) {
-  return StoreService();
-});
 
-final valueStoresPerIdProvider = Provider.family<List<ValueStore>?, int>((final ref, final id) {
-  final stores = ref.watch(valueStoreProvider);
+@riverpod
+List<ValueStore>? valueStoresPerId(final Ref ref, final int id) {
+  final stores = ref.watch(stateServiceProvider);
   return stores[id];
-});
+}
 
-final valueStoreChangedProvider =
-    ChangeNotifierProvider.family<ValueStore?, Tuple2<String, int>>((final ref, final key) {
-  final stores = ref.watch(valueStoresPerIdProvider(key.item2));
-  return stores?.firstOrNull((final e) => e.key == key.item1);
-});
+@riverpod
+ValueStore? valueStoreChanged(final Ref ref, final String key, final int id) {
+  final stores = ref.watch(valueStoresPerIdProvider(id));
+  return stores?.firstOrDefault((final e) => e.key == key);
+}
 
-class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
-  StoreService() : super({}) {
-    _instance = this;
+@Riverpod(keepAlive: true)
+class StateService extends _$StateService {
+  // static late Ref<Map<int, List<ValueStore>>> _ref;
+  // static late StateService _instance;
+
+  @override
+  Map<int, List<ValueStore>> build() {
+    // _instance = this;
+    // _ref = ref;
+    return {};
   }
-
-  static late StoreService _instance;
 
   // static final Map<Type, Widget Function(ValueProvider provider)> getWidgetFor = {
   //   TemperatureStore: (vp) {
@@ -61,9 +64,9 @@ class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
   //       ),
   // };
 
-  static final lock = Lock();
-  static bool updateAndGetStores(final int deviceId, final Map<String, dynamic> json) {
-    final Map<String, ValueStore> stores = (_instance.state[deviceId] ?? []).toMap((final e) => e.key, (final e) => e);
+  bool updateAndGetStores(final int deviceId, final Map<String, dynamic> json) {
+    final Map<String, ValueStore> stores =
+        (state[deviceId] ?? []).toMap((final e) => e.key, (final e) => e);
     bool changed = false;
     bool rebuild = false;
     for (final item in json.keys) {
@@ -82,23 +85,31 @@ class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
 
     for (final item in json.keys) {
       if (rebuild) {
-        stores[item] = ValueStore(deviceId, json[item], item, Command.None);
+        final val = getValueFromJson(json[item]);
+        if (val.runtimeType == DateTime) {
+          stores[item] =
+              ValueStore<DateTime>(deviceId, val, item, Command2.none);
+        } else {
+          stores[item] = ValueStore(deviceId, val, item, Command2.none);
+        }
         changed = true;
       } else {
         final store = stores[item]!;
-        store.setValue(json[item]);
+        store.value = getValueFromJson(json[item]);
       }
     }
 
     if (changed) {
-      lock.synchronized(() {
-        _instance.state[deviceId] = stores.values.toList();
-        print("$deviceId: ${_instance.state.length}");
+      state[deviceId] = stores.values.toList();
 
-        _instance.state = {..._instance.state};
-      });
+      state = {...state};
     }
     return changed;
+  }
+
+  static dynamic getValueFromJson(final dynamic val) {
+    if (val.runtimeType == String) return DateTime.tryParse(val) ?? val;
+    return val;
   }
 
   // static Map<String, ValueStore>? getStoresFor(final int id) {

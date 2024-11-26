@@ -31,6 +31,7 @@
 ///         License:   SIL (http://scripts.sil.org/OFL)
 ///         Homepage:  http://www.mfglabs.com/
 ///
+library;
 // ignore_for_file: constant_identifier_names
 
 import 'package:flutter/widgets.dart';
@@ -41,8 +42,10 @@ class SmarthomeIcons {
   static const _kFontFam = 'Smarthome';
 
   static const IconData temperature = IconData(0xe800, fontFamily: _kFontFam);
-  static const IconData wi_thermometer = IconData(0xe801, fontFamily: _kFontFam);
-  static const IconData xiaomiTempSensor = IconData(0xe802, fontFamily: _kFontFam);
+  static const IconData wi_thermometer =
+      IconData(0xe801, fontFamily: _kFontFam);
+  static const IconData xiaomiTempSensor =
+      IconData(0xe802, fontFamily: _kFontFam);
   static const IconData wi_hot = IconData(0xe803, fontFamily: _kFontFam);
   static const IconData wi_barometer = IconData(0xe804, fontFamily: _kFontFam);
   static const IconData fire = IconData(0xe805, fontFamily: _kFontFam);
@@ -86,12 +89,16 @@ class SmarthomeIcons {
   static const IconData power_swtich = IconData(0xe83e, fontFamily: _kFontFam);
   static const IconData paw = IconData(0xe84a, fontFamily: _kFontFam);
   static const IconData paper_plane_1 = IconData(0xf01d, fontFamily: _kFontFam);
-  static const IconData paper_plane_alt2 = IconData(0xf01e, fontFamily: _kFontFam);
-  static const IconData paper_plane_alt = IconData(0xf01f, fontFamily: _kFontFam);
+  static const IconData paper_plane_alt2 =
+      IconData(0xf01e, fontFamily: _kFontFam);
+  static const IconData paper_plane_alt =
+      IconData(0xf01f, fontFamily: _kFontFam);
   static const IconData gauge = IconData(0xf0e4, fontFamily: _kFontFam);
   static const IconData paper_plane = IconData(0xf1d8, fontFamily: _kFontFam);
-  static const IconData paper_plane_empty = IconData(0xf1d9, fontFamily: _kFontFam);
-  static const IconData connectdevelop = IconData(0xf20e, fontFamily: _kFontFam);
+  static const IconData paper_plane_empty =
+      IconData(0xf1d9, fontFamily: _kFontFam);
+  static const IconData connectdevelop =
+      IconData(0xf20e, fontFamily: _kFontFam);
   static const IconData battery_4 = IconData(0xf240, fontFamily: _kFontFam);
   static const IconData battery_3 = IconData(0xf241, fontFamily: _kFontFam);
   static const IconData battery_2 = IconData(0xf242, fontFamily: _kFontFam);

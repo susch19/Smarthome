@@ -21,13 +21,13 @@ class SimpleDialog {
             TextButton(
                 child: Text(cancelButtonText),
                 onPressed: () {
-                  Navigator.pop(context, "");
+                  Navigator.pop(context, false);
                   onCancel?.call();
                 }),
             TextButton(
                 child: Text(okButtonText),
                 onPressed: () {
-                  Navigator.pop(context, "");
+                  Navigator.pop(context, true);
                   onSubmitted?.call();
                 })
           ]);

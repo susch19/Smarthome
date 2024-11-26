@@ -16,7 +16,8 @@ class DeviceOverviewModel {
     this.friendlyName,
   );
 
-  factory DeviceOverviewModel.fromJson(final Map<String, dynamic> json) => _$DeviceOverviewModelFromJson(json);
+  factory DeviceOverviewModel.fromJson(final Map<String, dynamic> json) =>
+      _$DeviceOverviewModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$DeviceOverviewModelToJson(this);
 }

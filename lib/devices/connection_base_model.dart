@@ -9,15 +9,18 @@ part 'connection_base_model.g.dart';
 @immutable
 class ConnectionBaseModel extends BaseModel {
   final bool isConnected;
-  static final isConnectedProvider = Provider.family<bool?, int>((final ref, final id) {
+  static final isConnectedProvider =
+      Provider.family<bool?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is ConnectionBaseModel) return baseModel.isConnected;
     return null;
   });
 
-  const ConnectionBaseModel(super.id, super.friendlyName, super.typeName, this.isConnected);
+  const ConnectionBaseModel(
+      super.id, super.friendlyName, super.typeName, this.isConnected);
 
-  factory ConnectionBaseModel.fromJson(final Map<String, dynamic> json) => _$ConnectionBaseModelFromJson(json);
+  factory ConnectionBaseModel.fromJson(final Map<String, dynamic> json) =>
+      _$ConnectionBaseModelFromJson(json);
 
   @override
   Map<String, dynamic> toJson() => _$ConnectionBaseModelToJson(this);

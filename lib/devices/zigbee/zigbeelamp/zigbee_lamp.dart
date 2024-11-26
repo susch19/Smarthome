@@ -9,13 +9,14 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbee_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 import 'zigbee_lamp_model.dart';
 
 class ZigbeeLamp extends Device<ZigbeeLampModel> {
-  ZigbeeLamp(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
+  ZigbeeLamp(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   final stateProvider = Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
@@ -25,7 +26,10 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
 
   @override
   void navigateToDevice(final BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => ZigbeeLampScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (final BuildContext context) => ZigbeeLampScreen(this)));
   }
 
   @override
@@ -40,10 +44,12 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
             return MaterialButton(
               child: Text(
                 "An",
-                style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+                style: (state)
+                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                    : const TextStyle(),
               ),
-              onPressed: () =>
-                  sendToServer(sm.MessageType.Update, sm.Command.SingleColor, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(MessageType.update,
+                  Command2.singlecolor, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -53,9 +59,12 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
             return MaterialButton(
               child: Text(
                 "Aus",
-                style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+                style: !(state)
+                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                    : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.off, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -71,7 +80,7 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
 
 class ZigbeeLampScreen extends ConsumerStatefulWidget {
   final ZigbeeLamp device;
-  const ZigbeeLampScreen(this.device, {final Key? key}) : super(key: key);
+  const ZigbeeLampScreen(this.device, {super.key});
 
   @override
   _ZigbeeLampScreenState createState() => _ZigbeeLampScreenState();
@@ -80,47 +89,54 @@ class ZigbeeLampScreen extends ConsumerStatefulWidget {
 class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
   DateTime dateTime = DateTime.now();
 
-  final _brightnessProvider = StateProvider.family<int, Device<ZigbeeLampModel>>((final ref, final device) {
+  final _brightnessProvider =
+      StateProvider.family<int, Device<ZigbeeLampModel>>(
+          (final ref, final device) {
     final model = ref.watch(device.baseModelTProvider(device.id));
 
     return model?.brightness ?? 0;
   });
-  final _colorTemp = StateProvider.family<int, Device<ZigbeeLampModel>>((final ref, final device) {
+  final _colorTemp = StateProvider.family<int, Device<ZigbeeLampModel>>(
+      (final ref, final device) {
     final model = ref.watch(device.baseModelTProvider(device.id));
 
     return model?.colortemp ?? 0;
   });
-  final _transitionTime = StateProvider.family<double, Device<ZigbeeLampModel>>((final ref, final device) {
+  final _transitionTime = StateProvider.family<double, Device<ZigbeeLampModel>>(
+      (final ref, final device) {
     final model = ref.watch(device.baseModelTProvider(device.id));
 
     return model?.transitionTime ?? 0;
   });
 
-  void sliderChange(final Function f, final int dateTimeMilliseconds, [final double? val]) {
-    if (DateTime.now().isAfter(dateTime.add(Duration(milliseconds: dateTimeMilliseconds)))) {
+  void sliderChange(final Function f, final int dateTimeMilliseconds,
+      [final double? val]) {
+    if (DateTime.now()
+        .isAfter(dateTime.add(Duration(milliseconds: dateTimeMilliseconds)))) {
       Function.apply(f, val == null ? [] : [val]);
       dateTime = DateTime.now();
     }
   }
 
   void changeDelay(final double? delay) {
-    widget.device
-        .sendToServer(sm.MessageType.Options, sm.Command.Delay, [delay.toString()], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.options, Command2.delay,
+        [delay.toString()], ref.read(apiProvider));
   }
 
   void changeBrightness(final double brightness) {
-    widget.device.sendToServer(
-        sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.update, Command2.brightness,
+        [brightness.round().toString()], ref.read(apiProvider));
   }
 
   void changeColorTemp(final double colorTemp) {
-    widget.device.sendToServer(
-        sm.MessageType.Update, sm.Command.Temp, [colorTemp.round().toString()], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.update, Command2.temp,
+        [colorTemp.round().toString()], ref.read(apiProvider));
   }
 
   @override
   Widget build(final BuildContext context) {
-    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(widget.device.id));
+    final friendlyName =
+        ref.watch(BaseModel.friendlyNameProvider(widget.device.id));
     return Scaffold(
       appBar: AppBar(
         title: Text(friendlyName),
@@ -132,10 +148,14 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.power_settings_new),
         onPressed: () {
-          final state = ref.read(ZigbeeLampModel.stateProvider(widget.device.id));
+          final state =
+              ref.read(ZigbeeLampModel.stateProvider(widget.device.id));
 
-          widget.device.sendToServer(sm.MessageType.Update, state ? sm.Command.Off : sm.Command.SingleColor, [],
-              ref.read(hubConnectionProvider));
+          widget.device.sendToServer(
+              MessageType.update,
+              state ? Command2.off : Command2.singlecolor,
+              [],
+              ref.read(apiProvider));
         },
       ),
     );
@@ -145,30 +165,36 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text("Angeschaltet: ${ref.watch(ZigbeeLampModel.stateProvider(widget.device.id)) ? "Ja" : "Nein"}"),
+          title: Text(
+              "Angeschaltet: ${ref.watch(ZigbeeLampModel.stateProvider(widget.device.id)) ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Verfügbar: ${ref.watch(ZigbeeModel.availableProvider(widget.device.id)) ? "Ja" : "Nein"}"),
+          title: Text(
+              "Verfügbar: ${ref.watch(ZigbeeModel.availableProvider(widget.device.id)) ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title:
-              Text("Verbindungsqualität: ${ref.watch(ZigbeeModel.linkQualityProvider(widget.device.id))}"),
+          title: Text(
+              "Verbindungsqualität: ${ref.watch(ZigbeeModel.linkQualityProvider(widget.device.id))}"),
         ),
         ListTile(
-          title:
-              Text("Helligkeit ${ref.watch(ZigbeeLampModel.brightnessProvider(widget.device.id)).toStringAsFixed(0)}"),
+          title: Text(
+              "Helligkeit ${ref.watch(ZigbeeLampModel.brightnessProvider(widget.device.id)).toStringAsFixed(0)}"),
           subtitle: GestureDetector(
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
                   trackShape: GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
+                      LinearGradient(
+                          colors: [Colors.grey.shade800, Colors.white]))),
               child: Consumer(
                 builder: (final context, final ref, final child) {
-                  final brightness = ref.watch(_brightnessProvider(widget.device));
+                  final brightness =
+                      ref.watch(_brightnessProvider(widget.device));
                   return Slider(
                     value: brightness.toDouble(),
                     onChanged: (final d) {
-                      ref.read(_brightnessProvider(widget.device).notifier).state = d.round();
+                      ref
+                          .read(_brightnessProvider(widget.device).notifier)
+                          .state = d.round();
                       sliderChange(changeBrightness, 500, d);
                     },
                     max: 100.0,
@@ -178,20 +204,26 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
                 },
               ),
             ),
-            onTapCancel: () =>
-                changeBrightness(ref.watch(ZigbeeLampModel.brightnessProvider(widget.device.id)).toDouble()),
+            onTapCancel: () => changeBrightness(ref
+                .watch(ZigbeeLampModel.brightnessProvider(widget.device.id))
+                .toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Farbtemparatur ${(ref.watch(ZigbeeLampModel.colorTempProvider(widget.device.id)) - 204).toStringAsFixed(0)}"),
+          title: Text(
+              "Farbtemparatur ${(ref.watch(ZigbeeLampModel.colorTempProvider(widget.device.id)) - 204).toStringAsFixed(0)}"),
           subtitle: GestureDetector(
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
                   trackShape: const GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Color.fromARGB(255, 255, 209, 163), Color.fromARGB(255, 255, 147, 44)]))),
+                      LinearGradient(colors: [
+                Color.fromARGB(255, 255, 209, 163),
+                Color.fromARGB(255, 255, 147, 44)
+              ]))),
               child: Consumer(
                 builder: (final context, final ref, final child) {
-                  final colorTempClampledProvider = Provider<double>((final ref) {
+                  final colorTempClampledProvider =
+                      Provider<double>((final ref) {
                     final colorTemp = ref.watch(_colorTemp(widget.device));
                     return ((colorTemp - 204).clamp(0, 204)).toDouble();
                   });
@@ -199,7 +231,8 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
                   return Slider(
                     value: colorTemp,
                     onChanged: (final d) {
-                      ref.read(_colorTemp(widget.device).notifier).state = d.round();
+                      ref.read(_colorTemp(widget.device).notifier).state =
+                          d.round();
                       sliderChange(changeColorTemp, 500, d + 204.0);
                     },
                     max: 204.0,
@@ -209,12 +242,14 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
                 },
               ),
             ),
-            onTapCancel: () =>
-                changeColorTemp(ref.watch(ZigbeeLampModel.colorTempProvider(widget.device.id)).toDouble()),
+            onTapCancel: () => changeColorTemp(ref
+                .watch(ZigbeeLampModel.colorTempProvider(widget.device.id))
+                .toDouble()),
           ),
         ),
         ListTile(
-          title: Text("Übergangszeit ${(ref.watch(ZigbeeLampModel.transitionTimeProvider(widget.device.id)) ?? 0).toStringAsFixed(1)} Sekunden"),
+          title: Text(
+              "Übergangszeit ${(ref.watch(ZigbeeLampModel.transitionTimeProvider(widget.device.id)) ?? 0).toStringAsFixed(1)} Sekunden"),
           subtitle: GestureDetector(
             child: Consumer(builder: (final context, final ref, final child) {
               final transitionTime = ref.watch(_transitionTime(widget.device));
@@ -229,7 +264,8 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
                 label: '$transitionTime',
               );
             }),
-            onTapCancel: () => changeDelay(ref.watch(ZigbeeLampModel.transitionTimeProvider(widget.device.id))),
+            onTapCancel: () => changeDelay(ref.watch(
+                ZigbeeLampModel.transitionTimeProvider(widget.device.id))),
           ),
         ),
       ],

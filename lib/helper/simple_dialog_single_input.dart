@@ -20,7 +20,8 @@ class SimpleDialogSingleInput {
           child: ListBody(
             children: <Widget>[
               TextField(
-                  decoration: InputDecoration(hintText: hintText, labelText: labelText),
+                  decoration:
+                      InputDecoration(hintText: hintText, labelText: labelText),
                   controller: tec,
                   maxLines: maxLines,
                   autofocus: true,
@@ -32,7 +33,9 @@ class SimpleDialogSingleInput {
           ),
         ),
         actions: <Widget>[
-          TextButton(child: Text(cancelButtonText), onPressed: () => Navigator.pop(context!, "")),
+          TextButton(
+              child: Text(cancelButtonText),
+              onPressed: () => Navigator.pop(context!, "")),
           TextButton(
               child: Text(acceptButtonText),
               onPressed: () {

@@ -6,39 +6,37 @@ import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
-import 'package:tuple/tuple.dart';
 
-class StatelessDashboardCard extends StatelessWidget {
+class DashboardCard extends ConsumerWidget {
   final Device device;
   final VoidCallback onLongPress;
-  final Object tag;
 
-  const StatelessDashboardCard({
-    final Key? key,
+  const DashboardCard({
+    super.key,
     required this.device,
     required this.onLongPress,
-    required this.tag,
-  }) : super(key: key);
+  });
 
   @override
-  Widget build(final BuildContext context) {
-    // final friendlyName = ref.watch(BaseModel.friendlyNameProvider(device.id));
-    // final typeNames = ref.watch(BaseModel.typeNamesProvider(device.id));
-    // final isConnected = ref.watch(BaseModel.isConnectedProvider(device.id));
-
-    // final deviceIcon = ref.watch(iconWidgetProvider(Tuple3(typeNames ?? [], device, AdaptiveTheme.of(context))));
-    // print("Redraw $friendlyName");
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final typeNames = ref.watch(BaseModel.typeNamesProvider(device.id));
+    final deviceIcon = ref.watch(iconWidgetProvider(
+      typeNames ?? [],
+      device,
+      AdaptiveTheme.of(context),
+      false,
+    ));
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Card(
         color: Colors.transparent,
         child: BlurryContainer(
-          color: AdaptiveTheme.of(context).brightness == Brightness.light ? Colors.white54 : Colors.black38,
+          color: AdaptiveTheme.of(context).brightness == Brightness.light
+              ? Colors.white54
+              : Colors.black38,
           child: MaterialButton(
             splashColor: Colors.transparent,
             disabledColor: Colors.transparent,
-
-            // ),
             onPressed: () => device.navigateToDevice(context),
             onLongPress: onLongPress,
             child: Column(
@@ -47,16 +45,18 @@ class StatelessDashboardCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(left: 4, top: 8.0, bottom: 8.0),
-                      child: Consumer(
-                        builder: (final _, final ref, final __) {
-                          final typeNames = ref.watch(BaseModel.typeNamesProvider(device.id));
-                          final deviceIcon = ref.watch(
-                              iconWidgetProvider(Tuple4(typeNames ?? [], device, AdaptiveTheme.of(context), false)));
-                          return SizedBox(
-                            width: 32, height: 40, child: deviceIcon, //icon,
-                          );
-                        },
+                      margin:
+                          const EdgeInsets.only(left: 4, top: 8.0, bottom: 8.0),
+                      child: SizedBox(
+                        width: 32,
+                        height: 40,
+                        child: IconButton(
+                          padding: EdgeInsets.all(2),
+                          onPressed: () {
+                            device.iconPressed(context, ref);
+                          },
+                          icon: deviceIcon,
+                        ), //icon,
                       ),
                     ),
                     Expanded(
@@ -66,9 +66,11 @@ class StatelessDashboardCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      // width: 16,
-                      // height: 16,
-                      margin: const EdgeInsets.only(right: 8.0, top: 8.0, bottom: 8.0),
+                      margin: const EdgeInsets.only(
+                        right: 8.0,
+                        top: 8.0,
+                        bottom: 8.0,
+                      ),
                       child: device.getRightWidgets(),
                     ),
                   ],
@@ -86,13 +88,16 @@ class StatelessDashboardCard extends StatelessWidget {
                               final bool? isConnected;
                               if (device is GenericDevice) {
                                 isConnected = ref
-                                    .watch(valueStoreChangedProvider(Tuple2("isConnected", device.id)))
+                                    .watch(valueStoreChangedProvider(
+                                        "isConnected", device.id))
                                     ?.currentValue;
                               } else {
-                                isConnected = ref.watch(ConnectionBaseModel.isConnectedProvider(device.id));
+                                isConnected = ref.watch(
+                                    ConnectionBaseModel.isConnectedProvider(
+                                        device.id));
                               }
 
-                              if (isConnected == null) return Container();
+                              if (isConnected == null) return const SizedBox();
                               return CustomPaint(
                                 painter: CircleBlurPainter(
                                   isConnected ? Colors.greenAccent : Colors.red,
@@ -108,7 +113,8 @@ class StatelessDashboardCard extends StatelessWidget {
                             margin: const EdgeInsets.only(top: 8.0),
                             child: Consumer(
                               builder: (final _, final ref, final __) {
-                                final friendlyName = ref.watch(BaseModel.friendlyNameProvider(device.id));
+                                final friendlyName = ref.watch(
+                                    BaseModel.friendlyNameProvider(device.id));
                                 return Text(
                                   friendlyName,
                                   style: const TextStyle(),
@@ -117,10 +123,6 @@ class StatelessDashboardCard extends StatelessWidget {
                                 );
                               },
                             )),
-                      ),
-                      SizedBox(
-                        height: 16,
-                        width: 12,
                       ),
                     ],
                   ),

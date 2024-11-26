@@ -24,7 +24,6 @@
 //     // TODO: implement navigateToDevice
 //   }
 
-  
 // }
 
 // class _LampState extends State<Lamp> {

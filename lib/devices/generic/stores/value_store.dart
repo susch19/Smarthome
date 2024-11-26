@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
+import 'package:json_path/json_path.dart';
+import 'package:smarthome/devices/property_info.dart';
 import 'package:smarthome/helper/datetime_helper.dart';
-import 'package:smarthome/helper/iterable_extensions.dart';
-import 'package:smarthome/models/message.dart';
+import 'package:smarthome/helper/extension_export.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 class ValueStore<T> extends ChangeNotifier {
   T currentValue;
   String key;
-  Command command;
+  Command2 command;
   int id;
   bool sendToServer = false;
   bool _debugDisposes = false;
@@ -21,15 +23,22 @@ class ValueStore<T> extends ChangeNotifier {
     super.dispose();
   }
 
-  T getValue() {
+  T get value {
+    if (currentValue.runtimeType == (DateTime)) {
+      return ((currentValue as DateTime).toLocal() as T);
+    }
+
     return currentValue;
   }
 
-  setValue(final T newValue) {
+  set value(T newValue) {
     switch (T) {
-      case List<String>:
+      case const (List<String>):
         (currentValue as List<String>).sequenceEquals(newValue as List<String>);
         return;
+      case const (DateTime):
+        newValue = DateTime.tryParse(newValue.toString()) as T;
+        break;
       default:
         break;
     }
@@ -40,9 +49,9 @@ class ValueStore<T> extends ChangeNotifier {
     notifyListeners();
   }
 
-  updateValue(final T newValue) {
+  set updateValue(final T newValue) {
     switch (T) {
-      case List<String>:
+      case const (List<String>):
         (currentValue as List<String>).sequenceEquals(newValue as List<String>);
         return;
       default:
@@ -54,24 +63,43 @@ class ValueStore<T> extends ChangeNotifier {
     notifyListeners();
   }
 
+  dynamic getFromJson(final LayoutBasePropertyInfo info) {
+    if (value is Map<String, dynamic> &&
+        (info.extensionData?.containsKey("JsonPath") ?? false)) {
+      final path = info.extensionData!["JsonPath"];
+      final prices = JsonPath(path);
+
+      return prices.read(value).firstOrDefault((final x) => true)?.value;
+      // .map((match) => '${match.path}:\t${match.value}')
+      // .forEach(print)
+    }
+    return getValueAsString(
+        precision: info.precision ?? 1, format: info.format);
+  }
+
   String getMeasuremtUnit() {
     return "";
   }
 
-  String getValueAsString({final int precision = 1, final String? format}) {
-    if (currentValue.runtimeType == (double)) {
-      return (currentValue as double).toStringAsFixed(precision);
+  String getValueAsString(
+      {final int precision = 1,
+      final String? format,
+      final bool asHex = false}) {
+    final val = value;
+    if (val is num) {
+      if (asHex) return val.toHex();
+      return val.toStringAsFixed(precision);
     }
     if (format != null) {
-      if (currentValue.runtimeType == (DateTime)) {
-        return (currentValue as DateTime).toDate(format: format);
+      if (val is DateTime) {
+        return (val as DateTime).toDate(format: format);
       }
     }
 
-    if (currentValue is List<dynamic>) {
-      return (currentValue as List<dynamic>).join('\r\n');
+    if (val is List<dynamic>) {
+      return (val as List<dynamic>).join('\r\n');
     }
 
-    return currentValue.toString();
+    return val.toString();
   }
 }

@@ -4,11 +4,11 @@ import 'dart:math' as math;
 @immutable
 class ExpandableFab extends StatefulWidget {
   const ExpandableFab({
-    final Key? key,
+    super.key,
     this.initialOpen,
     required this.distance,
     required this.children,
-  }) : super(key: key);
+  });
 
   final bool? initialOpen;
   final double distance;
@@ -18,7 +18,8 @@ class ExpandableFab extends StatefulWidget {
   ExpandableFabState createState() => ExpandableFabState();
 }
 
-class ExpandableFabState extends State<ExpandableFab> with SingleTickerProviderStateMixin {
+class ExpandableFabState extends State<ExpandableFab>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _expandAnimation;
   bool _open = false;
@@ -98,7 +99,9 @@ class ExpandableFabState extends State<ExpandableFab> with SingleTickerProviderS
     final children = <Widget>[];
     final count = widget.children.length;
     const step = 56.0; //90.0 / (count - 1);
-    for (var i = 0, angleInDegrees = step + 8.0; i < count; i++, angleInDegrees += step) {
+    for (var i = 0, angleInDegrees = step + 8.0;
+        i < count;
+        i++, angleInDegrees += step) {
       children.add(
         _ExpandingActionButton(
           positionOffsetInPx: angleInDegrees,
@@ -143,12 +146,11 @@ class ExpandableFabState extends State<ExpandableFab> with SingleTickerProviderS
 @immutable
 class _ExpandingActionButton extends StatelessWidget {
   const _ExpandingActionButton({
-    final Key? key,
     required this.positionOffsetInPx,
     required this.maxDistance,
     required this.progress,
     required this.child,
-  }) : super(key: key);
+  });
 
   final double positionOffsetInPx;
   final double maxDistance;
@@ -185,10 +187,10 @@ class _ExpandingActionButton extends StatelessWidget {
 @immutable
 class ActionButton extends StatelessWidget {
   const ActionButton({
-    final Key? key,
+    super.key,
     this.onPressed,
     required this.icon,
-  }) : super(key: key);
+  });
 
   final VoidCallback? onPressed;
   final Widget icon;

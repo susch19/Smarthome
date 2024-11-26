@@ -11,10 +11,9 @@ class HistorySeriesAnnotationChartWidget extends StatelessWidget {
   final DateTime shownDate;
   final LoadMoreViewBuilderCallback? loadMoreIndicatorBuilder;
 
-  const HistorySeriesAnnotationChartWidget(
-      this.seriesList, this.min, this.max, this.unit, this.valueName, this.shownDate,
-      {final Key? key, this.loadMoreIndicatorBuilder})
-      : super(key: key);
+  const HistorySeriesAnnotationChartWidget(this.seriesList, this.min, this.max,
+      this.unit, this.valueName, this.shownDate,
+      {super.key, this.loadMoreIndicatorBuilder});
 
   @override
   Widget build(final BuildContext context) {
@@ -27,9 +26,12 @@ class HistorySeriesAnnotationChartWidget extends StatelessWidget {
             majorGridLines: const MajorGridLines(width: 0),
             title: AxisTitle(text: DateFormat("dd.MM.yyyy").format(shownDate))),
         primaryYAxis: NumericAxis(
-            minimum: (min - (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
-            maximum: (max + (((max - min) < 10 ? 10 : (max - min)) / 10)).roundToDouble(),
-            interval: (((max - min) < 10 ? 10 : (max - min)) / 10).roundToDouble(),
+            minimum: (min - (((max - min) < 10 ? 10 : (max - min)) / 10))
+                .roundToDouble(),
+            maximum: (max + (((max - min) < 10 ? 10 : (max - min)) / 10))
+                .roundToDouble(),
+            interval:
+                (((max - min) < 10 ? 10 : (max - min)) / 10).roundToDouble(),
             axisLine: const AxisLine(width: 0),
             labelFormat: '{value}$unit',
             majorTickLines: const MajorTickLines(size: 0),
@@ -38,7 +40,8 @@ class HistorySeriesAnnotationChartWidget extends StatelessWidget {
         trackballBehavior: TrackballBehavior(
           enable: true,
           activationMode: ActivationMode.singleTap,
-          tooltipSettings: const InteractiveTooltip(format: '{point.x} : {point.y}'),
+          tooltipSettings:
+              const InteractiveTooltip(format: '{point.x} : {point.y}'),
         ),
         zoomPanBehavior: ZoomPanBehavior(
           /// To enable the pinch zooming as true.
