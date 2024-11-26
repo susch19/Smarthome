@@ -9,18 +9,20 @@ import 'package:tuple/tuple.dart';
 class DashboardValueStoreWidget extends ConsumerWidget {
   final DashboardPropertyInfo e;
   final GenericDevice device;
-  const DashboardValueStoreWidget(this.e, this.device, {final Key? key}) : super(key: key);
+  const DashboardValueStoreWidget(this.e, this.device, {final Key? key})
+      : super(key: key);
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
+    final valueModel = ref.watch(
+        valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
     if (valueModel == null ||
         valueModel.currentValue == null ||
         (e.specialType == SpecialType.right) ||
         ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)) {
-      return Container();
+      return const SizedBox();
     }
 
     return device.getEditWidget(context, e, valueModel, ref);

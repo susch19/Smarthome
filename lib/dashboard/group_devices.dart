@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
 class GroupDevices extends ConsumerWidget {
-  GroupDevices(this.groupName, this.isNewGroup, {final Key? key}) : super(key: key);
+  GroupDevices(this.groupName, this.isNewGroup, {final Key? key})
+      : super(key: key);
 
-  final tempGroupProvider = StateProvider.family<List<String>, int>((final ref, final id) {
+  final tempGroupProvider =
+      StateProvider.family<List<String>, int>((final ref, final id) {
     return ref.read(Device.groupsByIdProvider(id));
   });
 
@@ -25,7 +27,7 @@ class GroupDevices extends ConsumerWidget {
       body: Container(
         decoration: ThemeManager.getBackgroundDecoration(context),
         child: Form(
-            onWillPop: () => _onWillPop(context),
+            onPopInvoked: (final didPop) => _onWillPop(context, didPop),
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Consumer(
               builder: (final context, final ref, final child) {
@@ -39,7 +41,8 @@ class GroupDevices extends ConsumerWidget {
         child: const Icon(Icons.save),
         onPressed: () {
           for (final device in modifiedDevices) {
-            ref.read(Device.groupsByIdProvider(device.id).notifier).state = ref.read(tempGroupProvider(device.id));
+            ref.read(Device.groupsByIdProvider(device.id).notifier).state =
+                ref.read(tempGroupProvider(device.id));
           }
           ref.read(deviceProvider.notifier).saveDeviceGroups();
           Navigator.of(context).pop(true);
@@ -56,10 +59,12 @@ class GroupDevices extends ConsumerWidget {
       final groups = ref.watch(tempGroupProvider(device.id));
       final contains = groups.contains(groupName);
       widgets.add(ListTile(
-        leading: Checkbox(value: contains, onChanged: (final v) => changed(v, device, ref)),
+        leading: Checkbox(
+            value: contains, onChanged: (final v) => changed(v, device, ref)),
         title: Consumer(
           builder: (final context, final ref, final child) {
-            final friendlyName = ref.watch(BaseModel.friendlyNameProvider(device.id));
+            final friendlyName =
+                ref.watch(BaseModel.friendlyNameProvider(device.id));
             final typeName = ref.watch(BaseModel.typeNameProvider(device.id));
             return Wrap(
               children: [
@@ -76,7 +81,8 @@ class GroupDevices extends ConsumerWidget {
     return widgets;
   }
 
-  void changed(final bool? value, final Device<BaseModel> device, final WidgetRef ref) {
+  void changed(
+      final bool? value, final Device<BaseModel> device, final WidgetRef ref) {
     if (value == null) return;
 
     if (modifiedDevices.contains(device)) {
@@ -94,17 +100,19 @@ class GroupDevices extends ConsumerWidget {
     groupsState.state = groups;
   }
 
-  Future<bool> _onWillPop(final BuildContext context) async {
-    if (!isNewGroup && modifiedDevices.isEmpty) return true;
+  Future<bool> _onWillPop(final BuildContext context, bool didPop) async {
+    if (!didPop || (!isNewGroup && modifiedDevices.isEmpty)) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!.copyWith(color: theme.textTheme.bodySmall!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!
+        .copyWith(color: theme.textTheme.bodySmall!.color);
 
     return await (showDialog<bool>(
           context: context,
           builder: (final BuildContext context) => AlertDialog(
             content: isNewGroup
-                ? Text("Es wurden der neuen Gruppe keine Geräte zugeordnet.\r\nSoll die neue Gruppe verworfen werden?",
+                ? Text(
+                    "Es wurden der neuen Gruppe keine Geräte zugeordnet.\r\nSoll die neue Gruppe verworfen werden?",
                     style: dialogTextStyle)
                 : Text(
                     "Es wurden Änderungen an den Temperatur-Einstellungen vorgenommen.\r\nSollen diese verworfen werden?",

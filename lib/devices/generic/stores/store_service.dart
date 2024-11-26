@@ -6,7 +6,6 @@ import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:synchronized/synchronized.dart';
 import 'package:tuple/tuple.dart';
 
 // final valueStoreProvider = StateNotifierProvider<StoreService, List<ValueStore>>((final ref) => StoreService());
@@ -15,17 +14,21 @@ import 'package:tuple/tuple.dart';
 //   StoreService(ref);
 //   return StoreService._stores;
 // });
-final valueStoreProvider = StateNotifierProvider<StoreService, Map<int, List<ValueStore>>>((final ref) {
+final valueStoreProvider =
+    StateNotifierProvider<StoreService, Map<int, List<ValueStore>>>(
+        (final ref) {
   return StoreService();
 });
 
-final valueStoresPerIdProvider = Provider.family<List<ValueStore>?, int>((final ref, final id) {
+final valueStoresPerIdProvider =
+    Provider.family<List<ValueStore>?, int>((final ref, final id) {
   final stores = ref.watch(valueStoreProvider);
   return stores[id];
 });
 
 final valueStoreChangedProvider =
-    ChangeNotifierProvider.family<ValueStore?, Tuple2<String, int>>((final ref, final key) {
+    ChangeNotifierProvider.family<ValueStore?, Tuple2<String, int>>(
+        (final ref, final key) {
   final stores = ref.watch(valueStoresPerIdProvider(key.item2));
   return stores?.firstOrNull((final e) => e.key == key.item1);
 });
@@ -61,9 +64,10 @@ class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
   //       ),
   // };
 
-  static final lock = Lock();
-  static bool updateAndGetStores(final int deviceId, final Map<String, dynamic> json) {
-    final Map<String, ValueStore> stores = (_instance.state[deviceId] ?? []).toMap((final e) => e.key, (final e) => e);
+  static bool updateAndGetStores(
+      final int deviceId, final Map<String, dynamic> json) {
+    final Map<String, ValueStore> stores = (_instance.state[deviceId] ?? [])
+        .toMap((final e) => e.key, (final e) => e);
     bool changed = false;
     bool rebuild = false;
     for (final item in json.keys) {
@@ -82,23 +86,31 @@ class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
 
     for (final item in json.keys) {
       if (rebuild) {
-        stores[item] = ValueStore(deviceId, json[item], item, Command.None);
+        final val = getValueFromJson(json[item]);
+        if (val.runtimeType == DateTime) {
+          stores[item] =
+              ValueStore<DateTime>(deviceId, val, item, Command.None);
+        } else {
+          stores[item] = ValueStore(deviceId, val, item, Command.None);
+        }
         changed = true;
       } else {
         final store = stores[item]!;
-        store.setValue(json[item]);
+        store.setValue(getValueFromJson(json[item]));
       }
     }
 
     if (changed) {
-      lock.synchronized(() {
-        _instance.state[deviceId] = stores.values.toList();
-        print("$deviceId: ${_instance.state.length}");
+      _instance.state[deviceId] = stores.values.toList();
 
-        _instance.state = {..._instance.state};
-      });
+      _instance.state = {..._instance.state};
     }
     return changed;
+  }
+
+  static dynamic getValueFromJson(dynamic val) {
+    if (val.runtimeType == String) return DateTime.tryParse(val) ?? val;
+    return val;
   }
 
   // static Map<String, ValueStore>? getStoresFor(final int id) {

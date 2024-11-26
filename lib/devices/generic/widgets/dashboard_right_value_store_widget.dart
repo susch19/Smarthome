@@ -9,32 +9,35 @@ import 'package:tuple/tuple.dart';
 class DashboardRightValueStoreWidget extends ConsumerWidget {
   final DashboardPropertyInfo e;
   final GenericDevice device;
-  const DashboardRightValueStoreWidget(this.e, this.device, {final Key? key}) : super(key: key);
+  const DashboardRightValueStoreWidget(this.e, this.device, {final Key? key})
+      : super(key: key);
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
-    if (valueModel == null) return Container();
+    final valueModel = ref.watch(
+        valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
+    if (valueModel == null) return const SizedBox();
 
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-    if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) return Container();
+    if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)
+      return const SizedBox();
     if (e.specialType == SpecialType.right) {
       return device.getEditWidget(context, e, valueModel, ref);
     }
 
     // else if (e.specialType == SpecialType.disabled) {
-    //   if (valueModel.currentValue.runtimeType != (bool)) return Container();
+    //   if (valueModel.currentValue.runtimeType != (bool)) return const SizedBox();
     //   final currentValue = valueModel.currentValue as bool;
     //   return Icon(
     //     currentValue ? Icons.power_off_outlined : Icons.power_outlined,
     //     size: 20,
     //   );
     // }
-    return Container();
+    return const SizedBox();
   }
 
   // StatelessWidget buildBatteryIcon(final ValueStore<dynamic> valueModel) {
-  //   if (valueModel.currentValue.runtimeType != (int)) return Container();
+  //   if (valueModel.currentValue.runtimeType != (int)) return const SizedBox();
   //   final currentValue = valueModel.currentValue as int;
   //   return Icon(
   //     (currentValue > 80

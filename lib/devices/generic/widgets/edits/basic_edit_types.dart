@@ -13,8 +13,13 @@ import 'package:tuple/tuple.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class BasicEditTypes {
-  static Widget buildButton(final int id, final BuildContext context, final ValueStore? valueModel,
-      final LayoutBasePropertyInfo e, final WidgetRef ref, final bool raisedButton) {
+  static Widget buildButton(
+      final int id,
+      final BuildContext context,
+      final ValueStore? valueModel,
+      final LayoutBasePropertyInfo e,
+      final WidgetRef ref,
+      final bool raisedButton) {
     final info = e.editInfo!;
     final tempSettingsDialog = info.dialog == "HeaterConfig";
 
@@ -24,13 +29,19 @@ class BasicEditTypes {
           if (tempSettingsDialog) {
             pushTempSettings(context, id, e, ref);
           } else {
-            await ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update",
-                args: <Object>[GenericDevice.getMessage(info, info.editParameter.first, id).toJson()]);
+            await ref
+                .read(hubConnectionConnectedProvider)
+                ?.invoke(info.hubMethod ?? "Update", args: <Object>[
+              GenericDevice.getMessage(info, info.editParameter.first, id)
+                  .toJson()
+            ]);
           }
         }),
         child: Text(info.display!,
             style: TextStyle(
-                fontWeight: valueModel?.currentValue == info.activeValue ? FontWeight.bold : FontWeight.normal)),
+                fontWeight: valueModel?.currentValue == info.activeValue
+                    ? FontWeight.bold
+                    : FontWeight.normal)),
       );
     }
 
@@ -39,57 +50,87 @@ class BasicEditTypes {
         if (tempSettingsDialog) {
           pushTempSettings(context, id, e, ref);
         } else {
-          await ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update",
-              args: <Object>[GenericDevice.getMessage(info, info.editParameter.first, id).toJson()]);
+          await ref
+              .read(hubConnectionConnectedProvider)
+              ?.invoke(info.hubMethod ?? "Update", args: <Object>[
+            GenericDevice.getMessage(info, info.editParameter.first, id)
+                .toJson()
+          ]);
         }
       }),
       child: Text(info.display!,
           style: TextStyle(
-              fontWeight: valueModel?.currentValue == info.activeValue ? FontWeight.bold : FontWeight.normal)),
+              fontWeight: valueModel?.currentValue == info.activeValue
+                  ? FontWeight.bold
+                  : FontWeight.normal)),
     );
   }
 
-  static Widget icon(final ValueStore? valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+  static Widget icon(final ValueStore? valueModel,
+      final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final edit = GenericDevice.getEditParameter(valueModel, e.editInfo!);
-
+    final color = edit.raw["Color"] as int?;
+    if (edit.raw["Disable"] == true) return const SizedBox();
     return Icon(
-      IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+      IconData(edit.raw["CodePoint"] as int,
+          fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+      color: color == null ? null : Color(color),
+      size: edit.raw["Size"],
     );
   }
 
-  static Widget iconButton(
-      final int id, final ValueStore? valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+  static Widget iconButton(final int id, final ValueStore? valueModel,
+      final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final info = e.editInfo!;
     final edit = info.editParameter.firstWhere(
-        (final element) => valueModel != null && element.value == valueModel.currentValue,
+        (final element) =>
+            valueModel != null && element.value == valueModel.currentValue,
         orElse: () => info.editParameter.first);
+    final color = edit.raw["Color"] as int?;
+    if (edit.raw["Disable"] == true) return const SizedBox();
 
     return IconButton(
       onPressed: (() async {
-        await ref
-            .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[GenericDevice.getMessage(info, edit, id).toJson()]);
+        await ref.read(hubConnectionConnectedProvider)?.invoke(
+            info.hubMethod ?? "Update",
+            args: <Object>[GenericDevice.getMessage(info, edit, id).toJson()]);
       }),
-      icon: Icon(IconData(edit.raw["CodePoint"] as int, fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons')),
+      icon: Icon(
+        IconData(edit.raw["CodePoint"] as int,
+            fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+        color: color == null ? null : Color(color),
+        size: edit.raw["Size"],
+      ),
     );
   }
 
-  static Widget buildToggle(
-      final int id, final ValueStore? valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+  static Widget buildToggle(final int id, final ValueStore? valueModel,
+      final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final info = e.editInfo!;
-    final edit = info.editParameter.firstWhere((final element) => element.value != valueModel?.currentValue);
-    return Switch(
-      onChanged: ((final _) async {
-        await ref
-            .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[GenericDevice.getMessage(info, edit, id).toJson()]);
-      }),
-      value: valueModel?.currentValue == info.activeValue,
+    final edit = info.editParameter.firstWhere(
+        (final element) => element.value != valueModel?.currentValue);
+    if (edit.raw["Disable"] == true) return const SizedBox();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (edit.displayName != null) Text(edit.displayName!),
+        Switch(
+          onChanged: ((final _) async {
+            await ref
+                .read(hubConnectionConnectedProvider)
+                ?.invoke(info.hubMethod ?? "Update", args: <Object>[
+              GenericDevice.getMessage(info, edit, id).toJson()
+            ]);
+          }),
+          value: valueModel?.currentValue == info.activeValue,
+        ),
+      ],
     );
   }
 
-  static Widget buildDropdown(
-      final int id, final ValueStore? valueModel, final LayoutBasePropertyInfo e, final WidgetRef ref) {
+  static Widget buildDropdown(final int id, final ValueStore? valueModel,
+      final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final info = e.editInfo!;
     return DropdownButton(
       items: info.editParameter
@@ -99,37 +140,46 @@ class BasicEditTypes {
               ))
           .toList(),
       onChanged: (final value) async {
-        final edit = info.editParameter.firstWhere((final element) => element.value == value);
-        await ref
-            .read(hubConnectionConnectedProvider)
-            ?.invoke(info.hubMethod ?? "Update", args: <Object>[GenericDevice.getMessage(info, edit, id).toJson()]);
+        final edit = info.editParameter
+            .firstWhere((final element) => element.value == value);
+        await ref.read(hubConnectionConnectedProvider)?.invoke(
+            info.hubMethod ?? "Update",
+            args: <Object>[GenericDevice.getMessage(info, edit, id).toJson()]);
       },
       value: valueModel?.currentValue,
     );
   }
 
-  static void pushTempSettings(
-      final BuildContext context, final int id, final LayoutBasePropertyInfo e, final WidgetRef ref) async {
+  static void pushTempSettings(final BuildContext context, final int id,
+      final LayoutBasePropertyInfo e, final WidgetRef ref) async {
     final res = await Navigator.push(
         context,
         MaterialPageRoute<Tuple2<bool, List<HeaterConfig>>>(
-            builder: (final BuildContext context) => TempScheduling(id), fullscreenDialog: true));
+            builder: (final BuildContext context) => TempScheduling(id),
+            fullscreenDialog: true));
     if (res == null || !res.item1) return;
     final info = e.editInfo!;
-    final message = Message(
-        id, MessageType.Options, Command.Temp.index, ["store", ...res.item2.map((final f) => jsonEncode(f)).toList()]);
-    ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update", args: [message.toJson()]);
+    final message = Message(id, MessageType.Options, Command.Temp.index,
+        ["store", ...res.item2.map((final f) => jsonEncode(f)).toList()]);
+    ref
+        .read(hubConnectionConnectedProvider)
+        ?.invoke(info.hubMethod ?? "Update", args: [message.toJson()]);
   }
 
-  static final _sliderValueProvider = StateProvider.family<double, Tuple2<String, int>>((final _, final __) {
+  static final _sliderValueProvider =
+      StateProvider.family<double, Tuple2<String, int>>((final _, final __) {
     return 0.0;
   });
-  static Widget buildSlider(final BuildContext context, final int id, final ValueStore? valueModel,
-      final LayoutBasePropertyInfo e, final WidgetRef ref) {
+  static Widget buildSlider(
+      final BuildContext context,
+      final int id,
+      final ValueStore? valueModel,
+      final LayoutBasePropertyInfo e,
+      final WidgetRef ref) {
     final info = e.editInfo!;
     final edit = info.editParameter.first;
     final json = edit.value;
-    if (json is! Map<String, dynamic>) return Container();
+    if (json is! Map<String, dynamic>) return const SizedBox();
     var sliderTheme = SliderTheme.of(context);
     if (info.raw.containsKey("GradientColors")) {
       final gradients = info.raw["GradientColors"] as List<dynamic>;
@@ -142,7 +192,8 @@ class BasicEditTypes {
         }
       }
       sliderTheme = sliderTheme.copyWith(
-        trackShape: GradientRoundedRectSliderTrackShape(LinearGradient(colors: colors)),
+        trackShape:
+            GradientRoundedRectSliderTrackShape(LinearGradient(colors: colors)),
       );
     }
 
@@ -156,14 +207,18 @@ class BasicEditTypes {
           max: json["Max"] as double,
           divisions: json["Divisions"],
           onChanged: (final value) {
-            ref.read(_sliderValueProvider(Tuple2(e.name, id)).notifier).state = value;
+            ref.read(_sliderValueProvider(Tuple2(e.name, id)).notifier).state =
+                value;
           },
           onChangeEnd: (final value) async {
-            final message = Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command,
-                [customLabels[value.round()].values.first, ...?edit.parameters]);
-            await ref
-                .read(hubConnectionConnectedProvider)
-                ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+            final message = Message(edit.id ?? id,
+                edit.messageType ?? info.editCommand, edit.command, [
+              customLabels[value.round()].values.first,
+              ...?edit.parameters
+            ]);
+            await ref.read(hubConnectionConnectedProvider)?.invoke(
+                info.hubMethod ?? "Update",
+                args: <Object>[message.toJson()]);
           },
           value: currentValue,
           label: customLabels[currentValue.round()].keys.first,
@@ -174,7 +229,9 @@ class BasicEditTypes {
     if (valueModel == null) {
       sliderVal = 0.0;
     } else {
-      sliderVal = valueModel.currentValue is double ? valueModel.currentValue : valueModel.currentValue.toDouble();
+      sliderVal = valueModel.currentValue is double
+          ? valueModel.currentValue
+          : valueModel.currentValue.toDouble();
     }
     return SliderTheme(
       data: sliderTheme,
@@ -191,14 +248,19 @@ class BasicEditTypes {
           }
         },
         onChangeEnd: (final value) async {
-          final message =
-              Message(edit.id ?? id, edit.messageType ?? info.editCommand, edit.command, [value, ...?edit.parameters]);
-          await ref
-              .read(hubConnectionConnectedProvider)
-              ?.invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+          final message = Message(
+              edit.id ?? id,
+              edit.messageType ?? info.editCommand,
+              edit.command,
+              [value, ...?edit.parameters]);
+          await ref.read(hubConnectionConnectedProvider)?.invoke(
+              info.hubMethod ?? "Update",
+              args: <Object>[message.toJson()]);
         },
         value: sliderVal,
-        label: info.display ?? valueModel?.getValueAsString(precision: e.precision ?? 1) ?? "",
+        label: info.display ??
+            valueModel?.getValueAsString(precision: e.precision ?? 1) ??
+            "",
       ),
     );
   }

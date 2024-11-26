@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
 import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 // import 'package:signalr_core/signalr_core.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
@@ -10,36 +12,41 @@ import 'package:smarthome/devices/generic/icons/svg_icon.dart';
 import 'package:smarthome/helper/cache_file_manager.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 
-final _iconProvider = StateNotifierProvider<IconManager, Map<String, Uint8List>>((final ref) {
-  return IconManager();
-});
+part 'icon_manager.g.dart';
 
-final iconByTypeNameProvider = Provider.autoDispose.family<Uint8List?, String>((final ref, final name) {
-  final iconCache = ref.watch(_iconProvider);
-  final result = iconCache[name];
-  if (result == null) {
-    final connection = ref.watch(hubConnectionConnectedProvider);
-    if (connection != null) {
-      ref.read(_iconProvider.notifier)._getIconForTypeName(name, connection);
-    }
-  }
-  return result;
-});
+// @riverpod
+// FutureOr<Uint8List?> iconByTypeName(Ref ref, String typeName) async {
+//   final iconCache = ref.watch(iconManagerProvider);
+//   final result = iconCache[typeName];
+//   if (result == null) {
+//     final connection = ref.watch(hubConnectionConnectedProvider);
+//     if (connection != null) {
+//       return await ref
+//           .read(iconManagerProvider.notifier)
+//           ._getIconForTypeName(typeName, connection);
+//     }
+//   }
+//   return result;
+// }
 
-final iconByNameProvider = Provider.autoDispose.family<Uint8List?, String>((final ref, final name) {
-  final iconCache = ref.watch(_iconProvider);
-  final result = iconCache[name];
-  if (result == null) {
-    final connection = ref.watch(hubConnectionConnectedProvider);
-    if (connection != null) {
-      ref.read(_iconProvider.notifier)._getIconByName(name, connection);
-    }
-  }
-  return result;
-});
+// @riverpod
+// FutureOr<Uint8List?> iconByName(Ref ref, String iconName) async {
+//   final iconCache = ref.watch(iconManagerProvider);
+//   final result = iconCache[iconName];
+//   if (result == null) {
+//     final connection = ref.watch(hubConnectionConnectedProvider);
+//     if (connection != null) {
+//       return await ref
+//           .read(iconManagerProvider.notifier)
+//           ._getIconByName(iconName, connection);
+//     }
+//   }
+//   return result;
+// }
 
-final iconByTypeNamesProvider = Provider.autoDispose.family<Uint8List?, List<String>>((final ref, final names) {
-  final iconCache = ref.watch(_iconProvider);
+@riverpod
+FutureOr<Uint8List?> iconByTypeNames(Ref ref, List<String> names) async {
+  final iconCache = ref.watch(iconManagerProvider);
   for (final name in names) {
     if (iconCache.containsKey(name)) {
       return iconCache[name];
@@ -47,45 +54,65 @@ final iconByTypeNamesProvider = Provider.autoDispose.family<Uint8List?, List<Str
   }
   final connection = ref.watch(hubConnectionConnectedProvider);
   if (connection != null && names.isNotEmpty) {
-    ref.read(_iconProvider.notifier)._getIconByName(names.first, connection);
+    return await ref
+        .read(iconManagerProvider.notifier)
+        ._getIconForTypeName(names.first);
   }
   return null;
-});
+}
 
-class IconManager extends StateNotifier<Map<String, Uint8List>> {
-  static final CacheFileManager _cacheFileManager =
-      CacheFileManager(path.join(Directory.systemTemp.path, "smarthome_icon_cache"), "svg");
+@Riverpod(keepAlive: true)
+class IconManager extends _$IconManager {
+  static final CacheFileManager _cacheFileManager = CacheFileManager(
+      path.join(Directory.systemTemp.path, "smarthome_icon_cache"), "svg");
 
-  IconManager() : super({});
-  Future<Uint8List?> _getIconForTypeName(final String typeName, final HubConnection connection) async {
-    return _getIcon(typeName, "GetIconByTypeName", connection, true);
+  HubConnection? _connection;
+
+  @override
+  Map<String, Uint8List> build() {
+    _connection = ref.watch(hubConnectionConnectedProvider);
+    return {};
   }
 
-  Future<Uint8List?> _getIconByName(final String iconName, final HubConnection connection) async {
-    return _getIcon(iconName, "GetIconByName", connection, false);
+  FutureOr<Uint8List?> _getIconForTypeName(final String typeName) async {
+    try {
+      return await _getIcon(typeName, "GetIconByTypeName", true);
+    } catch (e) {}
   }
 
-  Future<String> _getIconHashForTypeName(final String typeName, final HubConnection connection) async {
-    return await connection.invoke("GetHashCodeByTypeName", args: [typeName]) as String;
+  FutureOr<Uint8List?> _getIconByName(final String iconName) {
+    return _getIcon(iconName, "GetIconByName", false);
   }
 
-  Future<String> _getIconHashByName(final String iconName, final HubConnection connection) async {
-    return await connection.invoke("GetHashCodeByName", args: [iconName]) as String;
+  FutureOr<String> _getIconHashForTypeName(final String typeName) async {
+    final connection = _connection;
+    if (connection == null) return "";
+    return await connection.invoke("GetHashCodeByTypeName", args: [typeName])
+        as String;
   }
 
-  Future<Uint8List?> _getIcon(
-      final String name, final String endpointName, final HubConnection? connection, final bool byTypeName) async {
-    if (connection == null) return null;
+  FutureOr<String> _getIconHashByName(final String iconName) async {
+    final connection = _connection;
+    if (connection == null) return "";
+    return await connection.invoke("GetHashCodeByName", args: [iconName])
+        as String;
+  }
+
+  FutureOr<Uint8List?> _getIcon(final String name, final String endpointName,
+      final bool byTypeName) async {
     final cache = state;
+    final connection = _connection;
+    if (connection == null) return null;
 
     if (cache.containsKey(name)) return cache[name];
 
-    String hash;
+    final String hash;
     if (byTypeName) {
-      hash = await _getIconHashForTypeName(name, connection);
+      hash = await _getIconHashForTypeName(name);
     } else {
-      hash = await _getIconHashByName(name, connection);
+      hash = await _getIconHashByName(name);
     }
+    if (hash == "") return null;
     if (!kIsWeb) {
       await _cacheFileManager.ensureDirectoryExists();
 

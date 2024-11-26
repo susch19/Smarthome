@@ -22,14 +22,20 @@ class ValueStore<T> extends ChangeNotifier {
   }
 
   T getValue() {
+    if (currentValue.runtimeType == (DateTime))
+      return ((currentValue as DateTime).toLocal() as T);
+
     return currentValue;
   }
 
-  setValue(final T newValue) {
+  setValue(T newValue) {
     switch (T) {
-      case List<String>:
+      case const (List<String>):
         (currentValue as List<String>).sequenceEquals(newValue as List<String>);
         return;
+      case const (DateTime):
+        newValue = DateTime.tryParse(newValue.toString()) as T;
+        break;
       default:
         break;
     }
@@ -42,7 +48,7 @@ class ValueStore<T> extends ChangeNotifier {
 
   updateValue(final T newValue) {
     switch (T) {
-      case List<String>:
+      case const (List<String>):
         (currentValue as List<String>).sequenceEquals(newValue as List<String>);
         return;
       default:
@@ -59,19 +65,20 @@ class ValueStore<T> extends ChangeNotifier {
   }
 
   String getValueAsString({final int precision = 1, final String? format}) {
-    if (currentValue.runtimeType == (double)) {
-      return (currentValue as double).toStringAsFixed(precision);
+    var val = getValue();
+    if (val.runtimeType == (double)) {
+      return (val as double).toStringAsFixed(precision);
     }
     if (format != null) {
-      if (currentValue.runtimeType == (DateTime)) {
-        return (currentValue as DateTime).toDate(format: format);
+      if (val.runtimeType == (DateTime)) {
+        return (val as DateTime).toDate(format: format);
       }
     }
 
-    if (currentValue is List<dynamic>) {
-      return (currentValue as List<dynamic>).join('\r\n');
+    if (val is List<dynamic>) {
+      return (val as List<dynamic>).join('\r\n');
     }
 
-    return currentValue.toString();
+    return val.toString();
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
@@ -17,12 +18,14 @@ enum DismissDialogAction {
   save,
 }
 
-final heaterConfigProvider = StateProvider.family<List<HeaterConfig>, int>((final ref, final id) {
+final heaterConfigProvider =
+    StateProvider.family<List<HeaterConfig>, int>((final ref, final id) {
   return [];
 });
 
-final _groupedHeaterConfigProvider =
-    FutureProvider.family<Map<Tuple2<TimeOfDay?, double?>, List<HeaterConfig>>, int>((final ref, final id) async {
+final _groupedHeaterConfigProvider = FutureProvider.family<
+    Map<Tuple2<TimeOfDay?, double?>, List<HeaterConfig>>,
+    int>((final ref, final id) async {
   final configs = ref.watch(heaterConfigProvider(id));
 
   if (configs.isEmpty) {
@@ -31,8 +34,14 @@ final _groupedHeaterConfigProvider =
     final dc = await connection?.invoke("GetConfig", args: [id]);
     if (dc is! String) return {};
     if (dc != "[]") {
-      final notifier = ref.read(heaterConfigProvider(id).notifier);
-      notifier.state = List<HeaterConfig>.from(jsonDecode(dc).map((final f) => HeaterConfig.fromJson(f)));
+      try {
+        final notifier = ref.read(heaterConfigProvider(id).notifier);
+        var initState = List<HeaterConfig>.from(
+            jsonDecode(dc).map((final f) => HeaterConfig.fromJson(f)));
+        notifier.state = initState;
+      } catch (e) {
+        print(e);
+      }
     }
     return {};
   }
@@ -72,7 +81,8 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
     if (!_saveNeeded) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!.copyWith(color: theme.textTheme.bodySmall!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!
+        .copyWith(color: theme.textTheme.bodySmall!.color);
 
     return await (showDialog<bool>(
             context: context,
@@ -122,14 +132,19 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
       key: _scaffoldKey,
       appBar: AppBar(
           title: const Text("Temperatur Einstellungen"),
-          actions: <Widget>[IconButton(icon: const Icon(Icons.save), onPressed: () => _handleSubmitted())]),
+          actions: <Widget>[
+            IconButton(
+                icon: const Icon(Icons.save),
+                onPressed: () => _handleSubmitted())
+          ]),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
           final res = await Navigator.push(
               context,
               MaterialPageRoute<Tuple2<bool, List<HeaterConfig>>>(
-                  builder: (final BuildContext context) => HeaterTempSettings(Tuple2(TimeOfDay.now(), 21.0), const []),
+                  builder: (final BuildContext context) => HeaterTempSettings(
+                      Tuple2(TimeOfDay.now(), 21.0), const []),
                   fullscreenDialog: true));
           storeNewTempConfigs(res, []);
         },
@@ -142,14 +157,26 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Consumer(
             builder: (final context, final ref, final child) {
-              final hConfig = ref.watch(_groupedHeaterConfigProvider(widget.id));
+              final hConfig =
+                  ref.watch(_groupedHeaterConfigProvider(widget.id));
               return hConfig.when(
                 data: (final data) {
-                  return ListView(
-                      padding: const EdgeInsets.all(16.0),
-                      children: data.entries.map((final x) => newHeaterConfigToWidget(x.key, x.value)).toList());
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(_groupedHeaterConfigProvider(widget.id));
+                      ref.invalidate(heaterConfigProvider(widget.id));
+                    },
+                    child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16.0),
+                        children: data.entries
+                            .map((final x) =>
+                                newHeaterConfigToWidget(x.key, x.value))
+                            .toList()),
+                  );
                 },
-                error: (final error, final stackTrace) => ListView(padding: const EdgeInsets.all(16.0)),
+                error: (final error, final stackTrace) =>
+                    ListView(padding: const EdgeInsets.all(16.0)),
                 loading: () => Container(
                   margin: const EdgeInsets.only(top: 25),
                   child: const CircularProgressIndicator(),
@@ -162,7 +189,8 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
     );
   }
 
-  Widget newHeaterConfigToWidget(final Tuple2<TimeOfDay?, double?> x, final List<HeaterConfig> value) {
+  Widget newHeaterConfigToWidget(
+      final Tuple2<TimeOfDay?, double?> x, final List<HeaterConfig> value) {
     return Container(
       padding: const EdgeInsets.only(top: 8.0),
       child: BlurryCard(
@@ -172,7 +200,9 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
               final res = await Navigator.push(
                   context,
                   MaterialPageRoute<Tuple2<bool, List<HeaterConfig>>>(
-                      builder: (final BuildContext context) => HeaterTempSettings(x, value), fullscreenDialog: true));
+                      builder: (final BuildContext context) =>
+                          HeaterTempSettings(x, value),
+                      fullscreenDialog: true));
               storeNewTempConfigs(res, value);
             },
             child: Column(
@@ -183,14 +213,18 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
                   children: [
                     Expanded(
                       child: Wrap(
-                        children: value.map((final x) => dayOfWeekChip(x.dayOfWeek)).toList(growable: false),
+                        children: value
+                            .map((final x) => dayOfWeekChip(x.dayOfWeek))
+                            .toList(growable: false),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () {
-                        final heaterConfigsNotifier = ref.read(heaterConfigProvider(widget.id).notifier);
-                        final heaterConfigs = heaterConfigsNotifier.state.toList();
+                        final heaterConfigsNotifier =
+                            ref.read(heaterConfigProvider(widget.id).notifier);
+                        final heaterConfigs =
+                            heaterConfigsNotifier.state.toList();
                         heaterConfigs.removeElements(value);
                         heaterConfigsNotifier.state = heaterConfigs;
                         _saveNeeded = true;
@@ -335,20 +369,24 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
   static List<DropdownMenuItem> buildItems() {
     final menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
-      menuItems.add(DropdownMenuItem(value: (d * 10).round(), child: Text(d.toStringAsFixed(1))));
+      menuItems.add(DropdownMenuItem(
+          value: (d * 10).round(), child: Text(d.toStringAsFixed(1))));
     }
     return menuItems;
   }
 
-  void storeNewTempConfigs(final Tuple2<bool, List<HeaterConfig>>? res, final List<HeaterConfig> value) {
+  void storeNewTempConfigs(final Tuple2<bool, List<HeaterConfig>>? res,
+      final List<HeaterConfig> value) {
     if (res == null || res.item1 == false) return;
-    final heaterConfigsNotifier = ref.read(heaterConfigProvider(widget.id).notifier);
+    final heaterConfigsNotifier =
+        ref.read(heaterConfigProvider(widget.id).notifier);
     final heaterConfigs = heaterConfigsNotifier.state.toList();
     heaterConfigs.removeElements(value);
 
     for (final element in res.item2) {
-      final hc = heaterConfigs
-          .firstOrNull((final x) => x.dayOfWeek.index == element.dayOfWeek.index && x.timeOfDay == element.timeOfDay);
+      final hc = heaterConfigs.firstOrNull((final x) =>
+          x.dayOfWeek.index == element.dayOfWeek.index &&
+          x.timeOfDay == element.timeOfDay);
       if (hc != null) heaterConfigs.remove(hc);
       heaterConfigs.add(element);
     }

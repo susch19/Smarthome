@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 // import 'package:signalr_core/signalr_core.dart';
 // import 'package:signalr_core/signalr_core.dart';
@@ -8,11 +9,12 @@ import 'package:signalr_netcore/signalr_client.dart';
 import 'package:logging/logging.dart';
 import 'package:smarthome/cloud/app_cloud_configuration.dart';
 import 'package:smarthome/devices/base_model.dart';
+import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:synchronized/synchronized.dart';
+import 'package:tuple/tuple.dart';
 import '../signalr/smarthome_protocol.dart';
 import 'package:http/http.dart' as http;
 import 'package:signalr_netcore/iretry_policy.dart';
@@ -21,7 +23,9 @@ import 'package:signalr_netcore/iretry_policy.dart';
 //   return null;
 // });
 
-final hubConnectionProvider = StateNotifierProvider<ConnectionManager, HubConnectionContainer>((final ref) {
+final hubConnectionProvider =
+    StateNotifierProvider<ConnectionManager, HubConnectionContainer>(
+        (final ref) {
   ref.onDispose(() => _emptyHubConnection.stop());
   return ConnectionManager(ref, _emptyHubConnection);
 });
@@ -41,11 +45,13 @@ final hubConnectionConnectedProvider = Provider<HubConnection?>((final ref) {
   return null;
 });
 
-final _emptyHubConnection = HubConnectionBuilder().withUrl("http://localhost:5056/SmartHome").build();
+final _emptyHubConnection =
+    HubConnectionBuilder().withUrl("http://localhost:5056/SmartHome").build();
 
 final apiProvider = Provider<ApiService>((final ref) => ApiService());
 
-final cloudConfigProvider = FutureProvider<AppCloudConfiguration?>((final ref) async {
+final cloudConfigProvider =
+    FutureProvider<AppCloudConfiguration?>((final ref) async {
   final api = ref.watch(apiProvider);
   final urlString = ref.watch(serverUrlProvider);
   final url = Uri.parse(urlString);
@@ -56,18 +62,21 @@ final cloudConfigProvider = FutureProvider<AppCloudConfiguration?>((final ref) a
   } else {
     final cc = PreferencesManager.instance.getString("cloudConfig");
     if (cc != null && cc.isNotEmpty) {
-      return AppCloudConfiguration.fromJson(jsonDecode(cc))..loadedFromPersistentStorage = true;
+      return AppCloudConfiguration.fromJson(jsonDecode(cc))
+        ..loadedFromPersistentStorage = true;
     }
   }
   return null;
 });
 
 class ApiService {
-  Future<AppCloudConfiguration?> getSecurityConfig(final String host, final int port) async {
+  Future<AppCloudConfiguration?> getSecurityConfig(
+      final String host, final int port) async {
     try {
-      final response = await http
-          .get(Uri(scheme: "http", host: host, port: port, path: "/Security"))
-          .timeout(const Duration(seconds: 10));
+      final uri =
+          Uri(scheme: "http", host: host, port: port, path: "/Security");
+      print(uri);
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         return AppCloudConfiguration.fromJson(jsonDecode(response.body));
       }
@@ -84,16 +93,18 @@ class HubConnectionContainer {
 }
 
 class ConnectionManager extends StateNotifier<HubConnectionContainer> {
-  static ValueNotifier<IconData> connectionIconChanged = ValueNotifier(Icons.error_outline);
-  static final lock = Lock();
+  static ValueNotifier<IconData> connectionIconChanged =
+      ValueNotifier(Icons.error_outline);
 
   Ref ref;
 
-  ConnectionManager(this.ref, final HubConnection con) : super(HubConnectionContainer(con, con.state)) {
+  ConnectionManager(this.ref, final HubConnection con)
+      : super(HubConnectionContainer(con, con.state)) {
     startConnection();
   }
   Future<void> startConnection() async {
-    if (state.connectionState == HubConnectionState.Connected) state.connection?.stop();
+    if (state.connectionState == HubConnectionState.Connected)
+      state.connection?.stop();
     final cloudConfig = await ref.watch(cloudConfigProvider.future);
     SmarthomeProtocol.cloudConfig = cloudConfig;
     final newConnectionState = createHubConnection(cloudConfig);
@@ -115,7 +126,8 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
       connectionIconChanged.value = Icons.check;
 
       connection.on("Update", update);
-      connection.on("UpdateUi", DeviceLayoutService.updateFromServer);
+      connection.on("UpdateUi",
+          ref.read(deviceLayoutsProvider.notifier).updateFromServer);
       state = HubConnectionContainer(connection, connection.state);
     });
     connection.onclose(({final Exception? error}) async {
@@ -123,7 +135,8 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
       if (e == null) return;
       state = HubConnectionContainer(connection, connection.state);
       while (true) {
-        if (newConnectionState.connectionState != HubConnectionState.Connected) {
+        if (newConnectionState.connectionState !=
+            HubConnectionState.Connected) {
           connectionIconChanged.value = Icons.error_outline;
 
           try {
@@ -147,8 +160,9 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
       }
     });
     connection.on("Update", update);
-    connection.on("UpdateUi", DeviceLayoutService.updateFromServer);
-    final serverUrl = ref.read(serverUrlProvider);
+    connection.on(
+        "UpdateUi", ref.read(deviceLayoutsProvider.notifier).updateFromServer);
+    final serverUrl = ref.watch(serverUrlProvider);
     if (serverUrl != "") {
       await connection.start();
       connectionIconChanged.value = Icons.check;
@@ -166,18 +180,21 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
 
     final newState = createHubConnection(SmarthomeProtocol.cloudConfig);
     newState.connection?.on("Update", update);
-    newState.connection?.on("UpdateUi", DeviceLayoutService.updateFromServer);
+    newState.connection?.on(
+        "UpdateUi", ref.read(deviceLayoutsProvider.notifier).updateFromServer);
 
     await newState.connection?.start();
     connectionIconChanged.value = Icons.check;
-    state = HubConnectionContainer(newState.connection, newState.connection?.state);
+    state =
+        HubConnectionContainer(newState.connection, newState.connection?.state);
   }
 
-  HubConnectionContainer createHubConnection(final AppCloudConfiguration? cloudConfig) {
+  HubConnectionContainer createHubConnection(
+      final AppCloudConfiguration? cloudConfig) {
     Logger.root.level = Level.ALL;
 // Writes the log messages to the console
     Logger.root.onRecord.listen((final LogRecord rec) {
-      print('${rec.level.name}: ${rec.time}: ${rec.message}');
+      // print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
     final serverUrl = ref.watch(serverUrlProvider);
     final serverUri = Uri.parse(serverUrl);
@@ -190,7 +207,8 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
                             port: cloudConfig.port,
                             pathSegments: [
                               ...serverUri.pathSegments,
-                              ...(serverUri.pathSegments.any((final element) => element == cloudConfig.id)
+                              ...(serverUri.pathSegments.any((final element) =>
+                                      element == cloudConfig.id)
                                   ? []
                                   : [cloudConfig.id])
                             ],
@@ -217,28 +235,49 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
   }
 
   Future update(final List<Object?>? arguments) async {
-    await lock.synchronized(() async {
-      final baseModels = ref.read(baseModelProvider.notifier);
-      final oldState = baseModels.state.toList();
-      bool hasChanges = false;
-      for (final a in arguments!) {
-        final updateMap = a as Map;
-        for (var i = 0; i < oldState.length; i++) {
-          final oldModel = oldState[i];
-          if (oldModel.id != updateMap["id"]) continue;
-          final newModel = oldModel.updateFromJson(updateMap as Map<String, dynamic>);
-          if (oldState[i] == newModel) continue;
-          oldState[i] = newModel;
-          hasChanges = true;
+    final oldState = ref.read(baseModelsProvider).toList();
+
+    bool hasChanges = false;
+    for (final a in arguments!) {
+      final updateMap = a as Map;
+      for (var i = 0; i < oldState.length; i++) {
+        final oldModel = oldState[i];
+        if (oldModel.id != updateMap["id"]) continue;
+        final newModel =
+            oldModel.updateFromJson(updateMap as Map<String, dynamic>);
+        if (oldState[i] == newModel) continue;
+        oldState[i] = newModel;
+        hasChanges = true;
+        for (final element in updateMap.keys) {
+          final now = DateTime.now();
+          final from = DateTime.utc(now.year, now.month, now.day)
+              .subtract(now.timeZoneOffset);
+          //Circular dependency error
+          // WidgetsBinding.instance.addPostFrameCallback((_) => ref.invalidate(
+          //     historyPropertyNameProvider(Tuple4(
+          //         newModel.id, from, from.add(Duration(days: 1)), element))));
         }
       }
-      if (hasChanges) baseModels.state = oldState;
-    });
+    }
+    if (hasChanges) ref.read(baseModelsProvider.notifier).storeModels(oldState);
   }
 }
 
 class PermanentRetryPolicy extends IRetryPolicy {
-  static const List<int> retryTimes = [100, 200, 500, 1000, 2500, 5000, 7500, 10000, 15000, 20000, 25000, 30000];
+  static const List<int> retryTimes = [
+    100,
+    200,
+    500,
+    1000,
+    2500,
+    5000,
+    7500,
+    10000,
+    15000,
+    20000,
+    25000,
+    30000
+  ];
 
   @override
   int? nextRetryDelayInMilliseconds(final RetryContext retryContext) {

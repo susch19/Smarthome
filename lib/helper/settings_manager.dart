@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const fallbackServerUrl = "http://localhost:5056/SmartHome";
 
-final settingsProvider = StateNotifierProvider<SettingsManager, Settings>((final ref) {
+final settingsProvider =
+    StateNotifierProvider<SettingsManager, Settings>((final ref) {
   print("Creating new settingsmanager");
+  ref.keepAlive();
   return SettingsManager();
 });
 
@@ -28,15 +30,21 @@ class Settings {
 
   Settings() {
     groupingEnabled = PreferencesManager.instance.getBool("Groupings") ?? true;
-    serverUrl = PreferencesManager.instance.getString("mainserverurl") ?? fallbackServerUrl;
-    showDebugInformation = PreferencesManager.instance.getBool("ShowDebugInformation") ?? false;
+    serverUrl = PreferencesManager.instance.getString("mainserverurl") ??
+        fallbackServerUrl;
+    showDebugInformation =
+        PreferencesManager.instance.getBool("ShowDebugInformation") ?? false;
   }
 
-  Settings copyWith({final bool? groupingEnabled, final String? serverUrl, final bool? showDebugInformation}) {
+  Settings copyWith(
+      {final bool? groupingEnabled,
+      final String? serverUrl,
+      final bool? showDebugInformation}) {
     return Settings()
       ..groupingEnabled = groupingEnabled ?? this.groupingEnabled
       ..serverUrl = serverUrl ?? this.serverUrl
-      ..showDebugInformation = showDebugInformation ?? this.showDebugInformation;
+      ..showDebugInformation =
+          showDebugInformation ?? this.showDebugInformation;
   }
 }
 
@@ -56,8 +64,10 @@ class SettingsManager extends StateNotifier<Settings> {
   static void setShowDebugInformation(final bool showDebugInformation) {
     final state = _instance;
 
-    state.state = state.state.copyWith(showDebugInformation: showDebugInformation);
-    PreferencesManager.instance.setBool("ShowDebugInformation", showDebugInformation);
+    state.state =
+        state.state.copyWith(showDebugInformation: showDebugInformation);
+    PreferencesManager.instance
+        .setBool("ShowDebugInformation", showDebugInformation);
   }
 
   static void setServerUrl(final String newUrl) {

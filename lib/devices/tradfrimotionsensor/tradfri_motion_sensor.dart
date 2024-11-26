@@ -7,12 +7,16 @@ import '../../helper/datetime_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
-  TradfriMotionSensor(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
+  TradfriMotionSensor(final int id, final String typeName, final IconData icon)
+      : super(id, typeName, iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
     Navigator.push(
-        context, MaterialPageRoute(builder: (final BuildContext context) => TradfriMotionSensorScreen(this)));
+        context,
+        MaterialPageRoute(
+            builder: (final BuildContext context) =>
+                TradfriMotionSensorScreen(this)));
   }
 
   @override
@@ -27,7 +31,9 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
                   ? SmarthomeIcons.bat3
                   : (battery > 40
                       ? SmarthomeIcons.bat2
-                      : (battery > 20 ? SmarthomeIcons.bat1 : SmarthomeIcons.bat_charge)))),
+                      : (battery > 20
+                          ? SmarthomeIcons.bat1
+                          : SmarthomeIcons.bat_charge)))),
           size: 20,
         );
       },
@@ -41,8 +47,12 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Consumer(
                 builder: (final context, final ref, final child) {
-                  return Text((ref.watch(TradfriMotionSensorModel.occupancyProvider(id)) ? "Blockiert" : "Frei"),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24));
+                  return Text(
+                      (ref.watch(TradfriMotionSensorModel.occupancyProvider(id))
+                          ? "Blockiert"
+                          : "Frei"),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 24));
                 },
               )
             ]),
@@ -55,13 +65,16 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
               children: [
                 Consumer(
                   builder: (final context, final ref, final child) {
-                    final lastReceived = ref.watch(ZigbeeModel.lastReceivedProvider(id));
+                    final lastReceived =
+                        ref.watch(ZigbeeModel.lastReceivedProvider(id));
 
                     return Text(
                         (lastReceived.millisecondsSinceEpoch == -62135600400000
                             ? ""
                             : lastReceived
-                                .subtract(Duration(seconds: ref.watch(TradfriMotionSensorModel.noMotionProvider(id))))
+                                .subtract(Duration(
+                                    seconds: ref.watch(TradfriMotionSensorModel
+                                        .noMotionProvider(id))))
                                 .toDate()),
                         style: const TextStyle());
                   },
@@ -74,11 +87,15 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Consumer(
                       builder: (final context, final ref, final child) {
-                        return Text(ref.watch(ZigbeeModel.lastReceivedProvider(id)).toDate());
+                        return Text(ref
+                            .watch(ZigbeeModel.lastReceivedProvider(id))
+                            .toDate());
                       },
                     ),
                   ]),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text(id.toRadixString(16))]),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [Text(id.toRadixString(16))]),
                 ]
               : <Widget>[])),
     );
@@ -92,18 +109,22 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
 
 class TradfriMotionSensorScreen extends ConsumerStatefulWidget {
   final TradfriMotionSensor device;
-  const TradfriMotionSensorScreen(this.device, {final Key? key}) : super(key: key);
+  const TradfriMotionSensorScreen(this.device, {final Key? key})
+      : super(key: key);
 
   @override
-  TradfriMotionSensorScreenState createState() => TradfriMotionSensorScreenState();
+  TradfriMotionSensorScreenState createState() =>
+      TradfriMotionSensorScreenState();
 }
 
-class TradfriMotionSensorScreenState extends ConsumerState<TradfriMotionSensorScreen> {
+class TradfriMotionSensorScreenState
+    extends ConsumerState<TradfriMotionSensorScreen> {
   DateTime dateTime = DateTime.now();
 
   @override
   Widget build(final BuildContext context) {
-    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(widget.device.id));
+    final friendlyName =
+        ref.watch(BaseModel.friendlyNameProvider(widget.device.id));
     return Scaffold(
       appBar: AppBar(
         title: Text(friendlyName),
@@ -118,7 +139,7 @@ class TradfriMotionSensorScreenState extends ConsumerState<TradfriMotionSensorSc
   Widget buildBody() {
     final model = ref.watch(widget.device.baseModelTProvider(widget.device.id));
 
-    if (model is! TradfriMotionSensorModel) return Container();
+    if (model is! TradfriMotionSensorModel) return const SizedBox();
 
     return ListView(
       children: <Widget>[
@@ -126,7 +147,8 @@ class TradfriMotionSensorScreenState extends ConsumerState<TradfriMotionSensorSc
           title: Text("Blockiert: ${model.occupancy ? "Ja" : "Nein"}"),
         ),
         ListTile(
-          title: Text("Letzte Bewegung: ${model.lastReceived.subtract(Duration(seconds: model.noMotion)).toDate()}"),
+          title: Text(
+              "Letzte Bewegung: ${model.lastReceived.subtract(Duration(seconds: model.noMotion)).toDate()}"),
         ),
         ListTile(
           title: Text("Battery: ${model.battery.toStringAsFixed(0)} %"),

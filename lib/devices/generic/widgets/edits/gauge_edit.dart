@@ -12,27 +12,53 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:tuple/tuple.dart';
 
 class GaugeEdit {
-  static final _newValueProvider = StateProvider.family<double, Tuple2<int, String>>((final ref, final key) {
+  static final _newValueProvider =
+      StateProvider.family<double, Tuple2<int, String>>((final ref, final key) {
     return 21.0;
   });
 
-  static Widget getTempGauge(final int id, final BuildContext context, final ValueStore? valueModel,
-      final LayoutBasePropertyInfo e, final WidgetRef ref) {
+  static Widget getTempGauge(
+      final int id,
+      final BuildContext context,
+      final ValueStore? valueModel,
+      final LayoutBasePropertyInfo e,
+      final WidgetRef ref) {
     final info = e.editInfo;
-    if (valueModel == null || valueModel.currentValue is! num || info == null) return Container();
+    if (valueModel == null || valueModel.currentValue is! num || info == null)
+      return const SizedBox();
 
-    final startAngle =
-        (info.raw.containsKey("StartAngle") ? double.tryParse(info.raw["StartAngle"].toString()) : null) ?? 150.0;
-    final endAngle =
-        (info.raw.containsKey("EndAngle") ? double.tryParse(info.raw["EndAngle"].toString()) : null) ?? 30.0;
-    final radiusFactor =
-        (info.raw.containsKey("RadiusFactor") ? double.tryParse(info.raw["RadiusFactor"].toString()) : null) ?? 0.9;
-    final minimum = (info.raw.containsKey("Min") ? double.tryParse(info.raw["Min"].toString()) : null) ?? 5.0;
-    final maximum = (info.raw.containsKey("Max") ? double.tryParse(info.raw["Max"].toString()) : null) ?? 35.0;
-    final interval =
-        (info.raw.containsKey("Interval") ? double.tryParse(info.raw["Interval"].toString()) : null) ?? 1.0;
-    final angle = (info.raw.containsKey("Angle") ? double.tryParse(info.raw["Angle"].toString()) : null) ?? 180.0;
-    final margin = (info.raw.containsKey("Margin") ? double.tryParse(info.raw["Margin"].toString()) : null) ?? 0;
+    final startAngle = (info.raw.containsKey("StartAngle")
+            ? double.tryParse(info.raw["StartAngle"].toString())
+            : null) ??
+        150.0;
+    final endAngle = (info.raw.containsKey("EndAngle")
+            ? double.tryParse(info.raw["EndAngle"].toString())
+            : null) ??
+        30.0;
+    final radiusFactor = (info.raw.containsKey("RadiusFactor")
+            ? double.tryParse(info.raw["RadiusFactor"].toString())
+            : null) ??
+        0.9;
+    final minimum = (info.raw.containsKey("Min")
+            ? double.tryParse(info.raw["Min"].toString())
+            : null) ??
+        5.0;
+    final maximum = (info.raw.containsKey("Max")
+            ? double.tryParse(info.raw["Max"].toString())
+            : null) ??
+        35.0;
+    final interval = (info.raw.containsKey("Interval")
+            ? double.tryParse(info.raw["Interval"].toString())
+            : null) ??
+        1.0;
+    final angle = (info.raw.containsKey("Angle")
+            ? double.tryParse(info.raw["Angle"].toString())
+            : null) ??
+        180.0;
+    final margin = (info.raw.containsKey("Margin")
+            ? double.tryParse(info.raw["Margin"].toString())
+            : null) ??
+        0;
 
     List<Color> gradients;
     if (info.raw.containsKey("GradientColors")) {
@@ -85,7 +111,8 @@ class GaugeEdit {
     }
 
     final value = valueModel.currentValue as double;
-    final selectedValue = ref.watch(_newValueProvider(Tuple2(id, valueModel.key)));
+    final selectedValue =
+        ref.watch(_newValueProvider(Tuple2(id, valueModel.key)));
 
     return Column(
       children: [
@@ -96,10 +123,11 @@ class GaugeEdit {
             children: <Widget>[
               Text(
                 selectedValue.toStringAsFixed(1),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
               ),
               (e.unitOfMeasurement == null
-                  ? Container()
+                  ? const SizedBox()
                   : Text(
                       e.unitOfMeasurement!,
                       style: const TextStyle(fontSize: 24),
@@ -132,7 +160,8 @@ class GaugeEdit {
                 labelsPosition: ElementsPosition.outside,
                 minorTicksPerInterval: 10,
                 minorTickStyle: const MinorTickStyle(length: 0.1),
-                majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                majorTickStyle: const MajorTickStyle(
+                    length: 0.05, lengthUnit: GaugeSizeUnit.factor),
               ),
               RadialAxis(
                 startAngle: startAngle,
@@ -150,11 +179,13 @@ class GaugeEdit {
                 ticksPosition: ElementsPosition.outside,
                 labelOffset: 0.05,
                 offsetUnit: GaugeSizeUnit.factor,
-                onAxisTapped: (final v) => _handlePointerValueChangedEnd(v, id, valueModel.key, info, ref),
+                onAxisTapped: (final v) => _handlePointerValueChangedEnd(
+                    v, id, valueModel.key, info, ref),
                 labelsPosition: ElementsPosition.outside,
                 minorTicksPerInterval: 0,
                 minorTickStyle: const MinorTickStyle(length: 0.1),
-                majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                majorTickStyle: const MajorTickStyle(
+                    length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                 pointers: <GaugePointer>[
                   MarkerPointer(
                     value: selectedValue,
@@ -163,9 +194,13 @@ class GaugeEdit {
                     markerHeight: 25,
                     markerWidth: 20,
                     enableDragging: true,
-                    onValueChanged: (final v) => _handlePointerValueChanged(v, id, valueModel.key, ref),
-                    onValueChangeEnd: (final v) => _handlePointerValueChangedEnd(v, id, valueModel.key, info, ref),
-                    onValueChanging: (final v) => _handlePointerValueChanging(v, id, valueModel.key, ref),
+                    onValueChanged: (final v) =>
+                        _handlePointerValueChanged(v, id, valueModel.key, ref),
+                    onValueChangeEnd: (final v) =>
+                        _handlePointerValueChangedEnd(
+                            v, id, valueModel.key, info, ref),
+                    onValueChanging: (final v) =>
+                        _handlePointerValueChanging(v, id, valueModel.key, ref),
                     borderColor: Colors.black,
                     borderWidth: 1,
                     color: Colors.white,
@@ -190,11 +225,17 @@ class GaugeEdit {
                             if (e.item2 == "") return Text(e.item1);
                             return Consumer(
                               builder: (context, ref, child) {
-                                final valStore = ref.watch(valueStoreChangedProvider(Tuple2(e.item2, id)));
-                                if (valStore == null) return Container();
+                                final valStore = ref.watch(
+                                    valueStoreChangedProvider(
+                                        Tuple2(e.item2, id)));
+                                if (valStore == null) return const SizedBox();
 
-                                if (e.item1 == "") return Text(valStore.getValueAsString() + e.item3);
-                                return Text(e.item1 + valStore.getValueAsString() + e.item3);
+                                if (e.item1 == "")
+                                  return Text(
+                                      valStore.getValueAsString() + e.item3);
+                                return Text(e.item1 +
+                                    valStore.getValueAsString() +
+                                    e.item3);
                               },
                             );
                           }).toList(),
@@ -210,27 +251,36 @@ class GaugeEdit {
     );
   }
 
-  static void _handlePointerValueChanged(
-      final double value, final int deviceId, final String key, final WidgetRef ref) {
+  static void _handlePointerValueChanged(final double value, final int deviceId,
+      final String key, final WidgetRef ref) {
     _setPointerValue(value, deviceId, key, ref);
   }
 
-  static Future _handlePointerValueChangedEnd(final double value, final int deviceId, final String key,
-      final PropertyEditInformation info, final WidgetRef ref) async {
+  static Future _handlePointerValueChangedEnd(
+      final double value,
+      final int deviceId,
+      final String key,
+      final PropertyEditInformation info,
+      final WidgetRef ref) async {
     _handlePointerValueChanged(value, deviceId, key, ref);
 
-    final msg = GenericDevice.getMessage(info, info.editParameter.first, deviceId);
+    final msg =
+        GenericDevice.getMessage(info, info.editParameter.first, deviceId);
     msg.parameters = [value, ...msg.parameters ?? []];
-    await ref.read(hubConnectionConnectedProvider)?.invoke(info.hubMethod ?? "Update", args: <Object>[msg.toJson()]);
+    await ref
+        .read(hubConnectionConnectedProvider)
+        ?.invoke(info.hubMethod ?? "Update", args: <Object>[msg.toJson()]);
   }
 
-  static void _handlePointerValueChanging(
-      final ValueChangingArgs args, final int deviceId, final String key, final WidgetRef ref) {
+  static void _handlePointerValueChanging(final ValueChangingArgs args,
+      final int deviceId, final String key, final WidgetRef ref) {
     _setPointerValue(args.value, deviceId, key, ref);
   }
 
-  static void _setPointerValue(final double value, final int deviceId, final String key, final WidgetRef ref) {
-    final curValue = ref.read(_newValueProvider(Tuple2(deviceId, key)).notifier);
+  static void _setPointerValue(final double value, final int deviceId,
+      final String key, final WidgetRef ref) {
+    final curValue =
+        ref.read(_newValueProvider(Tuple2(deviceId, key)).notifier);
     curValue.state = (value.clamp(5, 35) * 10).roundToDouble() / 10;
   }
 }

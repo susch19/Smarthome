@@ -24,7 +24,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   int selected = 0;
   double _value = 21.0;
   String _annotationValue = '21.0';
-  late TimeOfDay initialDate;
+  late TimeOfDay selectedDate;
 
   @override
   void initState() {
@@ -32,7 +32,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
     heaterConfigs = widget.configs;
     selected = widget.configs.bitOr((final x) => dayOfWeekToFlagMap[x.dayOfWeek]!);
     _setPointerValue(widget.timeTemp.item2!);
-    initialDate = widget.timeTemp.item1!;
+    selectedDate = widget.timeTemp.item1!;
     //"${widget.timeTemp.item1!.hour.toString().padLeft(2, "0")}:${widget.timeTemp.item1!.minute.toString().padLeft(2, "0")}";
   }
 
@@ -77,7 +77,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
         return true;
       }
       final configs = <HeaterConfig>[];
-      final tod = initialDate;
+      final tod = selectedDate;
       for (int i = 0; i < 7; i++) {
         final flag = 1 << (i + 1);
 
@@ -151,8 +151,14 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
               Container(
                 margin: const EdgeInsets.only(top: 32.0),
                 child: ElevatedButton(
-                    onPressed: () => displayTimePicker(context, initialDate, ((final time) => initialDate = time)),
-                    child: Text("$initialDate")),
+                    onPressed: () => displayTimePicker(
+                        context,
+                        selectedDate,
+                        ((final time) => setState(() {
+                              selectedDate = time;
+                              _saveNeeded = true;
+                            }))),
+                    child: Text("$selectedDate")),
               ),
               // DateTimePicker(
               //   initialValue: initialDate,

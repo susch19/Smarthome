@@ -12,20 +12,24 @@ class DetailValueStoreWidget extends ConsumerWidget {
   final DetailPropertyInfo e;
   final GenericDevice device;
 
-  const DetailValueStoreWidget(this.e, this.device, {final Key? key}) : super(key: key);
+  const DetailValueStoreWidget(this.e, this.device, {final Key? key})
+      : super(key: key);
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
+    final valueModel = ref.watch(
+        valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
     if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
-      return Container();
+      return const SizedBox();
     }
 
     final text = Text(
       (e.displayName ?? "") +
-          (valueModel?.getValueAsString(format: e.format, precision: e.precision ?? 1) ?? "") +
+          (valueModel?.getValueAsString(
+                  format: e.format, precision: e.precision ?? 1) ??
+              "") +
           (e.unitOfMeasurement ?? ""),
       style: e.textStyle?.toTextStyle(),
     );

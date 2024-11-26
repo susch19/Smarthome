@@ -9,11 +9,16 @@ import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TradfriLedBulb extends Device<TradfriLedBulbModel> {
-  TradfriLedBulb(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
+  TradfriLedBulb(final int id, final String typeName, final IconData icon)
+      : super(id, typeName, iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => TradfriLedBulbScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (final BuildContext context) =>
+                TradfriLedBulbScreen(this)));
   }
 
   @override
@@ -26,7 +31,8 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
         final r = (colorNum & 0xFF0000) >> 16;
         final g = (colorNum & 0xFF00) >> 8;
         final b = (colorNum & 0xFF) >> 0;
-        return Icon(Icons.bubble_chart, color: Color.fromRGBO(r, g, b, 1), size: 24.0);
+        return Icon(Icons.bubble_chart,
+            color: Color.fromRGBO(r, g, b, 1), size: 24.0);
       },
     );
   }
@@ -43,9 +49,12 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
             return MaterialButton(
               child: Text(
                 "An",
-                style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+                style: (state)
+                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                    : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(sm.MessageType.Update,
+                  sm.Command.On, [], ref.read(hubConnectionProvider)),
             );
           },
         ),
@@ -55,9 +64,12 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
             return MaterialButton(
               child: Text(
                 "Aus",
-                style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+                style: !(state)
+                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                    : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(sm.MessageType.Update,
+                  sm.Command.Off, [], ref.read(hubConnectionProvider)),
             );
           },
         ),
@@ -76,7 +88,8 @@ class TradfriLedBulbScreen extends ConsumerWidget {
   final TradfriLedBulb device;
   TradfriLedBulbScreen(this.device, {final Key? key}) : super(key: key);
 
-  static final _rgbProvider = StateProvider.family<RGB, Device>((final ref, final device) {
+  static final _rgbProvider =
+      StateProvider.family<RGB, Device>((final ref, final device) {
     final color = ref.watch(TradfriLedBulbModel.colorProvider(device.id));
 
     final rgb = RGB();
@@ -89,19 +102,21 @@ class TradfriLedBulbScreen extends ConsumerWidget {
     return rgb;
   });
 
-  final _brightnessProvider = StateProvider.family<int, Device<TradfriLedBulbModel>>((final ref, final device) {
+  final _brightnessProvider =
+      StateProvider.family<int, Device<TradfriLedBulbModel>>(
+          (final ref, final device) {
     final model = ref.watch(device.baseModelTProvider(device.id));
 
     return model?.brightness ?? 0;
   });
   void changeBrightness(final double brightness, final WidgetRef ref) {
-    device.sendToServer(
-        sm.MessageType.Update, sm.Command.Brightness, [brightness.round().toString()], ref.read(hubConnectionProvider));
+    device.sendToServer(sm.MessageType.Update, sm.Command.Brightness,
+        [brightness.round().toString()], ref.read(hubConnectionProvider));
   }
 
   void changeColor(final RGB rgb, final WidgetRef ref) {
-    device.sendToServer(
-        sm.MessageType.Update, sm.Command.Color, ["#${rgb.hr + rgb.hg + rgb.hb}"], ref.read(hubConnectionProvider));
+    device.sendToServer(sm.MessageType.Update, sm.Command.Color,
+        ["#${rgb.hr + rgb.hg + rgb.hb}"], ref.read(hubConnectionProvider));
   }
 
   @override
@@ -120,7 +135,10 @@ class TradfriLedBulbScreen extends ConsumerWidget {
           final state = ref.read(TradfriLedBulbModel.stateProvider(device.id));
 
           device.sendToServer(
-              sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, [], ref.read(hubConnectionProvider));
+              sm.MessageType.Update,
+              state ? sm.Command.Off : sm.Command.On,
+              [],
+              ref.read(hubConnectionProvider));
         },
       ),
     );
@@ -128,7 +146,7 @@ class TradfriLedBulbScreen extends ConsumerWidget {
 
   Widget buildBody(final BuildContext context, final WidgetRef ref) {
     final model = ref.watch(device.baseModelTProvider(device.id));
-    if (model is! TradfriLedBulbModel) return Container();
+    if (model is! TradfriLedBulbModel) return const SizedBox();
 
     return ListView(
       children: <Widget>[
@@ -142,18 +160,21 @@ class TradfriLedBulbScreen extends ConsumerWidget {
           title: Text("Verbindungsqualität: ${model.linkQuality}"),
         ),
         ListTile(
-          title: Text("Helligkeit aktuell ${model.brightness.toStringAsFixed(0)}"),
+          title:
+              Text("Helligkeit aktuell ${model.brightness.toStringAsFixed(0)}"),
           subtitle: GestureDetector(
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
                   trackShape: GradientRoundedRectSliderTrackShape(
-                      LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
+                      LinearGradient(
+                          colors: [Colors.grey.shade800, Colors.white]))),
               child: Consumer(builder: (final context, final ref, final child) {
                 final brightness = ref.watch(_brightnessProvider(device));
                 return Slider(
                   value: brightness.toDouble(),
                   onChanged: (final d) {
-                    ref.read(_brightnessProvider(device).notifier).state = d.round();
+                    ref.read(_brightnessProvider(device).notifier).state =
+                        d.round();
                   },
                   max: 100.0,
                   divisions: 100,
@@ -172,7 +193,8 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                 title: Slider(
                   value: rgb.dr,
                   onChanged: (final d) {
-                    ref.read(_rgbProvider(device).notifier).state = rgb.cloneWith(red: d.round());
+                    ref.read(_rgbProvider(device).notifier).state =
+                        rgb.cloneWith(red: d.round());
                   },
                   onChangeEnd: (final a) => changeColor(rgb, ref),
                   max: 255.0,
@@ -188,7 +210,8 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                 title: Slider(
                   value: rgb.dg,
                   onChanged: (final d) {
-                    ref.read(_rgbProvider(device).notifier).state = rgb.cloneWith(green: d.round());
+                    ref.read(_rgbProvider(device).notifier).state =
+                        rgb.cloneWith(green: d.round());
                   },
                   onChangeEnd: (final a) => changeColor(rgb, ref),
                   max: 255.0,
@@ -204,7 +227,8 @@ class TradfriLedBulbScreen extends ConsumerWidget {
                 title: Slider(
                   value: rgb.db,
                   onChanged: (final d) {
-                    ref.read(_rgbProvider(device).notifier).state = rgb.cloneWith(blue: d.round());
+                    ref.read(_rgbProvider(device).notifier).state =
+                        rgb.cloneWith(blue: d.round());
                   },
                   onChangeEnd: (final a) => changeColor(rgb, ref),
                   max: 255.0,
@@ -259,7 +283,8 @@ class RGB {
     RGB.rgb(c.red, c.green, c.blue);
   }
 
-  RGB cloneWith({final int red = -1, final int green = -1, final int blue = -1}) {
+  RGB cloneWith(
+      {final int red = -1, final int green = -1, final int blue = -1}) {
     final rgb = RGB();
     if (red > -1) rgb.r = red;
     if (green > -1) rgb.g = green;
@@ -268,7 +293,8 @@ class RGB {
   }
 
   @override
-  bool operator ==(final Object other) => other is RGB && r == other.r && g == other.g && b == other.b;
+  bool operator ==(final Object other) =>
+      other is RGB && r == other.r && g == other.g && b == other.b;
 
   @override
   int get hashCode => Object.hash(r, g, b);
