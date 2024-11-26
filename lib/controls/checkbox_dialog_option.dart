@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 class CheckboxDialogOption extends SimpleDialogOption {
-  
-   const CheckboxDialogOption({
-    final Key? key,
+  const CheckboxDialogOption({
+    super.key,
     final onPressed,
     final padding,
     final child,
-  }) : super(key: key, onPressed: onPressed, padding: padding, child:child);
+  }) : super(onPressed: onPressed, padding: padding, child: child);
 }

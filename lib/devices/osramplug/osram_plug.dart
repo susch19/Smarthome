@@ -6,15 +6,19 @@ import 'package:smarthome/devices/zigbee/zigbee_model.dart';
 import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 class OsramPlug extends Device<ZigbeeSwitchModel> {
-  OsramPlug(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
+  OsramPlug(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => OsramPlugScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (final BuildContext context) => OsramPlugScreen(this)));
   }
 
   @override
@@ -29,9 +33,12 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
             return MaterialButton(
               child: Text(
                 "An",
-                style: (state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+                style: (state)
+                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                    : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.On, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.on, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -41,9 +48,12 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
             return MaterialButton(
               child: Text(
                 "Aus",
-                style: !(state) ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20) : const TextStyle(),
+                style: !(state)
+                    ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                    : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.off, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -59,7 +69,7 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
 
 class OsramPlugScreen extends ConsumerWidget {
   final OsramPlug device;
-  const OsramPlugScreen(this.device, {final Key? key}) : super(key: key);
+  const OsramPlugScreen(this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
@@ -76,8 +86,8 @@ class OsramPlugScreen extends ConsumerWidget {
           child: const Icon(Icons.power_settings_new),
           onPressed: () {
             final state = ref.watch(ZigbeeSwitchModel.stateProvider(device.id));
-            device.sendToServer(
-                sm.MessageType.Update, state ? sm.Command.Off : sm.Command.On, [], ref.read(hubConnectionProvider));
+            device.sendToServer(MessageType.update,
+                state ? Command2.off : Command2.on, [], ref.read(apiProvider));
           }),
     );
   }

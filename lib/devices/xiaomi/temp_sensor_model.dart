@@ -12,38 +12,42 @@ class TempSensorModel extends ZigbeeModel {
   final double pressure;
   final int battery;
 
-  static final temperatureProvider = Provider.family<double, int>((final ref, final id) {
+  static final temperatureProvider =
+      Provider.family<double, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TempSensorModel).temperature;
   });
-  static final humidityProvider = Provider.family<double, int>((final ref, final id) {
+  static final humidityProvider =
+      Provider.family<double, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TempSensorModel).humidity;
   });
-  static final pressureProvider = Provider.family<double, int>((final ref, final id) {
+  static final pressureProvider =
+      Provider.family<double, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TempSensorModel).pressure;
   });
-  static final batteryProvider = Provider.family<int, int>((final ref, final id) {
+  static final batteryProvider =
+      Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TempSensorModel).battery;
   });
 
   const TempSensorModel(
-      final int id,
-      final String friendlyName,
-      final String typeName,
-      final bool isConnected,
-      final bool available,
-      final DateTime lastReceived,
-      final int linkQuality,
+      super.id,
+      super.friendlyName,
+      super.typeName,
+      super.isConnected,
+      super.available,
+      super.lastReceived,
+      super.linkQuality,
       this.temperature,
       this.humidity,
       this.pressure,
-      this.battery)
-      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
+      this.battery);
 
-  factory TempSensorModel.fromJson(final Map<String, dynamic> json) => _$TempSensorModelFromJson(json);
+  factory TempSensorModel.fromJson(final Map<String, dynamic> json) =>
+      _$TempSensorModelFromJson(json);
 
   @override
   BaseModel getModelFromJson(final Map<String, dynamic> json) {
@@ -63,6 +67,6 @@ class TempSensorModel extends ZigbeeModel {
       other.battery == battery;
 
   @override
-  int get hashCode => Object.hash(
-      id, friendlyName, isConnected, available, lastReceived, linkQuality, temperature, humidity, pressure, battery);
+  int get hashCode => Object.hash(id, friendlyName, isConnected, available,
+      lastReceived, linkQuality, temperature, humidity, pressure, battery);
 }

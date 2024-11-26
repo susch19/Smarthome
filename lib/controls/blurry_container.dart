@@ -29,8 +29,7 @@ class BlurryContainer extends ConsumerWidget {
       this.borderRadius = kBorderRadius,
       this.margin = kDefaultMargin,
       this.blendMode = kblendMode,
-      final Key? key})
-      : super(key: key);
+      super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

@@ -18,33 +18,33 @@ const dayOfWeekToStringMap = <DayOfWeek, String>{
 };
 
 const dayOfWeekToFlagMap = <DayOfWeek, int>{
-  DayOfWeek.Mon: 1 << 1,
-  DayOfWeek.Tue: 1 << 2,
-  DayOfWeek.Wed: 1 << 3,
-  DayOfWeek.Thu: 1 << 4,
-  DayOfWeek.Fri: 1 << 5,
-  DayOfWeek.Sat: 1 << 6,
-  DayOfWeek.Sun: 1 << 7
+  DayOfWeek.Mon: 1 << 0,
+  DayOfWeek.Tue: 1 << 1,
+  DayOfWeek.Wed: 1 << 2,
+  DayOfWeek.Thu: 1 << 3,
+  DayOfWeek.Fri: 1 << 4,
+  DayOfWeek.Sat: 1 << 5,
+  DayOfWeek.Sun: 1 << 6
 };
 
 const flagToDayOfWeekMap = <int, DayOfWeek>{
-  1 << 1: DayOfWeek.Mon,
-  1 << 2: DayOfWeek.Tue,
-  1 << 3: DayOfWeek.Wed,
-  1 << 4: DayOfWeek.Thu,
-  1 << 5: DayOfWeek.Fri,
-  1 << 6: DayOfWeek.Sat,
-  1 << 7: DayOfWeek.Sun
+  1 << 0: DayOfWeek.Mon,
+  1 << 1: DayOfWeek.Tue,
+  1 << 2: DayOfWeek.Wed,
+  1 << 3: DayOfWeek.Thu,
+  1 << 4: DayOfWeek.Fri,
+  1 << 5: DayOfWeek.Sat,
+  1 << 6: DayOfWeek.Sun
 };
 
 const dayOfWeekStringToFlagMap = <String, int>{
-  'Mo': 1 << 1,
-  'Di': 1 << 2,
-  'Mi': 1 << 3,
-  'Do': 1 << 4,
-  'Fr': 1 << 5,
-  'Sa': 1 << 6,
-  'So': 1 << 7
+  'Mo': 1 << 0,
+  'Di': 1 << 1,
+  'Mi': 1 << 2,
+  'Do': 1 << 3,
+  'Fr': 1 << 4,
+  'Sa': 1 << 5,
+  'So': 1 << 6
 };
 
 const dayOfWeekToLongStringMap = <DayOfWeek, String>{
@@ -73,24 +73,26 @@ class HeaterConfig extends Equatable implements Comparable {
 
   static String timeOfDayToJson(final TimeOfDay? val) {
     if (val == null) return "";
-    final now = DateTime.now();
-    return (DateTime(now.year, now.month, now.day, val.hour, val.minute)).toIso8601String();
+    return (DateTime.utc(2000, 1, 1, val.hour, val.minute)).toIso8601String();
   }
 
   static TimeOfDay timeOfDayFromJson(final String val) {
-    final dt = DateTime.tryParse(val)!.toLocal();
+    final dt = DateTime.tryParse(val)!;
     const TimeOfDay(hour: 0, minute: 0);
     return TimeOfDay.fromDateTime(dt);
   }
 
-  factory HeaterConfig.fromJson(final Map<String, dynamic> json) => _$HeaterConfigFromJson(json);
+  factory HeaterConfig.fromJson(final Map<String, dynamic> json) =>
+      _$HeaterConfigFromJson(json);
 
   Map<String, dynamic> toJson() => _$HeaterConfigToJson(this);
 
   @override
   int compareTo(final other) {
     return (dayOfWeek.index * 1440 + timeOfDay.hour * 60 + timeOfDay.minute) -
-        (other.dayOfWeek.index * 1440 + other.timeOfDay.hour * 60 + other.timeOfDay.minute) as int;
+        (other.dayOfWeek.index * 1440 +
+            other.timeOfDay.hour * 60 +
+            other.timeOfDay.minute) as int;
   }
 
   @override

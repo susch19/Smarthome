@@ -12,15 +12,18 @@ class TradfriLedBulbModel extends ZigbeeModel {
   final String color;
   final bool state;
 
-  static final brightnessProvider = Provider.family<int, int>((final ref, final id) {
+  static final brightnessProvider =
+      Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TradfriLedBulbModel).brightness;
   });
-  static final colorProvider = Provider.family<String, int>((final ref, final id) {
+  static final colorProvider =
+      Provider.family<String, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TradfriLedBulbModel).color;
   });
-  static final stateProvider = Provider.family<bool, int>((final ref, final id) {
+  static final stateProvider =
+      Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TradfriLedBulbModel).state;
   });
@@ -28,10 +31,19 @@ class TradfriLedBulbModel extends ZigbeeModel {
   @override
   bool get isConnected => available;
 
-  const TradfriLedBulbModel(final int id, final String friendlyName, final String typeName, final bool isConnected,
-      final bool available, final DateTime lastReceived, final int linkQuality, this.brightness, this.color, this.state)
-      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
-  factory TradfriLedBulbModel.fromJson(final Map<String, dynamic> json) => _$TradfriLedBulbModelFromJson(json);
+  const TradfriLedBulbModel(
+      super.id,
+      super.friendlyName,
+      super.typeName,
+      super.isConnected,
+      super.available,
+      super.lastReceived,
+      super.linkQuality,
+      this.brightness,
+      this.color,
+      this.state);
+  factory TradfriLedBulbModel.fromJson(final Map<String, dynamic> json) =>
+      _$TradfriLedBulbModelFromJson(json);
 
   @override
   Map<String, dynamic> toJson() => _$TradfriLedBulbModelToJson(this);

@@ -11,16 +11,24 @@ part 'zigbee_switch_model.g.dart';
 class ZigbeeSwitchModel extends ZigbeeModel {
   final bool state;
 
-  static final stateProvider = Provider.family<bool, int>((final ref, final id) {
+  static final stateProvider =
+      Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeSwitchModel).state;
   });
 
-  const ZigbeeSwitchModel(final int id, final String friendlyName, final String typeName, final bool isConnected,
-      final bool available, final DateTime lastReceived, final int linkQuality, this.state)
-      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
+  const ZigbeeSwitchModel(
+      super.id,
+      super.friendlyName,
+      super.typeName,
+      super.isConnected,
+      super.available,
+      super.lastReceived,
+      super.linkQuality,
+      this.state);
 
-  factory ZigbeeSwitchModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeSwitchModelFromJson(json);
+  factory ZigbeeSwitchModel.fromJson(final Map<String, dynamic> json) =>
+      _$ZigbeeSwitchModelFromJson(json);
 
   @override
   BaseModel getModelFromJson(final Map<String, dynamic> json) {
@@ -31,7 +39,8 @@ class ZigbeeSwitchModel extends ZigbeeModel {
   Map<String, dynamic> toJson() => _$ZigbeeSwitchModelToJson(this);
 
   @override
-  bool operator ==(final Object other) => other is ZigbeeSwitchModel && super == other && state == other.state;
+  bool operator ==(final Object other) =>
+      other is ZigbeeSwitchModel && super == other && state == other.state;
 
   @override
   int get hashCode => Object.hash(super.hashCode, state);

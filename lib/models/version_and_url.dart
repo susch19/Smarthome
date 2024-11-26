@@ -9,7 +9,10 @@ class VersionAndUrl {
 
   @override
   bool operator ==(final Object other) =>
-      other is VersionAndUrl && version == other.version && upToDate == other.upToDate && url == other.url;
+      other is VersionAndUrl &&
+      version == other.version &&
+      upToDate == other.upToDate &&
+      url == other.url;
 
   @override
   int get hashCode => Object.hash(version.hashCode, upToDate, url);

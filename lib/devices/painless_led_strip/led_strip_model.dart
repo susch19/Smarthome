@@ -35,7 +35,8 @@ class LedStripModel extends ConnectionBaseModel {
       final bool isConnected)
       : super(id, friendlyName, typeName, isConnected);
 
-  factory LedStripModel.fromJson(final Map<String, dynamic> json) => _$LedStripModelFromJson(json);
+  factory LedStripModel.fromJson(final Map<String, dynamic> json) =>
+      _$LedStripModelFromJson(json);
 
   @override
   Map<String, dynamic> toJson() => _$LedStripModelToJson(this);
@@ -56,8 +57,8 @@ class LedStripModel extends ConnectionBaseModel {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(super.hashCode, colorMode, delay, numberOfLeds, brightness, step, reverse, colorNumber, version);
+  int get hashCode => Object.hash(super.hashCode, colorMode, delay,
+      numberOfLeds, brightness, step, reverse, colorNumber, version);
 
   @override
   bool operator ==(final Object other) =>

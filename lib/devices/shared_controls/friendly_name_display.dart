@@ -6,7 +6,7 @@ import 'package:smarthome/devices/base_model.dart';
 class FriendlyNameDisplay extends ConsumerWidget {
   final int id;
 
-  const FriendlyNameDisplay(this.id, {final Key? key}) : super(key: key);
+  const FriendlyNameDisplay(this.id, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

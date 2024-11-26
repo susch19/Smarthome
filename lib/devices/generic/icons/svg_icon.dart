@@ -17,12 +17,14 @@ class SvgIcon {
   SvgIcon(this.name, this.hash, {this.data});
 
   @override
-  bool operator ==(final Object other) => other is SvgIcon && name == other.name && hash == other.hash;
+  bool operator ==(final Object other) =>
+      other is SvgIcon && name == other.name && hash == other.hash;
 
   @override
   int get hashCode => Object.hash(super.hashCode, name, hash);
 
-  factory SvgIcon.fromJson(final Map<String, dynamic> json) => _$SvgIconFromJson(json);
+  factory SvgIcon.fromJson(final Map<String, dynamic> json) =>
+      _$SvgIconFromJson(json);
 
   Map<String, dynamic> toJson() => _$SvgIconToJson(this);
 

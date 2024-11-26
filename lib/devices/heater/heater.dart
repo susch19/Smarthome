@@ -14,20 +14,24 @@ import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/smarthome_icons.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:smarthome/icons/icons.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-import 'package:tuple/tuple.dart';
 
 import 'temp_scheduling.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Heater extends Device<HeaterModel> {
-  Heater(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
+  Heater(super.id, super.typeName, final IconData icon) : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => HeaterScreen(this)));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (final BuildContext context) => HeaterScreen(this),
+      ),
+    );
   }
 
   // @override
@@ -42,7 +46,9 @@ class Heater extends Device<HeaterModel> {
       children: [
         Consumer(builder: (final context, final ref, final child) {
           return Icon(
-            ref.watch(HeaterModel.disableHeatingProvider(id)) ? Icons.power_off_outlined : Icons.power_outlined,
+            ref.watch(HeaterModel.disableHeatingProvider(id))
+                ? Icons.power_off_outlined
+                : Icons.power_outlined,
             size: 20,
           );
         }),
@@ -59,7 +65,11 @@ class Heater extends Device<HeaterModel> {
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Consumer(
           builder: (final context, final ref, final child) => Text(
-            (ref.watch(HeaterModel.temperatureProvider(id))?.temperature.toStringAsFixed(1) ?? ""),
+            (ref
+                    .watch(HeaterModel.temperatureProvider(id))
+                    ?.temperature
+                    .toStringAsFixed(1) ??
+                ""),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
           ),
         ),
@@ -74,9 +84,12 @@ class Heater extends Device<HeaterModel> {
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Consumer(
           builder: (final context, final ref, final child) {
-            final currentConfig = ref.watch(HeaterModel.currentConfigProvider(id));
+            final currentConfig =
+                ref.watch(HeaterModel.currentConfigProvider(id));
             return Text(
-              currentConfig == null ? "" : ((currentConfig.temperature.toStringAsFixed(1))),
+              currentConfig == null
+                  ? ""
+                  : ((currentConfig.temperature.toStringAsFixed(1))),
               style: const TextStyle(fontWeight: FontWeight.normal),
             );
           },
@@ -86,25 +99,27 @@ class Heater extends Device<HeaterModel> {
           style: TextStyle(fontWeight: FontWeight.normal),
         ),
       ]),
-      Consumer(builder: (final context, final ref, final child) {
-        final showDebug = ref.watch(debugInformationEnabledProvider);
-        return !showDebug
-            ? Container()
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Consumer(
-                    builder: (final context, final ref, final child) {
-                      return Text(ref.watch(HeaterModel.versionProvider(id)));
-                    },
-                  )
-                ],
-              );
-      }),
       Consumer(
         builder: (final context, final ref, final child) {
           final showDebug = ref.watch(debugInformationEnabledProvider);
-          return showDebug ? Text(id.toString()) : Container();
+          return !showDebug
+              ? const SizedBox()
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Consumer(
+                      builder: (final context, final ref, final child) {
+                        return Text(ref.watch(HeaterModel.versionProvider(id)));
+                      },
+                    )
+                  ],
+                );
+        },
+      ),
+      Consumer(
+        builder: (final context, final ref, final child) {
+          final showDebug = ref.watch(debugInformationEnabledProvider);
+          return showDebug ? Text(id.toString()) : const SizedBox();
         },
       )
 
@@ -121,7 +136,7 @@ class Heater extends Device<HeaterModel> {
 class HeaterScreen extends ConsumerStatefulWidget {
   final Heater device;
 
-  const HeaterScreen(this.device, {final Key? key}) : super(key: key);
+  const HeaterScreen(this.device, {super.key});
 
   @override
   _HeaterScreenState createState() => _HeaterScreenState();
@@ -138,7 +153,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   @override
   void initState() {
     heater = widget.device;
-    final currentConfig = ref.read(HeaterModel.currentConfigProvider(widget.device.id));
+    final currentConfig =
+        ref.read(HeaterModel.currentConfigProvider(widget.device.id));
 
     handlePointerValueChanged(currentConfig?.temperature ?? 21);
     textEditingController = TextEditingController(text: tempString());
@@ -150,8 +166,10 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   Widget build(final BuildContext context) {
     final double width = MediaQuery.of(context).size.width;
 
-    final xiaomiTempSensor = ref.watch(HeaterModel.xiaomiProvider(widget.device.id));
-    final tempSensorDevice = ref.watch(valueStoreChangedProvider(Tuple2("temperature", xiaomiTempSensor ?? -1)));
+    final xiaomiTempSensor =
+        ref.watch(HeaterModel.xiaomiProvider(widget.device.id));
+    final tempSensorDevice = ref.watch(
+        valueStoreChangedProvider("temperature", xiaomiTempSensor ?? -1));
 
     return DefaultTabController(
       length: 2,
@@ -161,9 +179,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
             tabs: [
               Consumer(
                 builder: (final context, final ref, final child) {
-                  final typeNames = ref.watch(BaseModel.typeNamesProvider(widget.device.id));
-                  final icon = ref.watch(
-                      iconWidgetProvider(Tuple4(typeNames ?? [], widget.device, AdaptiveTheme.of(context), true)));
+                  final typeNames =
+                      ref.watch(BaseModel.typeNamesProvider(widget.device.id));
+                  final icon = ref.watch(iconWidgetProvider(
+                    typeNames ?? [],
+                    widget.device,
+                    AdaptiveTheme.of(context),
+                    true,
+                  ));
                   return Tab(icon: icon);
                 },
               ),
@@ -177,7 +200,11 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
           decoration: ThemeManager.getBackgroundDecoration(context),
           child: TabBarView(
             children: [
-              buildColumnView(width, tempSensorDevice is ValueStore<double> ? tempSensorDevice.currentValue : 21.0),
+              buildColumnView(
+                  width,
+                  tempSensorDevice is ValueStore<double>
+                      ? tempSensorDevice.currentValue
+                      : 21.0),
               buildSettingsView(width),
             ],
           ),
@@ -189,19 +216,22 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   _pushTempSettings(final BuildContext context) async {
     final res = await Navigator.push(
         context,
-        MaterialPageRoute<Tuple2<bool, List<HeaterConfig>>>(
-            builder: (final BuildContext context) => TempScheduling(widget.device.id), fullscreenDialog: true));
-    if (res == null || !res.item1) return;
+        MaterialPageRoute<(bool, List<HeaterConfig>)>(
+            builder: (final BuildContext context) =>
+                TempScheduling(widget.device.id),
+            fullscreenDialog: true));
+    if (res == null || !res.$1) return;
 
-    widget.device.sendToServer(sm.MessageType.Options, sm.Command.Temp,
-        res.item2.map((final f) => jsonEncode(f)).toList(), ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.options, Command2.temp,
+        res.$2.map((final f) => jsonEncode(f)).toList(), ref.read(apiProvider));
   }
 
   _pushLogView(final BuildContext context) async {
     await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (final BuildContext context) => LogScreen(HeaterModel.logsProvider, heater.id),
+            builder: (final BuildContext context) =>
+                LogScreen(HeaterModel.logsProvider, heater.id),
             fullscreenDialog: true));
   }
 
@@ -213,10 +243,13 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
           child: Row(
             children: [
               Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: const Icon(Icons.person)),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 8.0),
+                  child: const Icon(Icons.person)),
               Consumer(
                 builder: (final context, final ref, final child) {
-                  return Text(ref.watch(BaseModel.friendlyNameProvider(widget.device.id)));
+                  return Text(ref
+                      .watch(BaseModel.friendlyNameProvider(widget.device.id)));
                 },
               ),
             ],
@@ -227,11 +260,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
           child: Row(
             children: [
               Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: const Icon(Icons.timer)),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 8.0),
+                  child: const Icon(Icons.timer)),
               const Text("Zuletzt Empfangen: "),
               Consumer(
                 builder: (final context, final ref, final child) {
-                  final temperature = ref.watch(HeaterModel.temperatureProvider(widget.device.id));
+                  final temperature = ref
+                      .watch(HeaterModel.temperatureProvider(widget.device.id));
                   return Text(temperature == null
                       ? "Keine Daten vorliegend"
                       : "${dayOfWeekToStringMap[temperature.dayOfWeek]!} ${temperature.timeOfDay.format(context)}");
@@ -245,10 +281,13 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
           child: Row(
             children: [
               Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), child: const Icon(Icons.receipt)),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 8.0),
+                  child: const Icon(Icons.receipt)),
               const Text("Kalibrierung: "),
               Consumer(builder: (final context, final ref, final child) {
-                final currentCalibration = ref.watch(HeaterModel.currentCalibrationProvider(widget.device.id));
+                final currentCalibration = ref.watch(
+                    HeaterModel.currentCalibrationProvider(widget.device.id));
                 return Text(currentCalibration?.temperature == null
                     ? "Kein Ziel"
                     : "${currentCalibration!.temperature.toStringAsFixed(1)}°C (${dayOfWeekToStringMap[currentCalibration.dayOfWeek]!} ${currentCalibration.timeOfDay.format(context)})");
@@ -262,18 +301,20 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 child: Row(
                   children: [
                     Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 4.0, horizontal: 8.0),
                         child: const Icon(Icons.receipt)),
                     Consumer(
                       builder: (final context, final ref, final child) {
-                        final version = ref.watch(HeaterModel.versionProvider(widget.device.id));
+                        final version = ref.watch(
+                            HeaterModel.versionProvider(widget.device.id));
                         return Text(version);
                       },
                     ),
                   ],
                 ),
               )
-            : Container(),
+            : const SizedBox(),
         getTempGauge(value)
       ],
     );
@@ -285,8 +326,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
 
   void handlePointerValueChangedEnd(final double value) {
     handlePointerValueChanged(value);
-    widget.device.sendToServer(
-        sm.MessageType.Update, sm.Command.Temp, <String>[_annotationValue], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.update, Command2.temp,
+        <String>[_annotationValue], ref.read(apiProvider));
   }
 
   void handlePointerValueChanging(final ValueChangingArgs args) {
@@ -312,7 +353,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
           child: Row(
             children: [
               Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 8.0),
                   child: const Icon(SmarthomeIcons.temperature)),
               const Text("Sensor: "),
               TemperatureSensorDropdown(widget.device)
@@ -326,26 +368,33 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
               Consumer(
                 builder: (final context, final ref, final child) {
                   final heaterIcon = ref.watch(iconWidgetSingleProvider(
-                      Tuple4(widget.device.typeName, widget.device, AdaptiveTheme.of(context), false)));
+                    widget.device.typeName,
+                    widget.device,
+                    AdaptiveTheme.of(context),
+                    false,
+                  ));
                   return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 4.0, horizontal: 8.0),
                     child: heaterIcon,
                   );
                 },
               ),
               const Text("Heizung: "),
               Consumer(builder: (final context, final ref, final child) {
-                final disableHeater = ref.watch(HeaterModel.disableHeatingProvider(widget.device.id));
+                final disableHeater = ref.watch(
+                    HeaterModel.disableHeatingProvider(widget.device.id));
                 return Switch(
                   value: !disableHeater,
                   onChanged: (final val) {
-                    sm.Command command;
+                    Command2 command;
                     if (val) {
-                      command = sm.Command.On;
+                      command = Command2.on;
                     } else {
-                      command = sm.Command.Off;
+                      command = Command2.off;
                     }
-                    widget.device.sendToServer(sm.MessageType.Update, command, [], ref.read(hubConnectionProvider));
+                    widget.device.sendToServer(
+                        MessageType.update, command, [], ref.read(apiProvider));
                   },
                 );
               }),
@@ -357,23 +406,26 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
           child: Row(
             children: [
               Container(
-                margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                margin:
+                    const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
                 child: const Icon(SmarthomeIcons.lamp),
               ),
               const Text("Blaue Led: "),
               Consumer(
                 builder: (final context, final ref, final child) {
-                  final disableLed = ref.watch(HeaterModel.disableLedProvider(widget.device.id));
+                  final disableLed = ref
+                      .watch(HeaterModel.disableLedProvider(widget.device.id));
                   return Switch(
                     value: !disableLed,
                     onChanged: (final val) {
-                      sm.Command command;
+                      Command2 command;
                       if (val) {
-                        command = sm.Command.On;
+                        command = Command2.on;
                       } else {
-                        command = sm.Command.Off;
+                        command = Command2.off;
                       }
-                      widget.device.sendToServer(sm.MessageType.Options, command, [], ref.read(hubConnectionProvider));
+                      widget.device.sendToServer(MessageType.options, command,
+                          [], ref.read(apiProvider));
                     },
                   );
                 },
@@ -431,7 +483,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
             children: <Widget>[
               Text(
                 _annotationValue,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
               ),
               const Text(
                 ' °C',
@@ -452,7 +505,9 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 maximum: 35,
                 interval: 1,
                 axisLineStyle: const AxisLineStyle(
-                    gradient: SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                    gradient: SweepGradient(
+                        colors: [Colors.blue, Colors.amber, Colors.red],
+                        stops: [0.3, 0.5, 1]),
                     color: Colors.red,
                     thickness: 0.04,
                     thicknessUnit: GaugeSizeUnit.factor),
@@ -465,7 +520,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 labelsPosition: ElementsPosition.outside,
                 minorTicksPerInterval: 10,
                 minorTickStyle: const MinorTickStyle(length: 0.1),
-                majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                majorTickStyle: const MajorTickStyle(
+                    length: 0.05, lengthUnit: GaugeSizeUnit.factor),
               ),
               RadialAxis(
                 startAngle: 150,
@@ -475,7 +531,15 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 maximum: 35,
                 interval: 5,
                 axisLineStyle: const AxisLineStyle(
-                    gradient: SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                    gradient: SweepGradient(colors: [
+                      Colors.blue,
+                      Colors.amber,
+                      Colors.red,
+                    ], stops: [
+                      0.3,
+                      0.5,
+                      1
+                    ]),
                     color: Colors.red,
                     thickness: 0.04,
                     thicknessUnit: GaugeSizeUnit.factor),
@@ -487,7 +551,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 labelsPosition: ElementsPosition.outside,
                 minorTicksPerInterval: 0,
                 minorTickStyle: const MinorTickStyle(length: 0.1),
-                majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                majorTickStyle: const MajorTickStyle(
+                    length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                 pointers: <GaugePointer>[
                   MarkerPointer(
                     value: _value,
@@ -527,18 +592,26 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                                 // Text("Ausgelesen: "),
                                 // Icon(Icons.search),
                                 Consumer(
-                                  builder: (final context, final ref, final child) {
-                                    final temperature = ref.watch(HeaterModel.temperatureProvider(widget.device.id));
+                                  builder:
+                                      (final context, final ref, final child) {
+                                    final temperature = ref.watch(
+                                        HeaterModel.temperatureProvider(
+                                            widget.device.id));
                                     return temperature?.temperature == null
-                                        ? const Text("Kein Messergebnis", style: TextStyle(fontSize: 24))
+                                        ? const Text("Kein Messergebnis",
+                                            style: TextStyle(fontSize: 24))
                                         : Row(children: [
                                             Text(
-                                              temperature!.temperature.toStringAsFixed(1),
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                                              temperature!.temperature
+                                                  .toStringAsFixed(1),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 24),
                                             ),
                                             Text(
                                                 "°C (${dayOfWeekToStringMap[temperature.dayOfWeek]!} ${temperature.timeOfDay.format(context)})",
-                                                style: const TextStyle(fontSize: 24))
+                                                style: const TextStyle(
+                                                    fontSize: 24))
                                           ]);
                                   },
                                 )
@@ -553,19 +626,27 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                               // Icon(Icons.),
 
                               Consumer(
-                                builder: (final context, final ref, final child) {
-                                  final currentConfig = ref.watch(HeaterModel.currentConfigProvider(widget.device.id));
+                                builder:
+                                    (final context, final ref, final child) {
+                                  final currentConfig = ref.watch(
+                                      HeaterModel.currentConfigProvider(
+                                          widget.device.id));
                                   return currentConfig?.temperature == null
-                                      ? const Text("Keins", style: TextStyle(fontSize: 24))
+                                      ? const Text("Keins",
+                                          style: TextStyle(fontSize: 24))
                                       : Row(
                                           children: [
                                             Text(
-                                              currentConfig!.temperature.toStringAsFixed(1),
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                                              currentConfig!.temperature
+                                                  .toStringAsFixed(1),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 24),
                                             ),
                                             Text(
                                               "°C (${dayOfWeekToStringMap[currentConfig.dayOfWeek]!} ${currentConfig.timeOfDay.format(context)})",
-                                              style: const TextStyle(fontSize: 24),
+                                              style:
+                                                  const TextStyle(fontSize: 24),
                                             ),
                                           ],
                                         );
@@ -590,34 +671,39 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
 @immutable
 class TemperatureSensorDropdown extends ConsumerWidget {
   final Heater device;
-  const TemperatureSensorDropdown(this.device, {final Key? key}) : super(key: key);
+  const TemperatureSensorDropdown(this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final possibleDevices = ref.watch(devicesByValueStoreKeyProvider("temperature"));
+    final possibleDevices =
+        ref.watch(devicesByValueStoreKeyProvider("temperature"));
     final model = ref.watch(device.baseModelTProvider(device.id));
-    if (model is! HeaterModel) return Container();
-    final currentDevice = ref.watch(deviceByIdProvider(model.xiaomiTempSensor ?? -1));
+    if (model is! HeaterModel) return const SizedBox();
+    final currentDevice =
+        ref.watch(deviceByIdProvider(model.xiaomiTempSensor ?? -1));
     return DropdownButton(
       items: (possibleDevices
           .map((final f) => DropdownMenuItem(
                 value: f,
                 child: Consumer(
                   builder: (final context, final ref, final child) {
-                    final friendlyName = ref.watch(BaseModel.friendlyNameProvider(f.id));
+                    final friendlyName =
+                        ref.watch(BaseModel.friendlyNameProvider(f.id));
                     return Text(friendlyName);
                   },
                 ),
               ))
           .toList()),
       onChanged: (final dynamic a) {
-        device.sendToServer(sm.MessageType.Update, sm.Command.DeviceMapping,
-            [a.id.toString(), currentDevice?.id.toString() ?? "0"], ref.read(hubConnectionProvider));
-        final models = ref.read(baseModelProvider.notifier);
-        final newList = models.state.toList();
+        device.sendToServer(
+            MessageType.update,
+            Command2.devicemapping,
+            [a.id.toString(), currentDevice?.id.toString() ?? "0"],
+            ref.read(apiProvider));
+        final newList = ref.read(baseModelsProvider).toList();
         newList.remove(model);
         newList.add(model.copyWith(xiaomiTempSensor: a.id));
-        models.state = newList;
+        ref.read(baseModelsProvider.notifier).storeModels(newList);
       },
       value: currentDevice,
     );

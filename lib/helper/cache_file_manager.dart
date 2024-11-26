@@ -21,7 +21,8 @@ class CacheFileManager {
     return file.readAsString();
   }
 
-  Future<void> writeHashCode(final String fileName, final String hashCode) async {
+  Future<void> writeHashCode(
+      final String fileName, final String hashCode) async {
     final file = File(p.join(_path, "$fileName.$_fileExtension.md5"));
     await file.writeAsString(hashCode);
   }
@@ -42,12 +43,14 @@ class CacheFileManager {
     return file.readAsBytes();
   }
 
-  Future<void> writeContentAsString(final String fileName, final String content) async {
+  Future<void> writeContentAsString(
+      final String fileName, final String content) async {
     final file = File(p.join(_path, "$fileName.$_fileExtension"));
     await file.writeAsString(content);
   }
 
-  Future<void> writeContentAsBytes(final String fileName, final Uint8List content) async {
+  Future<void> writeContentAsBytes(
+      final String fileName, final Uint8List content) async {
     final file = File(p.join(_path, "$fileName.$_fileExtension"));
     await file.writeAsBytes(content);
   }
