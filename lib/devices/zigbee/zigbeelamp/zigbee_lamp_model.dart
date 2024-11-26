@@ -14,38 +14,42 @@ class ZigbeeLampModel extends ZigbeeModel {
   final int? colortemp;
   final double? transitionTime;
 
-  static final transitionTimeProvider = Provider.family<double?, int>((final ref, final id) {
+  static final transitionTimeProvider =
+      Provider.family<double?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeLampModel).transitionTime;
   });
-  static final brightnessProvider = Provider.family<int, int>((final ref, final id) {
+  static final brightnessProvider =
+      Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeLampModel).brightness ?? 0;
   });
-  static final colorTempProvider = Provider.family<int, int>((final ref, final id) {
+  static final colorTempProvider =
+      Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeLampModel).colortemp ?? 0;
   });
-  static final stateProvider = Provider.family<bool, int>((final ref, final id) {
+  static final stateProvider =
+      Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as ZigbeeLampModel).state;
   });
 
   const ZigbeeLampModel(
-      final int id,
-      final String friendlyName,
-      final String typeName,
-      final bool isConnected,
-      final bool available,
-      final DateTime lastReceived,
-      final int linkQuality,
+      super.id,
+      super.friendlyName,
+      super.typeName,
+      super.isConnected,
+      super.available,
+      super.lastReceived,
+      super.linkQuality,
       this.brightness,
       this.state,
       this.colortemp,
-      this.transitionTime)
-      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
+      this.transitionTime);
 
-  factory ZigbeeLampModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
+  factory ZigbeeLampModel.fromJson(final Map<String, dynamic> json) =>
+      _$ZigbeeLampModelFromJson(json);
 
   @override
   BaseModel getModelFromJson(final Map<String, dynamic> json) {

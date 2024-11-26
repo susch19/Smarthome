@@ -1,45 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smarthome/devices/device_exporter.dart';
-import 'package:smarthome/devices/generic/detail_property_info.dart';
-import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/settings_manager.dart';
-import 'package:tuple/tuple.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DetailValueStoreWidget extends ConsumerWidget {
+class DetailValueStoreWidget extends HookConsumerWidget {
   final DetailPropertyInfo e;
   final GenericDevice device;
 
-  const DetailValueStoreWidget(this.e, this.device, {final Key? key}) : super(key: key);
+  const DetailValueStoreWidget(this.e, this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
+    final valueModel =
+        ref.watch(valueStoreChangedProvider(e.name, e.deviceId ?? device.id));
+    if (valueModel == null) return Text((e.displayName));
+    useListenable(valueModel);
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
     if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
-      return Container();
+      return const SizedBox();
     }
 
-    final text = Text(
-      (e.displayName ?? "") +
-          (valueModel?.getValueAsString(format: e.format, precision: e.precision ?? 1) ?? "") +
-          (e.unitOfMeasurement ?? ""),
-      style: e.textStyle?.toTextStyle(),
-    );
-
-    Widget ret;
     if (e.editInfo != null) {
-      ret = Row(
-        children: [text, device.getEditWidget(context, e, valueModel, ref)],
-      );
-      ret = device.getEditWidget(context, e, valueModel, ref);
-    } else {
-      ret = text;
+      // ret = Row(
+      //   children: [text, device.getEditWidget(e, valueModel)],
+      // );
+      return device.getEditWidget(e, valueModel);
     }
-
-    return ret;
+    final jsonVal = valueModel.getFromJson(e)?.toString() ?? "";
+    final text = Text(
+      (e.displayName) + (jsonVal) + (e.unitOfMeasurement),
+      style: GenericDevice.toTextStyle(e.textStyle),
+    );
+    return text;
   }
 }

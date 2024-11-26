@@ -10,33 +10,35 @@ class TradfriMotionSensorModel extends ZigbeeModel {
   final int noMotion;
   final bool occupancy;
 
-  static final batteryProvider = Provider.family<int, int>((final ref, final id) {
+  static final batteryProvider =
+      Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TradfriMotionSensorModel).battery;
   });
 
-  static final noMotionProvider = Provider.family<int, int>((final ref, final id) {
+  static final noMotionProvider =
+      Provider.family<int, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TradfriMotionSensorModel).noMotion;
   });
 
-  static final occupancyProvider = Provider.family<bool, int>((final ref, final id) {
+  static final occupancyProvider =
+      Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     return (baseModel as TradfriMotionSensorModel).occupancy;
   });
 
   const TradfriMotionSensorModel(
-      final int id,
-      final String friendlyName,
-      final String typeName,
-      final bool isConnected,
-      final bool available,
-      final DateTime lastReceived,
-      final int linkQuality,
+      super.id,
+      super.friendlyName,
+      super.typeName,
+      super.isConnected,
+      super.available,
+      super.lastReceived,
+      super.linkQuality,
       this.battery,
       this.noMotion,
-      this.occupancy)
-      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
+      this.occupancy);
   factory TradfriMotionSensorModel.fromJson(final Map<String, dynamic> json) =>
       _$TradfriMotionSensorModelFromJson(json);
 

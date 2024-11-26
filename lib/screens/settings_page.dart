@@ -12,7 +12,7 @@ import 'screen_export.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
-  const SettingsPage({final Key? key}) : super(key: key);
+  const SettingsPage({super.key});
 
   @override
   SettingsPageState createState() => SettingsPageState();
@@ -22,14 +22,15 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   bool isEnabled = false;
   final TextEditingController _textEditingController = TextEditingController();
 
-  static final _maxExtendSlider = StateProvider<double>((final ref) => ref.watch(maxCrossAxisExtentProvider));
+  static final _maxExtendSlider = StateProvider<double>(
+      (final ref) => ref.watch(maxCrossAxisExtentProvider));
 
   @override
   Widget build(final BuildContext context) {
     final theme = AdaptiveTheme.of(context);
     final hubConnection = ref.watch(hubConnectionConnectedProvider);
     // final _ = ref.watch(brightnessProvider);
-    final settings = ref.watch(settingsProvider);
+    final settings = ref.watch(settingsManagerProvider);
     _textEditingController.text = settings.serverUrl;
 
     return Scaffold(
@@ -54,7 +55,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         children: [
                           Icon(
                             Icons.smartphone,
-                            color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isSystem ? 1 : 0.3),
+                            color: theme.theme.iconTheme.color!
+                                .withOpacity(theme.mode.isSystem ? 1 : 0.3),
                           ),
                           const Text("System folgen"),
                         ],
@@ -66,8 +68,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   MaterialButton(
                       child: Column(
                         children: [
-                          Icon(theme.mode.isLight ? Icons.light_mode : Icons.light_mode_outlined,
-                              color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isLight ? 1 : 0.3)),
+                          Icon(
+                              theme.mode.isLight
+                                  ? Icons.light_mode
+                                  : Icons.light_mode_outlined,
+                              color: theme.theme.iconTheme.color!
+                                  .withOpacity(theme.mode.isLight ? 1 : 0.3)),
                           const Text("Helles Design"),
                         ],
                       ),
@@ -78,8 +84,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   MaterialButton(
                       child: Column(
                         children: [
-                          Icon(theme.mode.isDark ? Icons.dark_mode : Icons.dark_mode_outlined,
-                              color: theme.theme.iconTheme.color!.withOpacity(theme.mode.isDark ? 1 : 0.3)),
+                          Icon(
+                              theme.mode.isDark
+                                  ? Icons.dark_mode
+                                  : Icons.dark_mode_outlined,
+                              color: theme.theme.iconTheme.color!
+                                  .withOpacity(theme.mode.isDark ? 1 : 0.3)),
                           const Text("Dunkles Design"),
                         ],
                       ),
@@ -95,7 +105,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               trailing: Switch(
                 value: !settings.groupingEnabled,
                 onChanged: (final a) {
-                  SettingsManager.setGroupingEnabled(!a);
+                  ref
+                      .read(settingsManagerProvider.notifier)
+                      .setGroupingEnabled(!a);
                 },
               ),
             ),
@@ -109,8 +121,10 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     max: 700,
                     divisions: 60,
                     onChangeEnd: (final value) {
-                      ref.read(maxCrossAxisExtentProvider.notifier).state = value;
-                      PreferencesManager.instance.setDouble("DashboardCardSize", value);
+                      ref.read(maxCrossAxisExtentProvider.notifier).state =
+                          value;
+                      PreferencesManager.instance
+                          .setDouble("DashboardCardSize", value);
                     },
                     onChanged: (final a) {
                       ref.read(_maxExtendSlider.notifier).state = a;
@@ -151,7 +165,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", true)));
+                        builder: (final c) => const HistoryConfigureScreen(
+                            "Historie Konfiguration", true)));
               },
             ),
             ListTile(
@@ -160,7 +175,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (final c) => const HistoryConfigureScreen("Historie Konfiguration", false)));
+                        builder: (final c) => const HistoryConfigureScreen(
+                            "Historie Konfiguration", false)));
               },
             ),
             const Divider(),
@@ -173,7 +189,10 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             ListTile(
               title: const Text("Serversuche öffnen"),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (final c) => const ServerSearchScreen()))
+                Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (final c) => const ServerSearchScreen()))
                     .then((final value) {
                   if (value is IpPort) {
                     final isIpv6 = value.type.name == "IPv6";
@@ -181,7 +200,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     final uri = Uri.parse(
                         "http://${isIpv6 ? "[" : ""}${value.ipAddress}${isIpv6 ? "]" : ""}:${value.port}/SmartHome");
 
-                    SettingsManager.setServerUrl(uri.toString());
+                    ref
+                        .read(settingsManagerProvider.notifier)
+                        .setServerUrl(uri.toString());
                     _textEditingController.text = uri.toString();
                   }
                 });
@@ -191,17 +212,20 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               leading: const Text("URL"),
               title: TextField(
                 controller: _textEditingController,
-                decoration: const InputDecoration(hintText: "URL vom Smarthome Server"),
+                decoration:
+                    const InputDecoration(hintText: "URL vom Smarthome Server"),
                 onSubmitted: (final s) {
-                  SettingsManager.setServerUrl(s);
+                  ref.read(settingsManagerProvider.notifier).setServerUrl(s);
                 },
               ),
               trailing: MaterialButton(
                 child: const Text("Speichern"),
                 onPressed: () {
-                  SettingsManager.setServerUrl(_textEditingController.text);
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(const SnackBar(content: Text("Neue URL wurde gespeichert")));
+                  ref
+                      .read(settingsManagerProvider.notifier)
+                      .setServerUrl(_textEditingController.text);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Neue URL wurde gespeichert")));
                 },
               ),
             ),
@@ -210,7 +234,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               trailing: Switch(
                 value: settings.showDebugInformation,
                 onChanged: (final a) {
-                  SettingsManager.setShowDebugInformation(a);
+                  ref
+                      .read(settingsManagerProvider.notifier)
+                      .setShowDebugInformation(a);
                 },
               ),
             ),
@@ -222,7 +248,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                     onTap: () => hubConnection?.invoke("UpdateTime"),
                   )
-                : Container(),
+                : const SizedBox(),
             // settings.showDebugInformation
             //     ? ListTile(
             //         title: const Text(
@@ -235,8 +261,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             //           ),
             //         ),
             //       )
-            //     : Container(),
-            settings.showDebugInformation ? const Divider() : Container(),
+            //     : const SizedBox(),
+            settings.showDebugInformation ? const Divider() : const SizedBox(),
             ListTile(
               leading: const Text("Über"),
               onTap: () => Navigator.push(

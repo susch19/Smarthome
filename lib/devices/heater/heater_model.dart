@@ -20,52 +20,60 @@ class HeaterModel extends ConnectionBaseModel {
   final bool? disableHeating;
   final String? logs;
 
-  static final temperatureProvider = Provider.family<HeaterConfig?, int>((final ref, final id) {
+  static final temperatureProvider =
+      Provider.family<HeaterConfig?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is HeaterModel) return baseModel.temperature;
     return null;
   });
-  static final currentConfigProvider = Provider.family<HeaterConfig?, int>((final ref, final id) {
+  static final currentConfigProvider =
+      Provider.family<HeaterConfig?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is HeaterModel) return baseModel.currentConfig;
     return null;
   });
-  static final currentCalibrationProvider = Provider.family<HeaterConfig?, int>((final ref, final id) {
+  static final currentCalibrationProvider =
+      Provider.family<HeaterConfig?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is HeaterModel) return baseModel.currentCalibration;
     return null;
   });
-  static final disableHeatingProvider = Provider.family<bool, int>((final ref, final id) {
+  static final disableHeatingProvider =
+      Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is! HeaterModel) return false;
     return baseModel.disableHeating ?? false;
   });
-  static final disableLedProvider = Provider.family<bool, int>((final ref, final id) {
+  static final disableLedProvider =
+      Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is! HeaterModel) return false;
     return baseModel.disableLed ?? false;
   });
-  static final versionProvider = Provider.family<String, int>((final ref, final id) {
+  static final versionProvider =
+      Provider.family<String, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is! HeaterModel) return "";
     return baseModel.version ?? "";
   });
-  static final xiaomiProvider = Provider.family<int?, int>((final ref, final id) {
+  static final xiaomiProvider =
+      Provider.family<int?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is! HeaterModel) return null;
     return baseModel.xiaomiTempSensor;
   });
-  static final logsProvider = Provider.family<String, int>((final ref, final id) {
+  static final logsProvider =
+      Provider.family<String, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is! HeaterModel) return "";
     return baseModel.logs ?? "";
   });
 
   const HeaterModel(
-    final int id,
-    final String friendlyName,
-    final String typeName,
-    final bool isConnected,
+    super.id,
+    super.friendlyName,
+    super.typeName,
+    super.isConnected,
     this.temperature,
     this.xiaomiTempSensor,
     this.currentConfig,
@@ -74,9 +82,10 @@ class HeaterModel extends ConnectionBaseModel {
     this.disableLed,
     this.disableHeating,
     this.logs,
-  ) : super(id, friendlyName, typeName, isConnected);
+  );
 
-  factory HeaterModel.fromJson(final Map<String, dynamic> json) => _$HeaterModelFromJson(json);
+  factory HeaterModel.fromJson(final Map<String, dynamic> json) =>
+      _$HeaterModelFromJson(json);
 
   @override
   HeaterModel getModelFromJson(final Map<String, dynamic> json) {
@@ -111,8 +120,17 @@ class HeaterModel extends ConnectionBaseModel {
       logs == other.logs;
 
   @override
-  int get hashCode => Object.hash(id, friendlyName, disableHeating, disableLed, version, xiaomiTempSensor,
-      currentCalibration, currentConfig, temperature, logs);
+  int get hashCode => Object.hash(
+      id,
+      friendlyName,
+      disableHeating,
+      disableLed,
+      version,
+      xiaomiTempSensor,
+      currentCalibration,
+      currentConfig,
+      temperature,
+      logs);
 
   HeaterModel copyWith(
       {final int? id,

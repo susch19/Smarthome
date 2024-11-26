@@ -6,14 +6,15 @@ import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart';
+
+import '../../restapi/swagger.enums.swagger.dart';
 
 class LedStrip extends Device<LedStripModel> {
-  LedStrip(final int id, final String typeName, final IconData icon) : super(id, typeName, iconData: icon);
+  LedStrip(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   final colorModeProvider = Provider.family<String, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
@@ -23,7 +24,10 @@ class LedStrip extends Device<LedStripModel> {
 
   @override
   void navigateToDevice(final BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (final BuildContext context) => LedStripScreen(this)));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (final BuildContext context) => LedStripScreen(this)));
   }
 
   @override
@@ -41,11 +45,15 @@ class LedStrip extends Device<LedStripModel> {
                   "An",
                   textAlign: TextAlign.center,
                   style: colorMode != "Off" && colorMode != "Mode"
-                      ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      ? const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 20)
                       : const TextStyle(),
                 ),
                 onPressed: () => sendToServer(
-                    sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"], ref.read(hubConnectionProvider)),
+                    MessageType.update,
+                    Command2.singlecolor,
+                    ["0xFF000000"],
+                    ref.read(apiProvider)),
               );
             },
           ),
@@ -57,11 +65,12 @@ class LedStrip extends Device<LedStripModel> {
                   "Aus",
                   textAlign: TextAlign.center,
                   style: colorMode == "Off"
-                      ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      ? const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 20)
                       : const TextStyle(),
                 ),
-                onPressed: () =>
-                    sendToServer(sm.MessageType.Update, sm.Command.Off, [], ref.read(hubConnectionProvider)),
+                onPressed: () => sendToServer(MessageType.update, Command2.off,
+                    [], ref.read(apiProvider)),
               );
             },
           ),
@@ -77,14 +86,18 @@ class LedStrip extends Device<LedStripModel> {
                   "Essen fertig",
                   textAlign: TextAlign.center,
                   style: colorMode == "Mode"
-                      ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      ? const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 20)
                       : const TextStyle(),
                 )),
-            onPressed: () => sendToServer(sm.MessageType.Update, sm.Command.Mode, [], ref.read(hubConnectionProvider)),
+            onPressed: () => sendToServer(
+                MessageType.update, Command2.mode, [], ref.read(apiProvider)),
           );
         },
       ),
-      (DeviceManager.showDebugInformation ? Text(id.toString()) : Container())
+      (DeviceManager.showDebugInformation
+          ? Text(id.toString())
+          : const SizedBox())
     ]);
   }
 
@@ -96,13 +109,14 @@ class LedStrip extends Device<LedStripModel> {
 
 class LedStripScreen extends ConsumerStatefulWidget {
   final LedStrip device;
-  const LedStripScreen(this.device, {final Key? key}) : super(key: key);
+  const LedStripScreen(this.device, {super.key});
 
   @override
   _LedStripScreenState createState() => _LedStripScreenState();
 }
 
-final _rgbwProvider = StateProvider.family<RGBW, Device>((final ref, final device) {
+final _rgbwProvider =
+    StateProvider.family<RGBW, Device>((final ref, final device) {
   final model = ref.watch(device.baseModelTProvider(device.id));
 
   final rgbw = RGBW();
@@ -115,22 +129,26 @@ final _rgbwProvider = StateProvider.family<RGBW, Device>((final ref, final devic
   return rgbw;
 });
 
-final _brightnessProvider = StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
+final _brightnessProvider =
+    StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
   final model = ref.watch(device.baseModelTProvider(device.id));
 
   return model?.brightness ?? 0;
 });
-final _colorModeProvider = StateProvider.family<String, Device<LedStripModel>>((final ref, final device) {
+final _colorModeProvider = StateProvider.family<String, Device<LedStripModel>>(
+    (final ref, final device) {
   final model = ref.watch(device.baseModelTProvider(device.id));
 
   return model?.colorMode ?? "Off";
 });
-final _delayProvider = StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
+final _delayProvider =
+    StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
   final model = ref.watch(device.baseModelTProvider(device.id));
 
   return model?.delay ?? 0;
 });
-final _numLedsProvider = StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
+final _numLedsProvider =
+    StateProvider.family<int, Device<LedStripModel>>((final ref, final device) {
   final model = ref.watch(device.baseModelTProvider(device.id));
 
   return model?.numberOfLeds ?? 0;
@@ -143,63 +161,81 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
   DateTime dateTime = DateTime.now();
   static const int colordelay = 1000;
 
-  static const TextStyle selectedTextStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
+  static const TextStyle selectedTextStyle =
+      TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
 
-  void _sliderChange<T>(final WidgetRef ref, final Function f, final int dateTimeMilliseconds, final T val) {
-    final sendToServer = DateTime.now().isAfter(dateTime.add(Duration(milliseconds: dateTimeMilliseconds)));
+  void _sliderChange<T>(final WidgetRef ref, final Function f,
+      final int dateTimeMilliseconds, final T val) {
+    final sendToServer = DateTime.now()
+        .isAfter(dateTime.add(Duration(milliseconds: dateTimeMilliseconds)));
     if (sendToServer) {
       dateTime = DateTime.now();
     }
     Function.apply(f, [ref, val, sendToServer]);
   }
 
-  void _colorModeChange(final WidgetRef ref, final Command newMode, [final bool sendToServer = true]) {
+  void _colorModeChange(final WidgetRef ref, final Command2 newMode,
+      [final bool sendToServer = true]) {
     final oldMode = ref.watch(_colorModeProvider(widget.device).notifier);
     oldMode.state = newMode.name;
 
-    if (sendToServer) widget.device.sendToServer(sm.MessageType.Update, newMode, [], ref.read(hubConnectionProvider));
-  }
-
-  void _changeColor(final WidgetRef ref, final RGBW rgbw, [final bool sendToServer = true]) {
-    final oldMode = ref.watch(_rgbwProvider(widget.device).notifier);
-    oldMode.state = rgbw;
     if (sendToServer) {
-      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Color,
-          ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"], ref.read(hubConnectionProvider));
+      widget.device
+          .sendToServer(MessageType.update, newMode, [], ref.read(apiProvider));
     }
   }
 
-  void _changeDelay(final WidgetRef ref, final int delay, [final bool sendToServer = true]) {
+  void _changeColor(final WidgetRef ref, final RGBW rgbw,
+      [final bool sendToServer = true]) {
+    final oldMode = ref.watch(_rgbwProvider(widget.device).notifier);
+    oldMode.state = rgbw;
     if (sendToServer) {
       widget.device.sendToServer(
-          sm.MessageType.Options, sm.Command.Delay, ["0x${delay.toRadixString(16)}"], ref.read(hubConnectionProvider));
+          MessageType.options,
+          Command2.color,
+          ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"],
+          ref.read(apiProvider));
+    }
+  }
+
+  void _changeDelay(final WidgetRef ref, final int delay,
+      [final bool sendToServer = true]) {
+    if (sendToServer) {
+      widget.device.sendToServer(MessageType.options, Command2.delay,
+          ["0x${delay.toRadixString(16)}"], ref.read(apiProvider));
     }
     final oldDelay = ref.watch(_delayProvider(widget.device).notifier);
     oldDelay.state = delay;
   }
 
-  void _changeNumLeds(final WidgetRef ref, final int numLeds, [final bool sendToServer = true]) {
+  void _changeNumLeds(final WidgetRef ref, final int numLeds,
+      [final bool sendToServer = true]) {
     if (sendToServer) {
-      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Calibration,
-          ["0x${(numLeds.toInt()).toRadixString(16)}"], ref.read(hubConnectionProvider));
+      widget.device.sendToServer(MessageType.options, Command2.calibration,
+          ["0x${(numLeds.toInt()).toRadixString(16)}"], ref.read(apiProvider));
     }
     final oldNumLeds = ref.watch(_numLedsProvider(widget.device).notifier);
     oldNumLeds.state = numLeds;
   }
 
-  void _changeBrightness(final WidgetRef ref, final int brightness, [final bool sendToServer = true]) {
+  void _changeBrightness(final WidgetRef ref, final int brightness,
+      [final bool sendToServer = true]) {
     if (sendToServer) {
-      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Brightness,
-          ["0x${(brightness.toInt()).toRadixString(16)}"], ref.read(hubConnectionProvider));
+      widget.device.sendToServer(
+          MessageType.options,
+          Command2.brightness,
+          ["0x${(brightness.toInt()).toRadixString(16)}"],
+          ref.read(apiProvider));
     }
-    final oldBrightness = ref.watch(_brightnessProvider(widget.device).notifier);
+    final oldBrightness =
+        ref.watch(_brightnessProvider(widget.device).notifier);
     oldBrightness.state = brightness;
   }
 
   @override
   Widget build(final BuildContext context) {
     final model = ref.read(widget.device.baseModelTProvider(widget.device.id));
-    if (model is! LedStripModel) return Container();
+    if (model is! LedStripModel) return const SizedBox();
     return Scaffold(
       appBar: AppBar(
         title: const Text("LED Strip "),
@@ -224,7 +260,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Off"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.Off),
+                      onTap: () => _colorModeChange(ref, Command2.off),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -236,7 +272,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Fast RGB"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.RGB),
+                      onTap: () => _colorModeChange(ref, Command2.rgb),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -248,7 +284,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Flicker"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.Mode),
+                      onTap: () => _colorModeChange(ref, Command2.mode),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -260,7 +296,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Strobo"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.Strobo),
+                      onTap: () => _colorModeChange(ref, Command2.strobo),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -272,7 +308,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("RGBCycle"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.RGBCycle),
+                      onTap: () => _colorModeChange(ref, Command2.rgbcycle),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -284,7 +320,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Wander"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.LightWander),
+                      onTap: () => _colorModeChange(ref, Command2.lightwander),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -296,7 +332,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Wander RGB"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.RGBWander),
+                      onTap: () => _colorModeChange(ref, Command2.rgbwander),
                       trailing: const Text(""),
                     ),
                   ],
@@ -305,13 +341,16 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
             ),
             Consumer(
               builder: (final context, final ref, final child) {
-                final colorMode = ref.watch(
-                    widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.colorMode));
-                final colorNumber = ref.watch(
-                    widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.colorNumber));
+                final colorMode = ref.watch(widget.device
+                    .baseModelTProvider(widget.device.id)
+                    .select((final value) => value!.colorMode));
+                final colorNumber = ref.watch(widget.device
+                    .baseModelTProvider(widget.device.id)
+                    .select((final value) => value!.colorNumber));
                 return ListTile(
                   title: Center(
-                    child: (colorMode == "SingleColor" && colorNumber == 0xFF000000)
+                    child: (colorMode == "SingleColor" &&
+                            colorNumber == 0xFF000000)
                         ? const Text(
                             'White',
                             style: selectedTextStyle,
@@ -320,7 +359,10 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                   ),
                   onTap: () {
                     widget.device.sendToServer(
-                        sm.MessageType.Update, sm.Command.SingleColor, ["0xFF000000"], ref.read(hubConnectionProvider));
+                        MessageType.update,
+                        Command2.singlecolor,
+                        ["0xFF000000"],
+                        ref.read(apiProvider));
                   },
                   trailing: const Text(""),
                 );
@@ -328,8 +370,9 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
             ),
             Consumer(
               builder: (final context, final ref, final child) {
-                final reversed = ref
-                    .watch(widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.reverse));
+                final reversed = ref.watch(widget.device
+                    .baseModelTProvider(widget.device.id)
+                    .select((final value) => value!.reverse));
                 return ListTile(
                   title: Center(
                     child: reversed
@@ -339,8 +382,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           )
                         : const Text("Reverse"),
                   ),
-                  onTap: () => widget.device
-                      .sendToServer(sm.MessageType.Options, sm.Command.Reverse, [], ref.read(hubConnectionProvider)),
+                  onTap: () => widget.device.sendToServer(MessageType.options,
+                      Command2.reverse, [], ref.read(apiProvider)),
                   trailing: const Text(""),
                 );
               },
@@ -348,10 +391,12 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
             Consumer(
               builder: (final context, final ref, final child) {
                 final rgbw = ref.watch(_rgbwProvider(widget.device));
-                final colorMode = ref.watch(
-                    widget.device.baseModelTProvider(widget.device.id).select((final value) => value!.colorMode));
+                final colorMode = ref.watch(widget.device
+                    .baseModelTProvider(widget.device.id)
+                    .select((final value) => value!.colorMode));
                 return ExpansionTile(
-                  title: (colorMode == "SingleColor" && model.colorNumber != 0xFF000000)
+                  title: (colorMode == "SingleColor" &&
+                          model.colorNumber != 0xFF000000)
                       ? const Text(
                           'SingleColor',
                           style: selectedTextStyle,
@@ -364,8 +409,11 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           value: rgbw.dr,
                           onChanged: (final d) {
                             final newRGBW = rgbw.copyWith(red: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
+                            ref
+                                .read(_rgbwProvider(widget.device).notifier)
+                                .state = newRGBW;
+                            _sliderChange(
+                                ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(red: d.round());
@@ -380,8 +428,11 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           value: rgbw.dg,
                           onChanged: (final d) {
                             final newRGBW = rgbw.copyWith(green: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
+                            ref
+                                .read(_rgbwProvider(widget.device).notifier)
+                                .state = newRGBW;
+                            _sliderChange(
+                                ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(green: d.round());
@@ -396,8 +447,11 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           value: rgbw.db,
                           onChanged: (final d) {
                             final newRGBW = rgbw.copyWith(blue: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
+                            ref
+                                .read(_rgbwProvider(widget.device).notifier)
+                                .state = newRGBW;
+                            _sliderChange(
+                                ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(blue: d.round());
@@ -412,8 +466,11 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           value: rgbw.dw,
                           onChanged: (final d) {
                             final newRGBW = rgbw.copyWith(white: d.round());
-                            ref.read(_rgbwProvider(widget.device).notifier).state = newRGBW;
-                            _sliderChange(ref, _changeColor, colordelay, newRGBW);
+                            ref
+                                .read(_rgbwProvider(widget.device).notifier)
+                                .state = newRGBW;
+                            _sliderChange(
+                                ref, _changeColor, colordelay, newRGBW);
                           },
                           onChangeEnd: (final d) {
                             final newRGBW = rgbw.copyWith(white: d.round());
@@ -432,8 +489,11 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           child: const Text(
                             'SingleColor',
                           ),
-                          onPressed: () => widget.device.sendToServer(sm.MessageType.Update, sm.Command.SingleColor,
-                              ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"], ref.read(hubConnectionProvider)),
+                          onPressed: () => widget.device.sendToServer(
+                              MessageType.update,
+                              Command2.singlecolor,
+                              ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"],
+                              ref.read(apiProvider)),
                         ),
                       ],
                     ),
@@ -466,7 +526,10 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                     child: SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                           trackShape: GradientRoundedRectSliderTrackShape(
-                              LinearGradient(colors: [Colors.grey.shade800, Colors.white]))),
+                              LinearGradient(colors: [
+                        Colors.grey.shade800,
+                        Colors.white
+                      ]))),
                       child: Slider(
                         value: res.toDouble(),
                         onChanged: (final d) {
@@ -488,9 +551,11 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                   subtitle: Text("Num Leds ${numLeds.toInt().toString()}"),
                   title: GestureDetector(
                     child: Slider(
-                      onChangeEnd: (final value) => _changeNumLeds(ref, value.round()),
+                      onChangeEnd: (final value) =>
+                          _changeNumLeds(ref, value.round()),
                       value: numLeds.toDouble(),
-                      onChanged: (final d) => _changeNumLeds(ref, d.round(), false),
+                      onChanged: (final d) =>
+                          _changeNumLeds(ref, d.round(), false),
                       max: 255.0,
                       label: '${numLeds.round()}',
                     ),
@@ -572,7 +637,8 @@ class RGBW {
     RGBW.rgb(c.red, c.green, c.blue);
   }
 
-  RGBW copyWith({final int? red, final int? green, final int? blue, final int? white}) {
+  RGBW copyWith(
+      {final int? red, final int? green, final int? blue, final int? white}) {
     return RGBW.rgbw(red ?? r, green ?? g, blue ?? b, white ?? w);
   }
 }

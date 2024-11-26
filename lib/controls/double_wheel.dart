@@ -1,4 +1,4 @@
-library wheel_chooser;
+library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
@@ -34,10 +34,9 @@ class WheelChooser extends StatefulWidget {
       this.listHeight,
       this.horizontal = false,
       this.diameter = 10000,
-      final Key? key})
+      super.key})
       : assert(perspective <= 0.01),
-        children = null,
-        super(key: key);
+        children = null;
 
   WheelChooser.custom(
       {required this.onValueChanged,
@@ -52,12 +51,11 @@ class WheelChooser extends StatefulWidget {
       this.listWidth,
       this.listHeight,
       this.horizontal = false,
-      final Key? key})
+      super.key})
       : assert(perspective <= 0.01),
         assert(datas == null || datas.length == children!.length),
         selectTextStyle = null,
-        unSelectTextStyle = null,
-        super(key: key);
+        unSelectTextStyle = null;
 
   WheelChooser.integer(
       {required this.onValueChanged,
@@ -76,7 +74,7 @@ class WheelChooser extends StatefulWidget {
       this.listHeight,
       this.horizontal = false,
       final bool reverse = false,
-      final Key? key})
+      super.key})
       : assert(perspective <= 0.01),
         assert(minValue < maxValue),
         assert(initValue == null || initValue >= minValue),
@@ -88,8 +86,7 @@ class WheelChooser extends StatefulWidget {
             ? 0
             : reverse
                 ? (maxValue - initValue) ~/ step
-                : (initValue - minValue) ~/ step,
-        super(key: key);
+                : (initValue - minValue) ~/ step;
 
   WheelChooser.double(
       {required this.onValueChanged,
@@ -108,7 +105,7 @@ class WheelChooser extends StatefulWidget {
       this.listHeight,
       this.horizontal = false,
       final bool reverse = false,
-      final Key? key})
+      super.key})
       : assert(perspective <= 0.01),
         assert(minValue < maxValue),
         assert(initValue == null || initValue >= minValue),
@@ -120,11 +117,14 @@ class WheelChooser extends StatefulWidget {
             ? 0
             : reverse
                 ? (maxValue - initValue) ~/ step
-                : (initValue - minValue) ~/ step,
-        super(key: key);
+                : (initValue - minValue) ~/ step;
 
   static List<double> _createDoubleList(
-      final double minValue, final double maxValue, final double step, final bool reverse) {
+    final double minValue,
+    final double maxValue,
+    final double step,
+    final bool reverse,
+  ) {
     final List<double> result = [];
     if (reverse) {
       for (double i = maxValue; i >= minValue; i -= step) {
@@ -138,7 +138,12 @@ class WheelChooser extends StatefulWidget {
     return result;
   }
 
-  static List<int> _createIntegerList(final int minValue, final int maxValue, final int step, final bool reverse) {
+  static List<int> _createIntegerList(
+    final int minValue,
+    final int maxValue,
+    final int step,
+    final bool reverse,
+  ) {
     final List<int> result = [];
     if (reverse) {
       for (int i = maxValue; i >= minValue; i -= step) {
@@ -165,7 +170,8 @@ class WheelChooserState extends State<WheelChooser> {
   void initState() {
     super.initState();
     currentPosition = widget.startPosition;
-    fixedExtentScrollController = FixedExtentScrollController(initialItem: currentPosition!);
+    fixedExtentScrollController =
+        FixedExtentScrollController(initialItem: currentPosition!);
   }
 
   void _listener(final int position) {
@@ -207,10 +213,14 @@ class WheelChooserState extends State<WheelChooser> {
         RotatedBox(
           quarterTurns: widget.horizontal ? 1 : 0,
           child: Text(
-            widget.datas![i] is double ? widget.datas![i].toStringAsFixed(1) : widget.datas![i].toString(),
+            widget.datas![i] is double
+                ? widget.datas![i].toStringAsFixed(1)
+                : widget.datas![i].toString(),
             textAlign: TextAlign.center,
             textScaler: const TextScaler.linear(1.5),
-            style: i == currentPosition ? widget.selectTextStyle : widget.unSelectTextStyle,
+            style: i == currentPosition
+                ? widget.selectTextStyle
+                : widget.unSelectTextStyle,
           ),
         ),
       );
@@ -245,14 +255,14 @@ class ListWheelScrollViewX extends StatelessWidget {
   final double diameterRatio;
   final void Function(int)? onSelectedItemChanged;
   const ListWheelScrollViewX({
-    final Key? key,
+    super.key,
     required this.builder,
     required this.itemExtent,
     this.controller,
     this.onSelectedItemChanged,
     this.scrollDirection = Axis.vertical,
     this.diameterRatio = 100000,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(final BuildContext context) {

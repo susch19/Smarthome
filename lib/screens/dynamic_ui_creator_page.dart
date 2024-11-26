@@ -7,7 +7,6 @@ import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smarthome/models/message.dart';
 
 final _layoutProvider = FutureProvider<List<DeviceLayout>>((final ref) async {
   final connection = ref.watch(hubConnectionConnectedProvider);
@@ -22,7 +21,7 @@ final _selectedLayoutProvider = StateProvider<DeviceLayout?>((final ref) {
 });
 
 class DynamicUiCreatorPage extends ConsumerStatefulWidget {
-  const DynamicUiCreatorPage({final Key? key}) : super(key: key);
+  const DynamicUiCreatorPage({super.key});
 
   @override
   DynamicUiCreatorPageState createState() => DynamicUiCreatorPageState();
@@ -68,7 +67,8 @@ class DynamicUiCreatorPageState extends ConsumerState<DynamicUiCreatorPage> {
                         (final e) => ListTile(
                           title: Text(e.uniqueName),
                           onTap: (() {
-                            ref.read(_selectedLayoutProvider.notifier).state = e;
+                            ref.read(_selectedLayoutProvider.notifier).state =
+                                e;
                           }),
                         ),
                       )
@@ -82,10 +82,20 @@ class DynamicUiCreatorPageState extends ConsumerState<DynamicUiCreatorPage> {
         ),
       );
     }
-    return getEditView(context, selected);
+    return EditView(layout: selected);
   }
+}
 
-  Widget getEditView(final BuildContext context, final DeviceLayout layout) {
+class EditView extends StatelessWidget {
+  const EditView({
+    super.key,
+    required this.layout,
+  });
+
+  final DeviceLayout layout;
+
+  @override
+  Widget build(final BuildContext context) {
     return Column(
       children: [
         Wrap(
@@ -105,7 +115,10 @@ class DynamicUiCreatorPageState extends ConsumerState<DynamicUiCreatorPage> {
                         spacing: 8,
                         children: elements.map((final e) {
                           return GenericDevice.getEditWidgetFor(
-                              context, -1, e, ValueStore(-1, 1.0, "", Command.Brightness), ref);
+                            -1,
+                            e,
+                            ValueStore(-1, 1.0, "", Command2.brightness),
+                          );
                         }).toList(),
                       ),
                     ),
@@ -117,6 +130,5 @@ class DynamicUiCreatorPageState extends ConsumerState<DynamicUiCreatorPage> {
         ),
       ],
     );
-    // return GenericDevice.getEditWidgetFor(context, -1, layout.dashboardDeviceLayout, null, ref);
   }
 }

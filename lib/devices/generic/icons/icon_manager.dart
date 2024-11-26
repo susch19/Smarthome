@@ -1,120 +1,89 @@
-import 'dart:io';
-import 'package:path/path.dart' as path;
-
 import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 // import 'package:signalr_core/signalr_core.dart';
-import 'package:signalr_netcore/signalr_client.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/icons/svg_icon.dart';
-import 'package:smarthome/helper/cache_file_manager.dart';
-import 'package:smarthome/helper/connection_manager.dart';
+import 'package:smarthome/helper/iterable_extensions.dart';
 
-final _iconProvider = StateNotifierProvider<IconManager, Map<String, Uint8List>>((final ref) {
-  return IconManager();
-});
+part 'icon_manager.g.dart';
 
-final iconByTypeNameProvider = Provider.autoDispose.family<Uint8List?, String>((final ref, final name) {
-  final iconCache = ref.watch(_iconProvider);
-  final result = iconCache[name];
-  if (result == null) {
-    final connection = ref.watch(hubConnectionConnectedProvider);
-    if (connection != null) {
-      ref.read(_iconProvider.notifier)._getIconForTypeName(name, connection);
-    }
-  }
-  return result;
-});
-
-final iconByNameProvider = Provider.autoDispose.family<Uint8List?, String>((final ref, final name) {
-  final iconCache = ref.watch(_iconProvider);
-  final result = iconCache[name];
-  if (result == null) {
-    final connection = ref.watch(hubConnectionConnectedProvider);
-    if (connection != null) {
-      ref.read(_iconProvider.notifier)._getIconByName(name, connection);
-    }
-  }
-  return result;
-});
-
-final iconByTypeNamesProvider = Provider.autoDispose.family<Uint8List?, List<String>>((final ref, final names) {
-  final iconCache = ref.watch(_iconProvider);
+@riverpod
+Uint8List? iconByTypeNames(final Ref ref, final List<String> names) {
+  final icons = ref.watch(_iconTypeNamesProvider);
   for (final name in names) {
-    if (iconCache.containsKey(name)) {
-      return iconCache[name];
-    }
-  }
-  final connection = ref.watch(hubConnectionConnectedProvider);
-  if (connection != null && names.isNotEmpty) {
-    ref.read(_iconProvider.notifier)._getIconByName(names.first, connection);
+    if (icons.containsKey(name)) return icons[name]?.data;
   }
   return null;
-});
+}
 
-class IconManager extends StateNotifier<Map<String, Uint8List>> {
-  static final CacheFileManager _cacheFileManager =
-      CacheFileManager(path.join(Directory.systemTemp.path, "smarthome_icon_cache"), "svg");
+@riverpod
+Uint8List? iconByDeviceId(final Ref ref, final int id) {
+  ref.watch(deviceLayoutsProvider);
+  return null;
+}
 
-  IconManager() : super({});
-  Future<Uint8List?> _getIconForTypeName(final String typeName, final HubConnection connection) async {
-    return _getIcon(typeName, "GetIconByTypeName", connection, true);
+@riverpod
+Uint8List? iconByName(final Ref ref, final String iconName) {
+  final iconCache = ref.watch(_iconNameProvider);
+  if (iconCache.containsKey(iconName)) {
+    return iconCache[iconName]?.data;
   }
+  return null;
+}
 
-  Future<Uint8List?> _getIconByName(final String iconName, final HubConnection connection) async {
-    return _getIcon(iconName, "GetIconByName", connection, false);
-  }
+@Riverpod(keepAlive: true)
+Map<String, SvgIcon> _iconTypeNames(final Ref ref) {
+  final layoutsRes = ref.watch(layoutIconsProvider);
 
-  Future<String> _getIconHashForTypeName(final String typeName, final HubConnection connection) async {
-    return await connection.invoke("GetHashCodeByTypeName", args: [typeName]) as String;
-  }
+  // return layoutsRes.maybeWhen(
+  //     orElse: () => {},
+  //     data: (data) {
+  //       final filtered = data.where((x) =>
+  //           x.icon != null &&
+  //           x.layout?.typeNames != null &&
+  //           x.layout!.typeNames!.isNotEmpty);
+  //       final grouped = filtered.groupManyBy((x) => x.layout!.typeNames!);
+  //       final ret =
+  //           grouped.entries.toMap((x) => x.key, (x) => x.value.first.icon!);
+  //       return ret;
+  //     });
+  return switch (layoutsRes) {
+    AsyncData(:final value) => value
+        .where((final x) =>
+            x.icon != null &&
+            x.layout?.typeNames != null &&
+            x.layout!.typeNames!.isNotEmpty)
+        .groupManyBy((final x) => x.layout!.typeNames!)
+        .entries
+        .toMap((final x) => x.key, (final x) => x.value.first.icon!),
+    _ => {},
+  };
+}
 
-  Future<String> _getIconHashByName(final String iconName, final HubConnection connection) async {
-    return await connection.invoke("GetHashCodeByName", args: [iconName]) as String;
-  }
+@Riverpod(keepAlive: true)
+Map<String, SvgIcon> _iconTypeName(final Ref ref) {
+  final layoutsRes = ref.watch(layoutIconsProvider);
+  return switch (layoutsRes) {
+    AsyncData(:final value) => value
+        .where((final x) => x.icon != null && x.layout?.typeName != null)
+        .groupBy((final x) => (x.layout!.typeName!, x.icon!))
+        .keys
+        .toMap((final x) => x.$1, (final x) => x.$2),
+    _ => {},
+  };
+}
 
-  Future<Uint8List?> _getIcon(
-      final String name, final String endpointName, final HubConnection? connection, final bool byTypeName) async {
-    if (connection == null) return null;
-    final cache = state;
-
-    if (cache.containsKey(name)) return cache[name];
-
-    String hash;
-    if (byTypeName) {
-      hash = await _getIconHashForTypeName(name, connection);
-    } else {
-      hash = await _getIconHashByName(name, connection);
-    }
-    if (!kIsWeb) {
-      await _cacheFileManager.ensureDirectoryExists();
-
-      final hashLocal = await _cacheFileManager.readHashCode(name);
-      if (hashLocal == hash) {
-        final bytes = await _cacheFileManager.readContentAsBytes(name);
-        if (bytes != null) return _putIntoCache(name, bytes);
-      }
-    }
-
-    final res = await connection.invoke(endpointName, args: [name]);
-    final svg = SvgIcon.fromJson(res as Map<String, dynamic>);
-
-    if (!kIsWeb) {
-      await _cacheFileManager.ensureDirectoryExists();
-      await _cacheFileManager.writeHashCode(name, hash);
-      await _cacheFileManager.writeContentAsBytes(name, svg.data!);
-
-      return _putIntoCache(name, svg.data!);
-    }
-
-    return _putIntoCache(name, svg.data!);
-  }
-
-  Uint8List _putIntoCache(final String name, final Uint8List uint8list) {
-    state = {...state, name: uint8list};
-    // cache.state[name] = uint8list;
-    // cache.state = cache.state.map((final key, final value) => MapEntry(key, value));
-    // return uint8list;
-    return uint8list;
-  }
+@Riverpod(keepAlive: true)
+Map<String, SvgIcon> _iconName(final Ref ref) {
+  final layoutsRes = ref.watch(layoutIconsProvider);
+  return switch (layoutsRes) {
+    AsyncData(:final value) => value
+        .where((final x) => x.icon != null && x.layout != null)
+        .groupBy((final x) => (x.layout!.iconName, x.icon!))
+        .keys
+        .toMap((final x) => x.$1, (final x) => x.$2),
+    _ => {},
+  };
 }

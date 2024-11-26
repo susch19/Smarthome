@@ -11,9 +11,11 @@ import 'package:signalr_netcore/signalr_client.dart';
 class MdnsManager {
   static const String name = '_smarthome._tcp';
 
-  static final MDnsClient _client = MDnsClient(rawDatagramSocketFactory: (final dynamic host, final int port,
-      {final bool? reuseAddress, final bool? reusePort, final int? ttl}) {
-    return RawDatagramSocket.bind(host, port, reuseAddress: reuseAddress ?? true, ttl: ttl ?? 255);
+  static final MDnsClient _client = MDnsClient(rawDatagramSocketFactory:
+      (final dynamic host, final int port,
+          {final bool? reuseAddress, final bool? reusePort, final int? ttl}) {
+    return RawDatagramSocket.bind(host, port,
+        reuseAddress: reuseAddress ?? true, ttl: ttl ?? 255);
   });
   static bool get initialized => _isInitialized;
   static bool _isInitialized = false;
@@ -32,25 +34,30 @@ class MdnsManager {
     _isInitialized = false;
   }
 
-  static Future<Iterable<NetworkInterface>> getInterfaces(final InternetAddressType type) async {
+  static Future<Iterable<NetworkInterface>> getInterfaces(
+      final InternetAddressType type) async {
     _interfaces = await NetworkInterface.list(
       type: type,
     );
     return _interfaces;
   }
 
-  static Stream<ServerRecord> getRecords({final Duration timeToLive = const Duration(minutes: 5)}) async* {
+  static Stream<ServerRecord> getRecords(
+      {final Duration timeToLive = const Duration(minutes: 5)}) async* {
     if (_lastSearched.difference(DateTime.now()).abs() < timeToLive) {
       for (final cached in _founded.values) {
-        if (cached.lastChecked.add(timeToLive).isAfter(DateTime.now())) yield cached;
+        if (cached.lastChecked.add(timeToLive).isAfter(DateTime.now())) {
+          yield cached;
+        }
       }
       return;
     }
 
-    await for (final PtrResourceRecord ptr
-        in _client.lookup<PtrResourceRecord>(ResourceRecordQuery.serverPointer(name))) {
+    await for (final PtrResourceRecord ptr in _client
+        .lookup<PtrResourceRecord>(ResourceRecordQuery.serverPointer(name))) {
       await for (final SrvResourceRecord srv
-          in _client.lookup<SrvResourceRecord>(ResourceRecordQuery.service(ptr.domainName))) {
+          in _client.lookup<SrvResourceRecord>(
+              ResourceRecordQuery.service(ptr.domainName))) {
         final instanceNameEndIndex = srv.name.indexOf(name);
         final instanceName = srv.name.substring(0, instanceNameEndIndex - 1);
         final List<IpPort> ipPorts = [];
@@ -59,21 +66,25 @@ class MdnsManager {
         String clusterId = instanceName;
 
         await for (final IPAddressResourceRecord ipAddr
-            in _client.lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv4(srv.target))) {
+            in _client.lookup<IPAddressResourceRecord>(
+                ResourceRecordQuery.addressIPv4(srv.target))) {
           if (await checkConnection(ipAddr, srv)) {
-            ipPorts.add(IpPort(ipAddr.address.address, srv.port, ipAddr.address.type));
+            ipPorts.add(
+                IpPort(ipAddr.address.address, srv.port, ipAddr.address.type));
           }
         }
 
         await for (final IPAddressResourceRecord ipAddr
-            in _client.lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv6(srv.target))) {
+            in _client.lookup<IPAddressResourceRecord>(
+                ResourceRecordQuery.addressIPv6(srv.target))) {
           if (await checkConnection(ipAddr, srv)) {
-            ipPorts.add(IpPort(ipAddr.address.address, srv.port, ipAddr.address.type));
+            ipPorts.add(
+                IpPort(ipAddr.address.address, srv.port, ipAddr.address.type));
           }
         }
 
-        await for (final TxtResourceRecord txtRecord
-            in _client.lookup<TxtResourceRecord>(ResourceRecordQuery.text(srv.name))) {
+        await for (final TxtResourceRecord txtRecord in _client
+            .lookup<TxtResourceRecord>(ResourceRecordQuery.text(srv.name))) {
           final keyValues = txtRecord.text.split("\n");
           for (final kv in keyValues) {
             final keyValue = kv.split("=");
@@ -92,7 +103,8 @@ class MdnsManager {
           }
           if (_founded.containsKey(srv.name)) {
             final sr = _founded[srv.name]!;
-            if (sr.lastChecked.difference(DateTime.now()).abs() > const Duration(seconds: 2)) {
+            if (sr.lastChecked.difference(DateTime.now()).abs() >
+                const Duration(seconds: 2)) {
               sr.debug = debug;
               sr.reachableAddresses = ipPorts;
               sr.minAppVersion = ver;
@@ -102,7 +114,8 @@ class MdnsManager {
               yield sr;
             }
           } else {
-            final sr = ServerRecord(instanceName, clusterId, srv.name, ipPorts, ver, debug, DateTime.now());
+            final sr = ServerRecord(instanceName, clusterId, srv.name, ipPorts,
+                ver, debug, DateTime.now());
             _founded[srv.name] = sr;
             yield sr;
           }
@@ -118,7 +131,8 @@ class MdnsManager {
     // }
   }
 
-  static Future<bool> checkConnection(final IPAddressResourceRecord ipAddr, final SrvResourceRecord srv) async {
+  static Future<bool> checkConnection(
+      final IPAddressResourceRecord ipAddr, final SrvResourceRecord srv) async {
     try {
       final isIpv6 = ipAddr.address.type.name == "IPv6";
       // if (isIpv6) {

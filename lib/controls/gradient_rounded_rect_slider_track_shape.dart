@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSliderTrackShape {
+class GradientRoundedRectSliderTrackShape extends SliderTrackShape
+    with BaseSliderTrackShape {
   final LinearGradient gradient;
 
   /// Create a slider track that draws two rectangles with rounded outer edges.
@@ -42,10 +43,12 @@ class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSlid
 
     // Assign the track segment paints, which are leading: active and
     // trailing: inactive.
-    final ColorTween activeTrackColorTween =
-        ColorTween(begin: sliderTheme.disabledActiveTrackColor, end: sliderTheme.activeTrackColor);
-    final ColorTween inactiveTrackColorTween =
-        ColorTween(begin: sliderTheme.disabledInactiveTrackColor, end: sliderTheme.inactiveTrackColor);
+    final ColorTween activeTrackColorTween = ColorTween(
+        begin: sliderTheme.disabledActiveTrackColor,
+        end: sliderTheme.activeTrackColor);
+    final ColorTween inactiveTrackColorTween = ColorTween(
+        begin: sliderTheme.disabledInactiveTrackColor,
+        end: sliderTheme.inactiveTrackColor);
     final Paint activePaint = Paint()
       ..shader = gradient.createShader(trackRect)
       ..color = activeTrackColorTween.evaluate(enableAnimation)!;
@@ -74,8 +77,12 @@ class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSlid
         trackRect.top,
         thumbCenter.dx,
         trackRect.bottom,
-        topLeft: (textDirection == TextDirection.ltr) ? activeTrackRadius : trackRadius,
-        bottomLeft: (textDirection == TextDirection.ltr) ? activeTrackRadius : trackRadius,
+        topLeft: (textDirection == TextDirection.ltr)
+            ? activeTrackRadius
+            : trackRadius,
+        bottomLeft: (textDirection == TextDirection.ltr)
+            ? activeTrackRadius
+            : trackRadius,
       ),
       leftTrackPaint,
     );
@@ -85,8 +92,12 @@ class GradientRoundedRectSliderTrackShape extends SliderTrackShape with BaseSlid
         trackRect.top,
         trackRect.right,
         trackRect.bottom,
-        topRight: (textDirection == TextDirection.rtl) ? activeTrackRadius : trackRadius,
-        bottomRight: (textDirection == TextDirection.rtl) ? activeTrackRadius : trackRadius,
+        topRight: (textDirection == TextDirection.rtl)
+            ? activeTrackRadius
+            : trackRadius,
+        bottomRight: (textDirection == TextDirection.rtl)
+            ? activeTrackRadius
+            : trackRadius,
       ),
       rightTrackPaint,
     );
