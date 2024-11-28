@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:smarthome/helper/datetime_helper.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
-import 'package:smarthome/models/message.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 class ValueStore<T> extends ChangeNotifier {
   T currentValue;

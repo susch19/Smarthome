@@ -106,7 +106,7 @@ class DynamicUiCreatorPageState extends ConsumerState<DynamicUiCreatorPage> {
                         spacing: 8,
                         children: elements.map((final e) {
                           return GenericDevice.getEditWidgetFor(context, -1, e,
-                              ValueStore(-1, 1.0, "", Command.Brightness), ref);
+                              ValueStore(-1, 1.0, "", Command.brightness), ref);
                         }).toList(),
                       ),
                     ),

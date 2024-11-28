@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smarthome/devices/device_exporter.dart';
-import 'package:smarthome/devices/generic/detail_property_info.dart';
-import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:tuple/tuple.dart';
@@ -26,12 +24,12 @@ class DetailValueStoreWidget extends ConsumerWidget {
     }
 
     final text = Text(
-      (e.displayName ?? "") +
+      (e.displayName) +
           (valueModel?.getValueAsString(
                   format: e.format, precision: e.precision ?? 1) ??
               "") +
-          (e.unitOfMeasurement ?? ""),
-      style: e.textStyle?.toTextStyle(),
+          (e.unitOfMeasurement),
+      style: GenericDevice.toTextStyle(e.textStyle),
     );
 
     Widget ret;

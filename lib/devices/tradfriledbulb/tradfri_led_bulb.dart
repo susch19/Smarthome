@@ -8,6 +8,8 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../restapi/swagger.enums.swagger.dart';
+
 class TradfriLedBulb extends Device<TradfriLedBulbModel> {
   TradfriLedBulb(final int id, final String typeName, final IconData icon)
       : super(id, typeName, iconData: icon);
@@ -53,8 +55,8 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update,
-                  sm.Command.On, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(MessageType.update, Command.on, [],
+                  ref.read(hubConnectionProvider)),
             );
           },
         ),
@@ -68,8 +70,8 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update,
-                  sm.Command.Off, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(MessageType.update, Command.off, [],
+                  ref.read(hubConnectionProvider)),
             );
           },
         ),
@@ -110,12 +112,12 @@ class TradfriLedBulbScreen extends ConsumerWidget {
     return model?.brightness ?? 0;
   });
   void changeBrightness(final double brightness, final WidgetRef ref) {
-    device.sendToServer(sm.MessageType.Update, sm.Command.Brightness,
+    device.sendToServer(MessageType.update, Command.brightness,
         [brightness.round().toString()], ref.read(hubConnectionProvider));
   }
 
   void changeColor(final RGB rgb, final WidgetRef ref) {
-    device.sendToServer(sm.MessageType.Update, sm.Command.Color,
+    device.sendToServer(MessageType.update, Command.color,
         ["#${rgb.hr + rgb.hg + rgb.hb}"], ref.read(hubConnectionProvider));
   }
 
@@ -135,8 +137,8 @@ class TradfriLedBulbScreen extends ConsumerWidget {
           final state = ref.read(TradfriLedBulbModel.stateProvider(device.id));
 
           device.sendToServer(
-              sm.MessageType.Update,
-              state ? sm.Command.Off : sm.Command.On,
+              MessageType.update,
+              state ? Command.off : Command.on,
               [],
               ref.read(hubConnectionProvider));
         },

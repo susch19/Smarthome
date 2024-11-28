@@ -89,9 +89,9 @@ class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
         final val = getValueFromJson(json[item]);
         if (val.runtimeType == DateTime) {
           stores[item] =
-              ValueStore<DateTime>(deviceId, val, item, Command.None);
+              ValueStore<DateTime>(deviceId, val, item, Command.none);
         } else {
-          stores[item] = ValueStore(deviceId, val, item, Command.None);
+          stores[item] = ValueStore(deviceId, val, item, Command.none);
         }
         changed = true;
       } else {

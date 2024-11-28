@@ -12,6 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart';
 
+import '../../restapi/swagger.enums.swagger.dart';
+
 class LedStrip extends Device<LedStripModel> {
   LedStrip(final int id, final String typeName, final IconData icon)
       : super(id, typeName, iconData: icon);
@@ -50,8 +52,8 @@ class LedStrip extends Device<LedStripModel> {
                       : const TextStyle(),
                 ),
                 onPressed: () => sendToServer(
-                    sm.MessageType.Update,
-                    sm.Command.SingleColor,
+                    MessageType.update,
+                    Command.singlecolor,
                     ["0xFF000000"],
                     ref.read(hubConnectionProvider)),
               );
@@ -69,8 +71,8 @@ class LedStrip extends Device<LedStripModel> {
                           fontWeight: FontWeight.bold, fontSize: 20)
                       : const TextStyle(),
                 ),
-                onPressed: () => sendToServer(sm.MessageType.Update,
-                    sm.Command.Off, [], ref.read(hubConnectionProvider)),
+                onPressed: () => sendToServer(MessageType.update, Command.off,
+                    [], ref.read(hubConnectionProvider)),
               );
             },
           ),
@@ -90,8 +92,8 @@ class LedStrip extends Device<LedStripModel> {
                           fontWeight: FontWeight.bold, fontSize: 20)
                       : const TextStyle(),
                 )),
-            onPressed: () => sendToServer(sm.MessageType.Update,
-                sm.Command.Mode, [], ref.read(hubConnectionProvider)),
+            onPressed: () => sendToServer(MessageType.update, Command.mode, [],
+                ref.read(hubConnectionProvider)),
           );
         },
       ),
@@ -181,7 +183,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
 
     if (sendToServer)
       widget.device.sendToServer(
-          sm.MessageType.Update, newMode, [], ref.read(hubConnectionProvider));
+          MessageType.update, newMode, [], ref.read(hubConnectionProvider));
   }
 
   void _changeColor(final WidgetRef ref, final RGBW rgbw,
@@ -190,8 +192,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
     oldMode.state = rgbw;
     if (sendToServer) {
       widget.device.sendToServer(
-          sm.MessageType.Options,
-          sm.Command.Color,
+          MessageType.options,
+          Command.color,
           ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"],
           ref.read(hubConnectionProvider));
     }
@@ -200,7 +202,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
   void _changeDelay(final WidgetRef ref, final int delay,
       [final bool sendToServer = true]) {
     if (sendToServer) {
-      widget.device.sendToServer(sm.MessageType.Options, sm.Command.Delay,
+      widget.device.sendToServer(MessageType.options, Command.delay,
           ["0x${delay.toRadixString(16)}"], ref.read(hubConnectionProvider));
     }
     final oldDelay = ref.watch(_delayProvider(widget.device).notifier);
@@ -211,8 +213,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
       [final bool sendToServer = true]) {
     if (sendToServer) {
       widget.device.sendToServer(
-          sm.MessageType.Options,
-          sm.Command.Calibration,
+          MessageType.options,
+          Command.calibration,
           ["0x${(numLeds.toInt()).toRadixString(16)}"],
           ref.read(hubConnectionProvider));
     }
@@ -224,8 +226,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
       [final bool sendToServer = true]) {
     if (sendToServer) {
       widget.device.sendToServer(
-          sm.MessageType.Options,
-          sm.Command.Brightness,
+          MessageType.options,
+          Command.brightness,
           ["0x${(brightness.toInt()).toRadixString(16)}"],
           ref.read(hubConnectionProvider));
     }
@@ -262,7 +264,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Off"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.Off),
+                      onTap: () => _colorModeChange(ref, Command.off),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -274,7 +276,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Fast RGB"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.RGB),
+                      onTap: () => _colorModeChange(ref, Command.rgb),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -286,7 +288,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Flicker"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.Mode),
+                      onTap: () => _colorModeChange(ref, Command.mode),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -298,7 +300,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Strobo"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.Strobo),
+                      onTap: () => _colorModeChange(ref, Command.strobo),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -310,7 +312,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("RGBCycle"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.RGBCycle),
+                      onTap: () => _colorModeChange(ref, Command.rgbcycle),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -322,8 +324,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Wander"),
                       ),
-                      onTap: () =>
-                          _colorModeChange(ref, sm.Command.LightWander),
+                      onTap: () => _colorModeChange(ref, Command.lightwander),
                       trailing: const Text(""),
                     ),
                     ListTile(
@@ -335,7 +336,7 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                               )
                             : const Text("Wander RGB"),
                       ),
-                      onTap: () => _colorModeChange(ref, sm.Command.RGBWander),
+                      onTap: () => _colorModeChange(ref, Command.rgbwander),
                       trailing: const Text(""),
                     ),
                   ],
@@ -362,8 +363,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                   ),
                   onTap: () {
                     widget.device.sendToServer(
-                        sm.MessageType.Update,
-                        sm.Command.SingleColor,
+                        MessageType.update,
+                        Command.singlecolor,
                         ["0xFF000000"],
                         ref.read(hubConnectionProvider));
                   },
@@ -385,11 +386,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                           )
                         : const Text("Reverse"),
                   ),
-                  onTap: () => widget.device.sendToServer(
-                      sm.MessageType.Options,
-                      sm.Command.Reverse,
-                      [],
-                      ref.read(hubConnectionProvider)),
+                  onTap: () => widget.device.sendToServer(MessageType.options,
+                      Command.reverse, [], ref.read(hubConnectionProvider)),
                   trailing: const Text(""),
                 );
               },
@@ -496,8 +494,8 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
                             'SingleColor',
                           ),
                           onPressed: () => widget.device.sendToServer(
-                              sm.MessageType.Update,
-                              sm.Command.SingleColor,
+                              MessageType.update,
+                              Command.singlecolor,
                               ["0x${rgbw.hw + rgbw.hb + rgbw.hg + rgbw.hr}"],
                               ref.read(hubConnectionProvider)),
                         ),

@@ -19,6 +19,7 @@ import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/main.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 part 'device.g.dart';
 
@@ -88,6 +89,25 @@ Widget iconWidgetSingle(
 }
 
 abstract class Device<T extends BaseModel> {
+  static const fromJsonFactory = _$DeviceRequestFromJson;
+
+  static Device _$DeviceRequestFromJson(Map<String, dynamic> json) {
+    final types = (json["typeNames"] as List).map((x) => x.toString()).toList();
+    String type = "Device";
+    for (final item in types) {
+      if (!DeviceManager.stringNameJsonFactory.containsKey(item)) {
+        continue;
+      }
+      type = item;
+      break;
+    }
+    final id = json["id"] as int;
+
+    final model = DeviceManager.stringNameJsonFactory[type]!(json, types);
+    final dev = DeviceManager.ctorFactory[type]!(id, types.first);
+    return dev;
+  }
+
   final baseModelTProvider = Provider.family<T?, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
     if (baseModel is T) return baseModel;
@@ -191,8 +211,8 @@ abstract class Device<T extends BaseModel> {
 
   @mustCallSuper
   Future sendToServer(
-      final sm.MessageType messageType,
-      final sm.Command command,
+      final MessageType messageType,
+      final Command command,
       final List<String>? parameters,
       final HubConnectionContainer container) async {
     if (container.connectionState != HubConnectionState.Connected ||
@@ -200,7 +220,7 @@ abstract class Device<T extends BaseModel> {
       return;
     }
 
-    final message = sm.Message(id, messageType, command.index, parameters);
+    final message = sm.Message(id, messageType, command, parameters);
     final jsonMsg = message.toJson();
     await container.connection!.invoke("Update", args: <Object>[jsonMsg]);
   }

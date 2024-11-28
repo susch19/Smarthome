@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:smarthome/controls/blurry_card.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device.dart';
+import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
-import 'package:smarthome/devices/generic/edit_parameter.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
-import 'package:smarthome/devices/generic/layout_base_property_info.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/generic/widgets/edits/basic_edit_types.dart';
@@ -95,16 +94,16 @@ class GenericDevice extends Device<BaseModel> {
       final WidgetRef ref) {
     switch (e.editInfo?.editType) {
       case EditType.button:
-      case EditType.raisedButton:
+      case EditType.raisedbutton:
         return BasicEditTypes.buildButton(id, context, valueModel, e, ref,
-            e.editInfo!.editType == EditType.raisedButton);
+            e.editInfo!.editType == EditType.raisedbutton);
       case EditType.toggle:
         return BasicEditTypes.buildToggle(id, valueModel, e, ref);
       case EditType.dropdown:
         return BasicEditTypes.buildDropdown(id, valueModel, e, ref);
       case EditType.slider:
         return BasicEditTypes.buildSlider(context, id, valueModel, e, ref);
-      case EditType.iconButton:
+      case EditType.iconbutton:
         return BasicEditTypes.iconButton(id, valueModel, e, ref);
       case EditType.icon:
         return BasicEditTypes.icon(valueModel, e, ref);
@@ -114,17 +113,28 @@ class GenericDevice extends Device<BaseModel> {
       //   return _buildInput(valueModel, e, ref);
       //https://github.com/mchome/flutter_colorpicker
       //FAB
-      case EditType.floatingActionButton:
+      case EditType.floatingactionbutton:
         return const SizedBox();
       default:
         return Text(
           (valueModel?.getValueAsString(
                       format: e.format, precision: e.precision ?? 1) ??
                   "") +
-              (e.unitOfMeasurement ?? ""),
-          style: e.textStyle?.toTextStyle(),
+              (e.unitOfMeasurement),
+          style: toTextStyle(e.textStyle),
         );
     }
+  }
+
+  static TextStyle toTextStyle(TextSettings? setting) {
+    var ts = const TextStyle();
+    if (setting == null) return ts;
+    if (setting.fontSize != null) ts = ts.copyWith(fontSize: setting.fontSize);
+    if (setting.fontFamily != "")
+      ts = ts.copyWith(fontFamily: setting.fontFamily);
+    ts = ts.copyWith(fontStyle: FontStyle.values[setting.fontStyle.index]);
+    ts = ts.copyWith(fontWeight: FontWeight.values[setting.fontWeight.index]);
+    return ts;
   }
 
   static Message getMessage(final PropertyEditInformation info,
@@ -139,22 +149,22 @@ class GenericDevice extends Device<BaseModel> {
     if (valueModel.currentValue is num) {
       final val = (valueModel.currentValue as num);
       return info.editParameter.firstWhere((final element) {
-        final lower = element.raw["Min"] as num?;
-        final upper = element.raw["Max"] as num?;
+        final lower = element.extensionData?["Min"] as num?;
+        final upper = element.extensionData?["Max"] as num?;
         if (lower != null && upper != null) {
           return val >= lower && val < upper;
         }
-        return element.value == val;
+        return element.$value == val;
       }, orElse: () => info.editParameter.first);
     } else if (valueModel.currentValue is bool) {
       final val = (valueModel.currentValue as bool);
       return info.editParameter.firstWhere((final element) {
-        return element.value == val;
+        return element.$value == val;
       }, orElse: () => info.editParameter.first);
     } else if (valueModel.currentValue is String) {
       final val = (valueModel.currentValue as String);
       return info.editParameter.firstWhere((final element) {
-        return element.value == val;
+        return element.$value == val;
       }, orElse: () => info.editParameter.first);
     } else {
       return info.editParameter.first;
@@ -321,8 +331,8 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
             args: <Object>[message.toJson()]);
       }),
       child: Icon(
-        IconData(edit.raw["CodePoint"] as int,
-            fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+        IconData(edit.extensionData!["CodePoint"] as int,
+            fontFamily: edit.extensionData!["FontFamily"] ?? 'MaterialIcons'),
       ),
     );
   }
@@ -354,7 +364,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
             (showDebugInformation && e.showOnlyInDeveloperMode == true))
         .where((final e) =>
             e.editInfo == null ||
-            e.editInfo!.editType != EditType.floatingActionButton)
+            e.editInfo!.editType != EditType.floatingactionbutton)
         .groupBy((final g) => g.rowNr)
         .map((final row, final elements) {
       final children = elements.map((final e) {

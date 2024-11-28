@@ -20,6 +20,7 @@ import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
 import 'package:smarthome/main.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/screens/settings_page.dart';
 import 'package:tuple/tuple.dart';
@@ -462,16 +463,11 @@ class MyHomePage extends ConsumerWidget {
 
   Future addNewDevice(final BuildContext context, final WidgetRef ref) async {
     // if (ConnectionManager.hubConnection.state != HubConnectionState.connected) {
-    final connection = ref.watch(hubConnectionConnectedProvider);
-    if (connection == null) {
-      return;
-    }
+    final connection = ref.watch(apiProvider);
 
-    final serverDevices = (await connection
-        .invoke("GetDeviceOverview", args: [])) as List<dynamic>;
-    final serverDevicesList = serverDevices
-        .map((final e) => DeviceOverviewModel.fromJson(e))
-        .toList();
+    final serverDevices = await connection.appDeviceOverviewGet();
+
+    final serverDevicesList = serverDevices.bodyOrThrow;
 
     final devices = ref.read(deviceProvider);
     final devicesToSelect = <Widget>[];
@@ -538,7 +534,7 @@ class MyHomePage extends ConsumerWidget {
   }
 
   void subscribeTo(final BuildContext context, final WidgetRef ref,
-      final List<DeviceOverviewModel> serverDevicesList) {
+      final List<DeviceOverview> serverDevicesList) {
     final List<int> selectedIds = [];
     for (final dev in serverDevicesList) {
       final notifier = ref.read(_addItemSelectorProvider(dev.id).notifier);

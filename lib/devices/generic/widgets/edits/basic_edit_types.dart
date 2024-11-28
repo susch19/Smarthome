@@ -2,13 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
-import 'package:smarthome/devices/generic/layout_base_property_info.dart';
+import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/generic_device.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
 import 'package:smarthome/devices/heater/temp_scheduling.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/models/message.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:tuple/tuple.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,13 +70,14 @@ class BasicEditTypes {
   static Widget icon(final ValueStore? valueModel,
       final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final edit = GenericDevice.getEditParameter(valueModel, e.editInfo!);
-    final color = edit.raw["Color"] as int?;
-    if (edit.raw["Disable"] == true) return const SizedBox();
+    final raw = edit.extensionData ?? {};
+    final color = raw["Color"] as int?;
+    if (raw["Disable"] == true) return const SizedBox();
     return Icon(
-      IconData(edit.raw["CodePoint"] as int,
-          fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+      IconData(raw["CodePoint"] as int,
+          fontFamily: raw["FontFamily"] ?? 'MaterialIcons'),
       color: color == null ? null : Color(color),
-      size: edit.raw["Size"],
+      size: raw["Size"],
     );
   }
 
@@ -84,10 +86,11 @@ class BasicEditTypes {
     final info = e.editInfo!;
     final edit = info.editParameter.firstWhere(
         (final element) =>
-            valueModel != null && element.value == valueModel.currentValue,
+            valueModel != null && element.$value == valueModel.currentValue,
         orElse: () => info.editParameter.first);
-    final color = edit.raw["Color"] as int?;
-    if (edit.raw["Disable"] == true) return const SizedBox();
+    final raw = edit.extensionData ?? {};
+    final color = raw["Color"] as int?;
+    if (raw["Disable"] == true) return const SizedBox();
 
     return IconButton(
       onPressed: (() async {
@@ -96,10 +99,10 @@ class BasicEditTypes {
             args: <Object>[GenericDevice.getMessage(info, edit, id).toJson()]);
       }),
       icon: Icon(
-        IconData(edit.raw["CodePoint"] as int,
-            fontFamily: edit.raw["FontFamily"] ?? 'MaterialIcons'),
+        IconData(raw["CodePoint"] as int,
+            fontFamily: raw["FontFamily"] ?? 'MaterialIcons'),
         color: color == null ? null : Color(color),
-        size: edit.raw["Size"],
+        size: raw["Size"],
       ),
     );
   }
@@ -108,8 +111,8 @@ class BasicEditTypes {
       final LayoutBasePropertyInfo e, final WidgetRef ref) {
     final info = e.editInfo!;
     final edit = info.editParameter.firstWhere(
-        (final element) => element.value != valueModel?.currentValue);
-    if (edit.raw["Disable"] == true) return const SizedBox();
+        (final element) => element.$value != valueModel?.currentValue);
+    if (edit.extensionData?["Disable"] == true) return const SizedBox();
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -135,13 +138,13 @@ class BasicEditTypes {
     return DropdownButton(
       items: info.editParameter
           .map((final e) => DropdownMenuItem(
-                value: e.value,
-                child: Text(e.displayName ?? e.value.toString()),
+                value: e.$value,
+                child: Text(e.displayName ?? e.$value.toString()),
               ))
           .toList(),
       onChanged: (final value) async {
         final edit = info.editParameter
-            .firstWhere((final element) => element.value == value);
+            .firstWhere((final element) => element.$value == value);
         await ref.read(hubConnectionConnectedProvider)?.invoke(
             info.hubMethod ?? "Update",
             args: <Object>[GenericDevice.getMessage(info, edit, id).toJson()]);
@@ -159,7 +162,7 @@ class BasicEditTypes {
             fullscreenDialog: true));
     if (res == null || !res.item1) return;
     final info = e.editInfo!;
-    final message = Message(id, MessageType.Options, Command.Temp.index,
+    final message = Message(id, MessageType.options, Command.temp,
         ["store", ...res.item2.map((final f) => jsonEncode(f)).toList()]);
     ref
         .read(hubConnectionConnectedProvider)
@@ -178,11 +181,11 @@ class BasicEditTypes {
       final WidgetRef ref) {
     final info = e.editInfo!;
     final edit = info.editParameter.first;
-    final json = edit.value;
+    final json = edit.$value;
     if (json is! Map<String, dynamic>) return const SizedBox();
     var sliderTheme = SliderTheme.of(context);
-    if (info.raw.containsKey("GradientColors")) {
-      final gradients = info.raw["GradientColors"] as List<dynamic>;
+    if (info.extensionData?.containsKey("GradientColors") ?? false) {
+      final gradients = info.extensionData!["GradientColors"] as List<dynamic>;
       final List<Color> colors = [];
       for (final grad in gradients) {
         if (grad is int) {

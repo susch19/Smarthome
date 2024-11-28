@@ -36,7 +36,7 @@ dependencies:
   github: ^9.0.0
   http: ^1.2.2
   intl: ^0.19.0
-  json_annotation: ^4.6.0
+  json_annotation: ^4.9.0
   logging: ^1.2.0
   multicast_dns: ^0.3.2
   new_gradient_app_bar: ^0.2.0
@@ -57,6 +57,7 @@ dependencies:
   hooks_riverpod: ^2.6.1
   flutter_hooks:
   riverpod_annotation: ^2.6.1
+  chopper: ^8.0.1
 
 
 dev_dependencies:
@@ -66,12 +67,21 @@ dev_dependencies:
   build_runner: ^2.4.13
   crypto: ^3.0.6
   flutter_lints: ^5.0.0
-  json_serializable: ^6.8.0
+  json_serializable: ^6.9.0
   pointycastle: ^3.6.1
   custom_lint:
   riverpod_generator: ^2.6.1
   riverpod_lint: ^2.6.1
   visibility_detector: ^0.4.0+2
+  chopper_generator: ^8.0.1
+  swagger_dart_code_generator: 
+    git:
+      url: https://github.com/airsphere-gmbh/swagger-dart-code-generator.git
+
+global_options:
+  json_serializable:
+    runs_before:
+      - retrofit_generator
 
 flutter:
   uses-material-design: true

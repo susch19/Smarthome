@@ -1,37 +1,38 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:json_annotation/json_annotation.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 part 'message.g.dart';
 
-enum MessageType { Get, Update, Options }
+// enum MessageType { Get, Update, Options }
 
-enum Command {
-  None,
-  Off,
-  On,
-  WhoIAm,
-  IP,
-  Time,
-  Temp,
-  Brightness,
-  RelativeBrightness,
-  Color,
-  Mode,
-  OnChangedConnections,
-  OnNewConnection,
-  Mesh,
-  Delay,
-  RGB,
-  Strobo,
-  RGBCycle,
-  LightWander,
-  RGBWander,
-  Reverse,
-  SingleColor,
-  DeviceMapping,
-  Calibration,
-}
+// enum Command {
+//   None,
+//   Off,
+//   On,
+//   WhoIAm,
+//   IP,
+//   Time,
+//   Temp,
+//   Brightness,
+//   RelativeBrightness,
+//   Color,
+//   Mode,
+//   OnChangedConnections,
+//   OnNewConnection,
+//   Mesh,
+//   Delay,
+//   RGB,
+//   Strobo,
+//   RGBCycle,
+//   LightWander,
+//   RGBWander,
+//   Reverse,
+//   SingleColor,
+//   DeviceMapping,
+//   Calibration,
+// }
 
 @JsonSerializable()
 class Message {
@@ -39,13 +40,14 @@ class Message {
   @JsonKey(name: "m")
   MessageType messageType;
   @JsonKey(name: "c")
-  int command;
+  Command command;
   @JsonKey(name: "p")
   List<Object?>? parameters;
 
   Message(this.id, this.messageType, this.command, [this.parameters]);
 
-  factory Message.fromJson(final Map<String, dynamic> json) => _$MessageFromJson(json);
+  factory Message.fromJson(final Map<String, dynamic> json) =>
+      _$MessageFromJson(json);
 
   Map<String, dynamic> toJson() => _$MessageToJson(this);
 

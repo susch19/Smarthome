@@ -20,7 +20,7 @@ class DashboardValueStoreWidget extends ConsumerWidget {
 
     if (valueModel == null ||
         valueModel.currentValue == null ||
-        (e.specialType == SpecialType.right) ||
+        (e.specialType == DasboardSpecialType.right) ||
         ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)) {
       return const SizedBox();
     }

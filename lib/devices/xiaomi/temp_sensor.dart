@@ -9,6 +9,7 @@ import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/models/message.dart' as sm;
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -165,7 +166,7 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
   void changeColor() {}
 
   void changeDelay(final int delay) {
-    widget.device.sendToServer(sm.MessageType.Options, sm.Command.Delay,
+    widget.device.sendToServer(MessageType.options, Command.delay,
         ["delay=$delay"], ref.read(hubConnectionProvider));
   }
 

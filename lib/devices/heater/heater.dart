@@ -16,6 +16,7 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/smarthome_icons.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:smarthome/icons/icons.dart';
+import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:tuple/tuple.dart';
 
@@ -225,8 +226,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
     if (res == null || !res.item1) return;
 
     widget.device.sendToServer(
-        sm.MessageType.Options,
-        sm.Command.Temp,
+        MessageType.options,
+        Command.temp,
         res.item2.map((final f) => jsonEncode(f)).toList(),
         ref.read(hubConnectionProvider));
   }
@@ -331,7 +332,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
 
   void handlePointerValueChangedEnd(final double value) {
     handlePointerValueChanged(value);
-    widget.device.sendToServer(sm.MessageType.Update, sm.Command.Temp,
+    widget.device.sendToServer(MessageType.update, Command.temp,
         <String>[_annotationValue], ref.read(hubConnectionProvider));
   }
 
@@ -392,14 +393,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 return Switch(
                   value: !disableHeater,
                   onChanged: (final val) {
-                    sm.Command command;
+                    Command command;
                     if (val) {
-                      command = sm.Command.On;
+                      command = Command.on;
                     } else {
-                      command = sm.Command.Off;
+                      command = Command.off;
                     }
-                    widget.device.sendToServer(sm.MessageType.Update, command,
-                        [], ref.read(hubConnectionProvider));
+                    widget.device.sendToServer(MessageType.update, command, [],
+                        ref.read(hubConnectionProvider));
                   },
                 );
               }),
@@ -423,14 +424,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                   return Switch(
                     value: !disableLed,
                     onChanged: (final val) {
-                      sm.Command command;
+                      Command command;
                       if (val) {
-                        command = sm.Command.On;
+                        command = Command.on;
                       } else {
-                        command = sm.Command.Off;
+                        command = Command.off;
                       }
-                      widget.device.sendToServer(sm.MessageType.Options,
-                          command, [], ref.read(hubConnectionProvider));
+                      widget.device.sendToServer(MessageType.options, command,
+                          [], ref.read(hubConnectionProvider));
                     },
                   );
                 },
@@ -702,8 +703,8 @@ class TemperatureSensorDropdown extends ConsumerWidget {
           .toList()),
       onChanged: (final dynamic a) {
         device.sendToServer(
-            sm.MessageType.Update,
-            sm.Command.DeviceMapping,
+            MessageType.update,
+            Command.devicemapping,
             [a.id.toString(), currentDevice?.id.toString() ?? "0"],
             ref.read(hubConnectionProvider));
         final newList = ref.read(baseModelsProvider).toList();

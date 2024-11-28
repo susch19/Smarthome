@@ -1,23 +1,22 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 // import 'package:signalr_core/signalr_core.dart';
 // import 'package:signalr_core/signalr_core.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import 'package:logging/logging.dart';
-import 'package:smarthome/cloud/app_cloud_configuration.dart';
 import 'package:smarthome/devices/base_model.dart';
-import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
-import 'package:smarthome/helper/preference_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tuple/tuple.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart' as sw;
 import '../signalr/smarthome_protocol.dart';
 import 'package:http/http.dart' as http;
 import 'package:signalr_netcore/iretry_policy.dart';
+
+part 'connection_manager.g.dart';
 
 // final hubConnectionStateProvider = StateProvider<HubConnectionState?>((final ref) {
 //   return null;
@@ -48,42 +47,23 @@ final hubConnectionConnectedProvider = Provider<HubConnection?>((final ref) {
 final _emptyHubConnection =
     HubConnectionBuilder().withUrl("http://localhost:5056/SmartHome").build();
 
-final apiProvider = Provider<ApiService>((final ref) => ApiService());
+// final apiProvider = Provider<ApiService>((final ref) => ApiService());
 
-final cloudConfigProvider =
-    FutureProvider<AppCloudConfiguration?>((final ref) async {
-  final api = ref.watch(apiProvider);
-  final urlString = ref.watch(serverUrlProvider);
-  final url = Uri.parse(urlString);
-  final res = await api.getSecurityConfig(url.host, url.port);
-  if (res != null) {
-    PreferencesManager.instance.setString("cloudConfig", jsonEncode(res));
-    return res;
-  } else {
-    final cc = PreferencesManager.instance.getString("cloudConfig");
-    if (cc != null && cc.isNotEmpty) {
-      return AppCloudConfiguration.fromJson(jsonDecode(cc))
-        ..loadedFromPersistentStorage = true;
-    }
-  }
-  return null;
-});
-
-class ApiService {
-  Future<AppCloudConfiguration?> getSecurityConfig(
-      final String host, final int port) async {
-    try {
-      final uri =
-          Uri(scheme: "http", host: host, port: port, path: "/Security");
-      print(uri);
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        return AppCloudConfiguration.fromJson(jsonDecode(response.body));
-      }
-    } catch (ex) {}
-    return null;
-  }
-}
+// class ApiService {
+//   Future<AppCloudConfiguration?> getSecurityConfig(
+//       final String host, final int port) async {
+//     try {
+//       final uri =
+//           Uri(scheme: "http", host: host, port: port, path: "/Security");
+//       print(uri);
+//       final response = await http.get(uri).timeout(const Duration(seconds: 10));
+//       if (response.statusCode == 200) {
+//         return AppCloudConfiguration.fromJson(jsonDecode(response.body));
+//       }
+//     } catch (ex) {}
+//     return null;
+//   }
+// }
 
 @immutable
 class HubConnectionContainer {
@@ -105,14 +85,12 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
   Future<void> startConnection() async {
     if (state.connectionState == HubConnectionState.Connected)
       state.connection?.stop();
-    final cloudConfig = await ref.watch(cloudConfigProvider.future);
-    SmarthomeProtocol.cloudConfig = cloudConfig;
-    final newConnectionState = createHubConnection(cloudConfig);
+    final newConnectionState = createHubConnection();
     final connection = newConnectionState.connection;
     if (connection == null) return;
     connection.serverTimeoutInMilliseconds = 30000;
 
-    onReconnecting({final Exception? error}) {
+    void onReconnecting({final Exception? error}) {
       connectionIconChanged.value = Icons.error_outline;
       connection.off("Update");
       connection.off("UpdateUi");
@@ -141,7 +119,7 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
 
           try {
             connection.stop();
-            final newConnection = createHubConnection(cloudConfig);
+            final newConnection = createHubConnection();
             await newConnection.connection?.start();
             state = HubConnectionContainer(connection, connection.state);
           } catch (e) {}
@@ -178,7 +156,7 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
     state.connection?.stop();
     state = HubConnectionContainer(state.connection, state.connection?.state);
 
-    final newState = createHubConnection(SmarthomeProtocol.cloudConfig);
+    final newState = createHubConnection();
     newState.connection?.on("Update", update);
     newState.connection?.on(
         "UpdateUi", ref.read(deviceLayoutsProvider.notifier).updateFromServer);
@@ -189,44 +167,21 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
         HubConnectionContainer(newState.connection, newState.connection?.state);
   }
 
-  HubConnectionContainer createHubConnection(
-      final AppCloudConfiguration? cloudConfig) {
+  HubConnectionContainer createHubConnection() {
     Logger.root.level = Level.ALL;
 // Writes the log messages to the console
     Logger.root.onRecord.listen((final LogRecord rec) {
       // print('${rec.level.name}: ${rec.time}: ${rec.message}');
     });
     final serverUrl = ref.watch(serverUrlProvider);
-    final serverUri = Uri.parse(serverUrl);
     return HubConnectionContainer(
         HubConnectionBuilder()
-            .withUrl(
-                cloudConfig?.loadedFromPersistentStorage ?? false
-                    ? Uri(
-                            host: cloudConfig!.host,
-                            port: cloudConfig.port,
-                            pathSegments: [
-                              ...serverUri.pathSegments,
-                              ...(serverUri.pathSegments.any((final element) =>
-                                      element == cloudConfig.id)
-                                  ? []
-                                  : [cloudConfig.id])
-                            ],
-                            scheme: "http")
-                        .toString()
-                    : serverUrl,
-                // HttpConnectionOptions(
-                //accessTokenFactory: () async => await getAccessToken(PreferencesManager.instance),
-                // logging: (final level, final message) => print('$level: $message')),
+            .withUrl(serverUrl,
                 options: HttpConnectionOptions(
                     logger: Logger("SignalR - transport"),
                     requestTimeout: 30000,
                     transport: HttpTransportType.WebSockets))
-            // .configureLogging(Logger("SignalR - hub"))
-            // .withHubProtocol(JsonHubProtocol())
             .withHubProtocol(SmarthomeProtocol())
-            // .withHubProtocol(MessagePackHubProtocol())
-            // .withAutomaticReconnect(PermanentRetryPolicy())
             .withAutomaticReconnect(
               reconnectPolicy: PermanentRetryPolicy(),
             )
@@ -284,5 +239,18 @@ class PermanentRetryPolicy extends IRetryPolicy {
     final retryCount = retryContext.previousRetryCount;
     if (retryCount >= retryTimes.length) return retryTimes.last;
     return retryTimes[retryCount];
+  }
+}
+
+@Riverpod(keepAlive: true)
+class Api extends _$Api {
+  @override
+  sw.Swagger build() {
+    final serverUrl = ref.watch(serverUrlProvider);
+    final parsed = Uri.parse(serverUrl);
+    final uri =
+        Uri(scheme: parsed.scheme, host: parsed.host, port: parsed.port);
+
+    return sw.Swagger.create(baseUrl: uri);
   }
 }

@@ -3,11 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/devices/device_exporter.dart';
-import 'package:smarthome/devices/generic/layout_base_property_info.dart';
-import 'package:smarthome/devices/generic/property_edit_information.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/helper/connection_manager.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:tuple/tuple.dart';
 
@@ -26,43 +25,44 @@ class GaugeEdit {
     final info = e.editInfo;
     if (valueModel == null || valueModel.currentValue is! num || info == null)
       return const SizedBox();
+    final raw = info.extensionData ?? {};
 
-    final startAngle = (info.raw.containsKey("StartAngle")
-            ? double.tryParse(info.raw["StartAngle"].toString())
+    final startAngle = (raw.containsKey("StartAngle")
+            ? double.tryParse(raw["StartAngle"].toString())
             : null) ??
         150.0;
-    final endAngle = (info.raw.containsKey("EndAngle")
-            ? double.tryParse(info.raw["EndAngle"].toString())
+    final endAngle = (raw.containsKey("EndAngle")
+            ? double.tryParse(raw["EndAngle"].toString())
             : null) ??
         30.0;
-    final radiusFactor = (info.raw.containsKey("RadiusFactor")
-            ? double.tryParse(info.raw["RadiusFactor"].toString())
+    final radiusFactor = (raw.containsKey("RadiusFactor")
+            ? double.tryParse(raw["RadiusFactor"].toString())
             : null) ??
         0.9;
-    final minimum = (info.raw.containsKey("Min")
-            ? double.tryParse(info.raw["Min"].toString())
+    final minimum = (raw.containsKey("Min")
+            ? double.tryParse(raw["Min"].toString())
             : null) ??
         5.0;
-    final maximum = (info.raw.containsKey("Max")
-            ? double.tryParse(info.raw["Max"].toString())
+    final maximum = (raw.containsKey("Max")
+            ? double.tryParse(raw["Max"].toString())
             : null) ??
         35.0;
-    final interval = (info.raw.containsKey("Interval")
-            ? double.tryParse(info.raw["Interval"].toString())
+    final interval = (raw.containsKey("Interval")
+            ? double.tryParse(raw["Interval"].toString())
             : null) ??
         1.0;
-    final angle = (info.raw.containsKey("Angle")
-            ? double.tryParse(info.raw["Angle"].toString())
+    final angle = (raw.containsKey("Angle")
+            ? double.tryParse(raw["Angle"].toString())
             : null) ??
         180.0;
-    final margin = (info.raw.containsKey("Margin")
-            ? double.tryParse(info.raw["Margin"].toString())
+    final margin = (raw.containsKey("Margin")
+            ? double.tryParse(raw["Margin"].toString())
             : null) ??
         0;
 
     List<Color> gradients;
-    if (info.raw.containsKey("GradientColors")) {
-      final gradientColor = info.raw["GradientColors"] as List<dynamic>;
+    if (raw.containsKey("GradientColors")) {
+      final gradientColor = raw["GradientColors"] as List<dynamic>;
       gradients = [];
       for (final grad in gradientColor) {
         if (grad is int) {
@@ -76,8 +76,8 @@ class GaugeEdit {
     }
 
     List<double> stops;
-    if (info.raw.containsKey("Stops")) {
-      final stopsInfo = info.raw["Stops"] as List<dynamic>;
+    if (raw.containsKey("Stops")) {
+      final stopsInfo = raw["Stops"] as List<dynamic>;
       stops = [];
       for (final grad in stopsInfo) {
         if (grad is double) {
@@ -89,8 +89,8 @@ class GaugeEdit {
     }
 
     final List<Tuple3<String, String, String>> displays = [];
-    if (info.raw.containsKey("Displays")) {
-      final displayInfos = info.raw["Displays"] as List<dynamic>;
+    if (raw.containsKey("Displays")) {
+      final displayInfos = raw["Displays"] as List<dynamic>;
       for (final di in displayInfos) {
         if (di is Map<String, dynamic>) {
           String label = "";

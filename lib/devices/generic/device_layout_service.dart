@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:smarthome/devices/device_exporter.dart';
+import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/helper/cache_file_manager.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/settings_manager.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:tuple/tuple.dart';
 import 'package:path/path.dart' as path;
 
@@ -43,6 +46,12 @@ class DeviceLayouts extends _$DeviceLayouts {
       path.join(Directory.systemTemp.path, "smarthome_layout_cache"), "json");
   @override
   FutureOr<List<DeviceLayout>> build() async {
+    final api = ref.watch(apiProvider);
+    final ids =
+        ref.watch(deviceProvider.select((x) => x.map((y) => y.id).toList()));
+
+    api.appLayoutMultiGet(request: <LayoutRequest>[]);
+
     final ret = <DeviceLayout>[];
     await _cacheFileManager.ensureDirectoryExists();
     final allLayoutsString =
@@ -149,7 +158,7 @@ final dashboardSpecialTypeLayoutProvider =
   final layoutProvider =
       ref.watch(dashboardDeviceLayoutProvider(device.item1, device.item2));
   return layoutProvider?.dashboardProperties
-      .where((final element) => element.specialType != SpecialType.none)
+      .where((final element) => element.specialType != DasboardSpecialType.none)
       .toList();
 });
 
@@ -159,7 +168,7 @@ final dashboardNoSpecialTypeLayoutProvider =
   final layoutProvider =
       ref.watch(dashboardDeviceLayoutProvider(device.item1, device.item2));
   return layoutProvider?.dashboardProperties
-      .where((final element) => element.specialType == SpecialType.none)
+      .where((final element) => element.specialType == DasboardSpecialType.none)
       .toList();
 });
 
@@ -191,7 +200,7 @@ final fabLayoutProvider =
       ref.watch(detailDeviceLayoutProvider(device.item1, device.item2));
   final props = layoutProvider?.propertyInfos;
   return props?.firstOrNull((final element) =>
-      element.editInfo?.editType == EditType.floatingActionButton);
+      element.editInfo?.editType == EditType.floatingactionbutton);
 });
 
 final detailTabInfoLayoutProvider =

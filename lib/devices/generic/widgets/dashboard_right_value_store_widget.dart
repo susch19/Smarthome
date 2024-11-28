@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic_device.dart';
@@ -21,7 +22,7 @@ class DashboardRightValueStoreWidget extends ConsumerWidget {
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
     if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)
       return const SizedBox();
-    if (e.specialType == SpecialType.right) {
+    if (e.specialType == DasboardSpecialType.right) {
       return device.getEditWidget(context, e, valueModel, ref);
     }
 

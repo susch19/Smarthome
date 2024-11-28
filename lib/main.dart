@@ -232,12 +232,10 @@ class _EagerInitialization extends ConsumerWidget {
 
 final _firebaseConfigProvider =
     FutureProvider<FirebaseOptions?>((final ref) async {
-  final connection = ref.watch(hubConnectionConnectedProvider);
-  if (connection == null) {
-    return null;
-  }
-  final res =
-      await connection.invoke("GetFirebaseOptions") as Map<String, dynamic>;
+  final connection = ref.watch(apiProvider);
+
+  final apiRes = await connection.notificationFirebaseOptionsGet();
+  final res = apiRes.bodyOrThrow as Map<String, dynamic>;
   final plattformName =
       kIsWeb ? "web" : defaultTargetPlatform.name.toLowerCase();
   if (!res.containsKey(plattformName)) return null;

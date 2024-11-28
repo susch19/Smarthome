@@ -105,7 +105,7 @@ class BaseModel {
       final Map<String, dynamic> json, final List<String> typeNames) {
     final bm = BaseModel(json['id'] as int,
         json['friendlyName'] as String? ?? "", json['typeName'], typeNames);
-    StoreService.updateAndGetStores(bm.id, json);
+    // StoreService.updateAndGetStores(bm.id, json);
     return bm;
   }
 

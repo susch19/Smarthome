@@ -220,7 +220,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
     return instance!.state.firstWhere((final x) => x.id == id);
   }
 
-  static final ctorFactory = <String, Object Function(int id, String typeName)>{
+  static final ctorFactory = <String, Device Function(int id, String typeName)>{
     //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
     'Heater': (final i, final n) => Heater(i, n, Icons.whatshot),
     // 'XiaomiTempSensor': (i, s) => XiaomiTempSensor(i, n, "Temperatursensor",

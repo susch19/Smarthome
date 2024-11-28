@@ -19,3 +19,4 @@ export 'zigbee/zigbeelamp/zigbee_lamp.dart';
 export 'zigbee/zigbeelamp/zigbee_lamp_model.dart';
 export 'generic_device.dart';
 export 'connection_base_model.dart';
+export 'property_info.dart';

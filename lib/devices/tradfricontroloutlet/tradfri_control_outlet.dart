@@ -7,6 +7,8 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../restapi/swagger.enums.swagger.dart';
+
 class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
   TradfriControlOutlet(final int id, final String typeName, final IconData icon)
       : super(id, typeName, iconData: icon);
@@ -36,8 +38,8 @@ class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update,
-                  sm.Command.SingleColor, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(MessageType.update,
+                  Command.singlecolor, [], ref.read(hubConnectionProvider)),
             );
           },
         ),
@@ -51,8 +53,8 @@ class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(sm.MessageType.Update,
-                  sm.Command.Off, [], ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(MessageType.update, Command.off, [],
+                  ref.read(hubConnectionProvider)),
             );
           },
         ),
@@ -98,8 +100,8 @@ class _TradfriControlOutletScreenState
             final state =
                 ref.watch(ZigbeeSwitchModel.stateProvider(widget.device.id));
             widget.device.sendToServer(
-                sm.MessageType.Update,
-                state ? sm.Command.Off : sm.Command.On,
+                MessageType.update,
+                state ? Command.off : Command.on,
                 [],
                 ref.read(hubConnectionProvider));
           }),
