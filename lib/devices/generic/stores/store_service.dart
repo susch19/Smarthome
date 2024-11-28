@@ -108,7 +108,7 @@ class StoreService extends StateNotifier<Map<int, List<ValueStore>>> {
     return changed;
   }
 
-  static dynamic getValueFromJson(dynamic val) {
+  static dynamic getValueFromJson(final dynamic val) {
     if (val.runtimeType == String) return DateTime.tryParse(val) ?? val;
     return val;
   }

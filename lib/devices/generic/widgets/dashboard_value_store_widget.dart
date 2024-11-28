@@ -9,8 +9,7 @@ import 'package:tuple/tuple.dart';
 class DashboardValueStoreWidget extends ConsumerWidget {
   final DashboardPropertyInfo e;
   final GenericDevice device;
-  const DashboardValueStoreWidget(this.e, this.device, {final Key? key})
-      : super(key: key);
+  const DashboardValueStoreWidget(this.e, this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:smarthome/controls/gradient_rounded_rect_slider_track_shape.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
-import 'package:smarthome/devices/generic_device.dart';
 import 'package:smarthome/devices/heater/heater_config.dart';
 import 'package:smarthome/devices/heater/temp_scheduling.dart';
 import 'package:smarthome/helper/connection_manager.dart';
@@ -163,7 +162,7 @@ class BasicEditTypes {
     if (res == null || !res.item1) return;
     final info = e.editInfo!;
     final message = Message(id, MessageType.options, Command.temp,
-        ["store", ...res.item2.map((final f) => jsonEncode(f)).toList()]);
+        ["store", ...res.item2.map((final f) => jsonEncode(f))]);
     ref
         .read(hubConnectionConnectedProvider)
         ?.invoke(info.hubMethod ?? "Update", args: [message.toJson()]);

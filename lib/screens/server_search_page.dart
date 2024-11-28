@@ -25,7 +25,7 @@ final _chosenValueProvider =
 });
 
 class ServerSearchScreen extends ConsumerWidget {
-  const ServerSearchScreen({final Key? key}) : super(key: key);
+  const ServerSearchScreen({super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

@@ -6,13 +6,12 @@ import 'package:smarthome/devices/zigbee/zigbee_model.dart';
 import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 class OsramPlug extends Device<ZigbeeSwitchModel> {
-  OsramPlug(final int id, final String typeName, final IconData icon)
-      : super(id, typeName, iconData: icon);
+  OsramPlug(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -70,7 +69,7 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
 
 class OsramPlugScreen extends ConsumerWidget {
   final OsramPlug device;
-  const OsramPlugScreen(this.device, {final Key? key}) : super(key: key);
+  const OsramPlugScreen(this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

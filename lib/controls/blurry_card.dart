@@ -19,15 +19,14 @@ class BlurryCard extends StatelessWidget {
   final Color darkShadowColor;
   final EdgeInsets margin;
   const BlurryCard(
-      {final Key? key,
+      {super.key,
       this.child,
       this.borderRadius = defaultBorderRadius,
       this.lightColor = defaultLightColor,
       this.darkColor = defaultBlackColor,
       this.lightShadowColor = defaultLightShadowColor,
       this.darkShadowColor = defaultDarkShadowColor,
-      this.margin = defaultMargin})
-      : super(key: key);
+      this.margin = defaultMargin});
 
   @override
   Widget build(final BuildContext context) {

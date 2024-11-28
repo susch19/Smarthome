@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:collection/collection.dart' show IterableExtension;
@@ -8,7 +7,6 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
@@ -19,9 +17,9 @@ import 'package:smarthome/helper/theme_manager.dart';
 import '../../helper/datetime_helper.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
-  XiaomiTempSensor(final int id, final String typeName,
-      {final IconData? icon, final Uint8List? iconBytes})
-      : super(id, typeName, iconData: icon, iconBytes: iconBytes);
+  XiaomiTempSensor(super.id, super.typeName,
+      {final IconData? icon, super.iconBytes})
+      : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -133,8 +131,7 @@ class XiaomiTempSensorScreen extends ConsumerStatefulWidget {
   final XiaomiTempSensor device;
   final bool showAppBar;
   const XiaomiTempSensorScreen(this.device,
-      {this.showAppBar = true, final Key? key})
-      : super(key: key);
+      {this.showAppBar = true, super.key});
 
   @override
   _XiaomiTempSensorScreenState createState() => _XiaomiTempSensorScreenState();
@@ -349,12 +346,10 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
           child: TimeSeriesRangeAnnotationChart(
             [
               LineSeries<TimeSeriesValue, DateTime>(
-                  enableTooltip: true,
                   animationDuration: 500,
                   // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
                   markerSettings: const MarkerSettings(
                     isVisible: true,
-                    shape: DataMarkerType.circle,
                   ),
                   dataSource: h.historyRecords
                       .map((final x) => TimeSeriesValue(
@@ -369,8 +364,7 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
                   yValueMapper: (final TimeSeriesValue value, final _) =>
                       value.value,
                   pointColorMapper: (final TimeSeriesValue value, final _) =>
-                      value.lineColor,
-                  width: 2)
+                      value.lineColor)
             ],
             h.historyRecords
                 .where((final x) => x.value != null)
@@ -432,8 +426,9 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
   }
 
   getNewData(final DateTime dt) {
-    if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch)
+    if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) {
       return;
+    }
     widget.device
         .getFromServer("GetIoBrokerHistories",
             [widget.device.id, dt.toString()], ref.read(hubConnectionProvider))
@@ -461,8 +456,7 @@ class TimeSeriesRangeAnnotationChart extends StatelessWidget {
 
   const TimeSeriesRangeAnnotationChart(this.seriesList, this.min, this.max,
       this.unit, this.valueName, this.shownDate,
-      {final Key? key})
-      : super(key: key);
+      {super.key});
 
   @override
   Widget build(final BuildContext context) {

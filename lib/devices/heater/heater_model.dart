@@ -62,10 +62,10 @@ class HeaterModel extends ConnectionBaseModel {
   });
 
   const HeaterModel(
-    final int id,
-    final String friendlyName,
-    final String typeName,
-    final bool isConnected,
+    super.id,
+    super.friendlyName,
+    super.typeName,
+    super.isConnected,
     this.temperature,
     this.xiaomiTempSensor,
     this.currentConfig,
@@ -74,7 +74,7 @@ class HeaterModel extends ConnectionBaseModel {
     this.disableLed,
     this.disableHeating,
     this.logs,
-  ) : super(id, friendlyName, typeName, isConnected);
+  );
 
   factory HeaterModel.fromJson(final Map<String, dynamic> json) => _$HeaterModelFromJson(json);
 

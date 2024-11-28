@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 import 'package:smarthome/restapi/swagger.swagger.dart';
 
 part 'property_info.g.dart';
@@ -26,10 +25,11 @@ class DashboardPropertyInfo extends LayoutBasePropertyInfo {
     required super.displayName,
   });
 
-  factory DashboardPropertyInfo.fromJson(Map<String, dynamic> json) =>
+  factory DashboardPropertyInfo.fromJson(final Map<String, dynamic> json) =>
       _$DashboardPropertyInfoFromJson(json);
 
   static const toJsonFactory = _$DashboardPropertyInfoToJson;
+  @override
   Map<String, dynamic> toJson() => _$DashboardPropertyInfoToJson(this);
 
   @JsonKey(
@@ -42,7 +42,7 @@ class DashboardPropertyInfo extends LayoutBasePropertyInfo {
   static const fromJsonFactory = _$DashboardPropertyInfoFromJson;
 
   @override
-  bool operator ==(Object other) {
+  bool operator ==(final Object other) {
     return identical(this, other) ||
         (other is LayoutBasePropertyInfo && super == (other)) ||
         (other is DashboardPropertyInfo &&
@@ -63,20 +63,20 @@ class DashboardPropertyInfo extends LayoutBasePropertyInfo {
 
 extension $DashboardPropertyInfoExtension on DashboardPropertyInfo {
   DashboardPropertyInfo copyWith(
-      {DasboardSpecialType? specialType,
-      String? name,
-      int? order,
-      TextSettings? textStyle,
-      PropertyEditInformation? editInfo,
-      int? rowNr,
-      String? unitOfMeasurement,
-      String? format,
-      bool? showOnlyInDeveloperMode,
-      int? deviceId,
-      bool? expanded,
-      int? precision,
-      Map<String, dynamic>? extensionData,
-      String? displayName}) {
+      {final DasboardSpecialType? specialType,
+      final String? name,
+      final int? order,
+      final TextSettings? textStyle,
+      final PropertyEditInformation? editInfo,
+      final int? rowNr,
+      final String? unitOfMeasurement,
+      final String? format,
+      final bool? showOnlyInDeveloperMode,
+      final int? deviceId,
+      final bool? expanded,
+      final int? precision,
+      final Map<String, dynamic>? extensionData,
+      final String? displayName}) {
     return DashboardPropertyInfo(
         specialType: specialType ?? this.specialType,
         name: name ?? this.name,
@@ -96,20 +96,20 @@ extension $DashboardPropertyInfoExtension on DashboardPropertyInfo {
   }
 
   DashboardPropertyInfo copyWithWrapped(
-      {Wrapped<DasboardSpecialType>? specialType,
-      Wrapped<String>? name,
-      Wrapped<int>? order,
-      Wrapped<TextSettings?>? textStyle,
-      Wrapped<PropertyEditInformation?>? editInfo,
-      Wrapped<int?>? rowNr,
-      Wrapped<String>? unitOfMeasurement,
-      Wrapped<String>? format,
-      Wrapped<bool?>? showOnlyInDeveloperMode,
-      Wrapped<int?>? deviceId,
-      Wrapped<bool?>? expanded,
-      Wrapped<int?>? precision,
-      Wrapped<Map<String, dynamic>?>? extensionData,
-      Wrapped<String>? displayName}) {
+      {final Wrapped<DasboardSpecialType>? specialType,
+      final Wrapped<String>? name,
+      final Wrapped<int>? order,
+      final Wrapped<TextSettings?>? textStyle,
+      final Wrapped<PropertyEditInformation?>? editInfo,
+      final Wrapped<int?>? rowNr,
+      final Wrapped<String>? unitOfMeasurement,
+      final Wrapped<String>? format,
+      final Wrapped<bool?>? showOnlyInDeveloperMode,
+      final Wrapped<int?>? deviceId,
+      final Wrapped<bool?>? expanded,
+      final Wrapped<int?>? precision,
+      final Wrapped<Map<String, dynamic>?>? extensionData,
+      final Wrapped<String>? displayName}) {
     return DashboardPropertyInfo(
         specialType:
             (specialType != null ? specialType.value : this.specialType),
@@ -156,10 +156,11 @@ class DetailPropertyInfo extends LayoutBasePropertyInfo {
     required super.displayName,
   });
 
-  factory DetailPropertyInfo.fromJson(Map<String, dynamic> json) =>
+  factory DetailPropertyInfo.fromJson(final Map<String, dynamic> json) =>
       _$DetailPropertyInfoFromJson(json);
 
   static const toJsonFactory = _$DetailPropertyInfoToJson;
+  @override
   Map<String, dynamic> toJson() => _$DetailPropertyInfoToJson(this);
 
   @JsonKey(name: 'tabInfoId')
@@ -172,7 +173,7 @@ class DetailPropertyInfo extends LayoutBasePropertyInfo {
   static const fromJsonFactory = _$DetailPropertyInfoFromJson;
 
   @override
-  bool operator ==(Object other) {
+  bool operator ==(final Object other) {
     return identical(this, other) ||
         (other is LayoutBasePropertyInfo && super == (other)) &&
             (other is DetailPropertyInfo &&
@@ -201,22 +202,22 @@ class DetailPropertyInfo extends LayoutBasePropertyInfo {
 
 extension $DetailPropertyInfoExtension on DetailPropertyInfo {
   DetailPropertyInfo copyWith(
-      {int? tabInfoId,
-      bool? blurryCard,
-      String? specialType,
-      String? name,
-      int? order,
-      TextSettings? textStyle,
-      PropertyEditInformation? editInfo,
-      int? rowNr,
-      String? unitOfMeasurement,
-      String? format,
-      bool? showOnlyInDeveloperMode,
-      int? deviceId,
-      bool? expanded,
-      int? precision,
-      Map<String, dynamic>? extensionData,
-      String? displayName}) {
+      {final int? tabInfoId,
+      final bool? blurryCard,
+      final String? specialType,
+      final String? name,
+      final int? order,
+      final TextSettings? textStyle,
+      final PropertyEditInformation? editInfo,
+      final int? rowNr,
+      final String? unitOfMeasurement,
+      final String? format,
+      final bool? showOnlyInDeveloperMode,
+      final int? deviceId,
+      final bool? expanded,
+      final int? precision,
+      final Map<String, dynamic>? extensionData,
+      final String? displayName}) {
     return DetailPropertyInfo(
         tabInfoId: tabInfoId ?? this.tabInfoId,
         blurryCard: blurryCard ?? this.blurryCard,
@@ -238,22 +239,22 @@ extension $DetailPropertyInfoExtension on DetailPropertyInfo {
   }
 
   DetailPropertyInfo copyWithWrapped(
-      {Wrapped<int?>? tabInfoId,
-      Wrapped<bool>? blurryCard,
-      Wrapped<String>? specialType,
-      Wrapped<String>? name,
-      Wrapped<int>? order,
-      Wrapped<TextSettings?>? textStyle,
-      Wrapped<PropertyEditInformation?>? editInfo,
-      Wrapped<int?>? rowNr,
-      Wrapped<String>? unitOfMeasurement,
-      Wrapped<String>? format,
-      Wrapped<bool?>? showOnlyInDeveloperMode,
-      Wrapped<int?>? deviceId,
-      Wrapped<bool?>? expanded,
-      Wrapped<int?>? precision,
-      Wrapped<Map<String, dynamic>?>? extensionData,
-      Wrapped<String>? displayName}) {
+      {final Wrapped<int?>? tabInfoId,
+      final Wrapped<bool>? blurryCard,
+      final Wrapped<String>? specialType,
+      final Wrapped<String>? name,
+      final Wrapped<int>? order,
+      final Wrapped<TextSettings?>? textStyle,
+      final Wrapped<PropertyEditInformation?>? editInfo,
+      final Wrapped<int?>? rowNr,
+      final Wrapped<String>? unitOfMeasurement,
+      final Wrapped<String>? format,
+      final Wrapped<bool?>? showOnlyInDeveloperMode,
+      final Wrapped<int?>? deviceId,
+      final Wrapped<bool?>? expanded,
+      final Wrapped<int?>? precision,
+      final Wrapped<Map<String, dynamic>?>? extensionData,
+      final Wrapped<String>? displayName}) {
     return DetailPropertyInfo(
         tabInfoId: (tabInfoId != null ? tabInfoId.value : this.tabInfoId),
         blurryCard: (blurryCard != null ? blurryCard.value : this.blurryCard),
@@ -299,7 +300,7 @@ class LayoutBasePropertyInfo {
     required this.displayName,
   });
 
-  factory LayoutBasePropertyInfo.fromJson(Map<String, dynamic> json) =>
+  factory LayoutBasePropertyInfo.fromJson(final Map<String, dynamic> json) =>
       _$LayoutBasePropertyInfoFromJson(json);
 
   static const toJsonFactory = _$LayoutBasePropertyInfoToJson;
@@ -334,7 +335,7 @@ class LayoutBasePropertyInfo {
   static const fromJsonFactory = _$LayoutBasePropertyInfoFromJson;
 
   @override
-  bool operator ==(Object other) {
+  bool operator ==(final Object other) {
     return identical(this, other) ||
         (other is LayoutBasePropertyInfo &&
             (identical(other.name, name) ||
@@ -398,19 +399,19 @@ class LayoutBasePropertyInfo {
 
 extension $LayoutBasePropertyInfoExtension on LayoutBasePropertyInfo {
   LayoutBasePropertyInfo copyWith(
-      {String? name,
-      int? order,
-      TextSettings? textStyle,
-      PropertyEditInformation? editInfo,
-      int? rowNr,
-      String? unitOfMeasurement,
-      String? format,
-      bool? showOnlyInDeveloperMode,
-      int? deviceId,
-      bool? expanded,
-      int? precision,
-      Map<String, dynamic>? extensionData,
-      String? displayName}) {
+      {final String? name,
+      final int? order,
+      final TextSettings? textStyle,
+      final PropertyEditInformation? editInfo,
+      final int? rowNr,
+      final String? unitOfMeasurement,
+      final String? format,
+      final bool? showOnlyInDeveloperMode,
+      final int? deviceId,
+      final bool? expanded,
+      final int? precision,
+      final Map<String, dynamic>? extensionData,
+      final String? displayName}) {
     return LayoutBasePropertyInfo(
         name: name ?? this.name,
         order: order ?? this.order,
@@ -429,19 +430,19 @@ extension $LayoutBasePropertyInfoExtension on LayoutBasePropertyInfo {
   }
 
   LayoutBasePropertyInfo copyWithWrapped(
-      {Wrapped<String>? name,
-      Wrapped<int>? order,
-      Wrapped<TextSettings?>? textStyle,
-      Wrapped<PropertyEditInformation?>? editInfo,
-      Wrapped<int?>? rowNr,
-      Wrapped<String>? unitOfMeasurement,
-      Wrapped<String>? format,
-      Wrapped<bool?>? showOnlyInDeveloperMode,
-      Wrapped<int?>? deviceId,
-      Wrapped<bool?>? expanded,
-      Wrapped<int?>? precision,
-      Wrapped<Map<String, dynamic>?>? extensionData,
-      Wrapped<String>? displayName}) {
+      {final Wrapped<String>? name,
+      final Wrapped<int>? order,
+      final Wrapped<TextSettings?>? textStyle,
+      final Wrapped<PropertyEditInformation?>? editInfo,
+      final Wrapped<int?>? rowNr,
+      final Wrapped<String>? unitOfMeasurement,
+      final Wrapped<String>? format,
+      final Wrapped<bool?>? showOnlyInDeveloperMode,
+      final Wrapped<int?>? deviceId,
+      final Wrapped<bool?>? expanded,
+      final Wrapped<int?>? precision,
+      final Wrapped<Map<String, dynamic>?>? extensionData,
+      final Wrapped<String>? displayName}) {
     return LayoutBasePropertyInfo(
         name: (name != null ? name.value : this.name),
         order: (order != null ? order.value : this.order),

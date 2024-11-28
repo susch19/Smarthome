@@ -48,7 +48,7 @@ class DeviceLayouts extends _$DeviceLayouts {
   FutureOr<List<DeviceLayout>> build() async {
     final api = ref.watch(apiProvider);
     final ids =
-        ref.watch(deviceProvider.select((x) => x.map((y) => y.id).toList()));
+        ref.watch(deviceProvider.select((final x) => x.map((final y) => y.id).toList()));
 
     api.appLayoutMultiGet(request: <LayoutRequest>[]);
 
@@ -73,21 +73,22 @@ class DeviceLayouts extends _$DeviceLayouts {
     return ret;
   }
 
-  void _fillLayoutList(List<dynamic> allLayouts, List<DeviceLayout> ret) {
+  void _fillLayoutList(final List<dynamic> allLayouts, final List<DeviceLayout> ret) {
     for (final element in allLayouts) {
-      if (element is Map<String, dynamic>)
+      if (element is Map<String, dynamic>) {
         ret.add(DeviceLayout.fromJson(element));
+      }
     }
   }
 
-  DeviceLayout? getLayout(int id, String typeName) {
+  DeviceLayout? getLayout(final int id, final String typeName) {
     final curState = state.valueOrNull;
     if (curState == null) return null;
 
     final byId =
-        curState.firstOrNull((x) => x.ids != null && x.ids!.contains(id));
+        curState.firstOrNull((final x) => x.ids != null && x.ids!.contains(id));
     if (byId != null) return byId;
-    final byName = curState.firstOrNull((x) =>
+    final byName = curState.firstOrNull((final x) =>
         x.typeName == typeName ||
         (x.typeNames != null && x.typeNames!.contains(typeName)));
 
@@ -95,7 +96,7 @@ class DeviceLayouts extends _$DeviceLayouts {
     return null;
   }
 
-  void updateFromServer(List<Object?>? arguments) {
+  void updateFromServer(final List<Object?>? arguments) {
     final updateMap = arguments![0] as Map<String, dynamic>;
     final hash = arguments[1] as String;
     _updateFromServer(updateMap, hash, updateStorage: true);
@@ -141,9 +142,9 @@ class DeviceLayouts extends _$DeviceLayouts {
 // });
 
 @riverpod
-DashboardDeviceLayout? dashboardDeviceLayout(Ref ref, int id, String typeName) {
+DashboardDeviceLayout? dashboardDeviceLayout(final Ref ref, final int id, final String typeName) {
   final layoutProvider = ref.watch(deviceLayoutsProvider);
-  if (layoutProvider.value case List<DeviceLayout> layouts) {
+  if (layoutProvider.value case final List<DeviceLayout> layouts) {
     return ref
         .read(deviceLayoutsProvider.notifier)
         .getLayout(id, typeName)
@@ -173,9 +174,9 @@ final dashboardNoSpecialTypeLayoutProvider =
 });
 
 @riverpod
-DetailDeviceLayout? detailDeviceLayout(Ref ref, int id, String typeName) {
+DetailDeviceLayout? detailDeviceLayout(final Ref ref, final int id, final String typeName) {
   final layoutProvider = ref.watch(deviceLayoutsProvider);
-  if (layoutProvider.value case List<DeviceLayout> layouts) {
+  if (layoutProvider.value case final List<DeviceLayout> layouts) {
     return ref
         .read(deviceLayoutsProvider.notifier)
         .getLayout(id, typeName)

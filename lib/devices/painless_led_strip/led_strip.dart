@@ -6,17 +6,15 @@ import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart';
 
 import '../../restapi/swagger.enums.swagger.dart';
 
 class LedStrip extends Device<LedStripModel> {
-  LedStrip(final int id, final String typeName, final IconData icon)
-      : super(id, typeName, iconData: icon);
+  LedStrip(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   final colorModeProvider = Provider.family<String, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
@@ -111,7 +109,7 @@ class LedStrip extends Device<LedStripModel> {
 
 class LedStripScreen extends ConsumerStatefulWidget {
   final LedStrip device;
-  const LedStripScreen(this.device, {final Key? key}) : super(key: key);
+  const LedStripScreen(this.device, {super.key});
 
   @override
   _LedStripScreenState createState() => _LedStripScreenState();
@@ -181,9 +179,10 @@ class _LedStripScreenState extends ConsumerState<LedStripScreen> {
     final oldMode = ref.watch(_colorModeProvider(widget.device).notifier);
     oldMode.state = newMode.name;
 
-    if (sendToServer)
+    if (sendToServer) {
       widget.device.sendToServer(
           MessageType.update, newMode, [], ref.read(hubConnectionProvider));
+    }
   }
 
   void _changeColor(final WidgetRef ref, final RGBW rgbw,

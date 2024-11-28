@@ -7,7 +7,6 @@ import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smarthome/models/message.dart';
 
 final _layoutProvider = FutureProvider<List<DeviceLayout>>((final ref) async {
   final connection = ref.watch(hubConnectionConnectedProvider);
@@ -22,7 +21,7 @@ final _selectedLayoutProvider = StateProvider<DeviceLayout?>((final ref) {
 });
 
 class DynamicUiCreatorPage extends ConsumerStatefulWidget {
-  const DynamicUiCreatorPage({final Key? key}) : super(key: key);
+  const DynamicUiCreatorPage({super.key});
 
   @override
   DynamicUiCreatorPageState createState() => DynamicUiCreatorPageState();

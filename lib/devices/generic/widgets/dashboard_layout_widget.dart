@@ -8,8 +8,7 @@ class DashboardLayoutWidget extends ConsumerWidget {
   final List<DashboardPropertyInfo> layout;
   final GenericDevice device;
 
-  const DashboardLayoutWidget(this.device, this.layout, {final Key? key})
-      : super(key: key);
+  const DashboardLayoutWidget(this.device, this.layout, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

@@ -4,14 +4,13 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../restapi/swagger.enums.swagger.dart';
 
 class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
-  TradfriControlOutlet(final int id, final String typeName, final IconData icon)
-      : super(id, typeName, iconData: icon);
+  TradfriControlOutlet(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -70,8 +69,7 @@ class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
 
 class TradfriControlOutletScreen extends ConsumerStatefulWidget {
   final TradfriControlOutlet device;
-  const TradfriControlOutletScreen(this.device, {final Key? key})
-      : super(key: key);
+  const TradfriControlOutletScreen(this.device, {super.key});
 
   @override
   _TradfriControlOutletScreenState createState() =>

@@ -19,14 +19,13 @@ class ThemeManager {
       ),
       textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
-        foregroundColor: MaterialStateProperty.resolveWith(_getColor),
+        foregroundColor: WidgetStateProperty.resolveWith(_getColor),
       )),
       primarySwatch: Colors.blue,
       textTheme: const TextTheme(titleMedium: TextStyle(decorationColor: Colors.teal)),
       colorScheme: ColorScheme.dark(
           primary: Colors.blue,
           secondary: Colors.teal,
-          background: Colors.indigo.shade700,
           surface: Colors.blue.shade900,
           onPrimary: Colors.white,
           onSecondary: Colors.white),
@@ -53,7 +52,7 @@ class ThemeManager {
           SliderThemeData(thumbColor: Colors.tealAccent.shade100, activeTrackColor: Colors.tealAccent.shade100),
       textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
-        foregroundColor: MaterialStateProperty.resolveWith(_getLightColor),
+        foregroundColor: WidgetStateProperty.resolveWith(_getLightColor),
       )),
       popupMenuTheme: PopupMenuThemeData(
         color: Colors.indigo.shade100.withOpacity(0.95),
@@ -71,10 +70,9 @@ class ThemeManager {
       colorScheme: ColorScheme.light(
               primary: Colors.lightBlue.shade200,
               secondary: Colors.tealAccent.shade100,
-              background: Colors.indigo.shade200,
               surface: indigoColor,
               onPrimary: Colors.black)
-          .copyWith(primary: Colors.lightBlue, background: indigoColor.withOpacity(0.95)),
+          .copyWith(primary: Colors.lightBlue, surface: indigoColor.withOpacity(0.95)),
     );
   }
 
@@ -95,11 +93,11 @@ class ThemeManager {
     );
   }
 
-  static Color _getColor(final Set<MaterialState> states) {
-    const Set<MaterialState> interactiveStates = <MaterialState>{
-      MaterialState.scrolledUnder,
-      MaterialState.error,
-      MaterialState.disabled
+  static Color _getColor(final Set<WidgetState> states) {
+    const Set<WidgetState> interactiveStates = <WidgetState>{
+      WidgetState.scrolledUnder,
+      WidgetState.error,
+      WidgetState.disabled
     };
     if (states.any(interactiveStates.contains)) {
       return Colors.teal.shade900;
@@ -107,11 +105,11 @@ class ThemeManager {
     return Colors.tealAccent;
   }
 
-  static Color _getLightColor(final Set<MaterialState> states) {
-    const Set<MaterialState> interactiveStates = <MaterialState>{
-      MaterialState.scrolledUnder,
-      MaterialState.error,
-      MaterialState.disabled
+  static Color _getLightColor(final Set<WidgetState> states) {
+    const Set<WidgetState> interactiveStates = <WidgetState>{
+      WidgetState.scrolledUnder,
+      WidgetState.error,
+      WidgetState.disabled
     };
     if (states.any(interactiveStates.contains)) {
       return Colors.teal.shade200;

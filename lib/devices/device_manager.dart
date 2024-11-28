@@ -301,7 +301,7 @@ class DeviceManager extends StateNotifier<List<Device>> {
       try {
         model = stringNameJsonFactory[type]!(sub, types);
         final dev = ctorFactory[type]!(id, types.first);
-        devices.add(dev as Device<BaseModel>);
+        devices.add(dev);
         final toRemove =
             baseModels.firstOrNull((final element) => element.id == id);
         if (toRemove != null) {

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
@@ -36,7 +35,7 @@ final _groupedHeaterConfigProvider = FutureProvider.family<
     if (dc != "[]") {
       try {
         final notifier = ref.read(heaterConfigProvider(id).notifier);
-        var initState = List<HeaterConfig>.from(
+        final initState = List<HeaterConfig>.from(
             jsonDecode(dc).map((final f) => HeaterConfig.fromJson(f)));
         notifier.state = initState;
       } catch (e) {
@@ -53,7 +52,7 @@ const List<HeaterConfig> emptyConfigs = [];
 
 class TempScheduling extends ConsumerStatefulWidget {
   final int id;
-  const TempScheduling(this.id, {final Key? key}) : super(key: key);
+  const TempScheduling(this.id, {super.key});
 
   @override
   TempSchedulingState createState() => TempSchedulingState();

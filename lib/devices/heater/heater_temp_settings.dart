@@ -9,7 +9,7 @@ import 'heater_config.dart';
 class HeaterTempSettings extends StatefulWidget {
   final List<HeaterConfig> configs;
   final Tuple2<TimeOfDay?, double?> timeTemp;
-  const HeaterTempSettings(this.timeTemp, this.configs, {final Key? key}) : super(key: key);
+  const HeaterTempSettings(this.timeTemp, this.configs, {super.key});
 
   @override
   HeaterTempSettingsState createState() => HeaterTempSettingsState();

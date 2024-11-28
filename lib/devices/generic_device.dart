@@ -1,8 +1,6 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:smarthome/controls/blurry_card.dart';
-import 'package:smarthome/devices/base_model.dart';
-import 'package:smarthome/devices/device.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
@@ -24,7 +22,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 import '../helper/theme_manager.dart';
 
 class GenericDevice extends Device<BaseModel> {
-  GenericDevice(final int id, final String typeName) : super(id, typeName);
+  GenericDevice(super.id, super.typeName);
 
   @override
   DeviceTypes getDeviceType() {
@@ -126,12 +124,13 @@ class GenericDevice extends Device<BaseModel> {
     }
   }
 
-  static TextStyle toTextStyle(TextSettings? setting) {
+  static TextStyle toTextStyle(final TextSettings? setting) {
     var ts = const TextStyle();
     if (setting == null) return ts;
     if (setting.fontSize != null) ts = ts.copyWith(fontSize: setting.fontSize);
-    if (setting.fontFamily != "")
+    if (setting.fontFamily != "") {
       ts = ts.copyWith(fontFamily: setting.fontFamily);
+    }
     ts = ts.copyWith(fontStyle: FontStyle.values[setting.fontStyle.index]);
     ts = ts.copyWith(fontWeight: FontWeight.values[setting.fontWeight.index]);
     return ts;
@@ -174,8 +173,7 @@ class GenericDevice extends Device<BaseModel> {
 
 class GenericDeviceScreen extends ConsumerStatefulWidget {
   final GenericDevice genericDevice;
-  const GenericDeviceScreen(this.genericDevice, {final Key? key})
-      : super(key: key);
+  const GenericDeviceScreen(this.genericDevice, {super.key});
 
   @override
   GenericDeviceScreenState createState() => GenericDeviceScreenState();
@@ -203,8 +201,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     final tabInfos = ref.watch(
         detailTabInfoLayoutProvider(Tuple2(widget.genericDevice.id, name)));
 
-    if (historyProps?.isEmpty ?? true)
+    if (historyProps?.isEmpty ?? true) {
       return buildWithoutHistory(context, tabInfos);
+    }
     return buildWithHistory(context, historyProps!, tabInfos);
   }
 
@@ -343,8 +342,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     var detailProperties = ref.watch(detailPropertyInfoLayoutProvider(
         Tuple2(widget.genericDevice.id, name)));
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-    if (detailProperties == null || detailProperties.isEmpty)
+    if (detailProperties == null || detailProperties.isEmpty) {
       return const SizedBox();
+    }
     detailProperties = detailProperties
         .where((final element) =>
             tabInfo == null || tabInfo.id == element.tabInfoId)
@@ -369,8 +369,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
         .map((final row, final elements) {
       final children = elements.map((final e) {
         final exp = e.expanded;
-        if (exp == null || !exp)
+        if (exp == null || !exp) {
           return DetailValueStoreWidget(e, widget.genericDevice);
+        }
         return Expanded(child: DetailValueStoreWidget(e, widget.genericDevice));
       }).toList(growable: false);
 
@@ -590,12 +591,10 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
       case "step":
         return [
           StepLineSeries<GraphTimeSeriesValue, DateTime>(
-              enableTooltip: true,
               animationDuration: 500,
               // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
               markerSettings: const MarkerSettings(
                 isVisible: true,
-                shape: DataMarkerType.circle,
               ),
               dataSource: h.historyRecords
                   .map((final x) => GraphTimeSeriesValue(
@@ -608,18 +607,15 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
               yValueMapper: (final GraphTimeSeriesValue value, final _) =>
                   value.value,
               pointColorMapper: (final GraphTimeSeriesValue value, final _) =>
-                  value.lineColor,
-              width: 2)
+                  value.lineColor)
         ];
       default:
         return [
           LineSeries<GraphTimeSeriesValue, DateTime>(
-              enableTooltip: true,
               animationDuration: 500,
               // markerSettings: MarkerSettings(shape: DataMarkerType.circle, color: Colors.green, width: 5, height: 5, isVisible: true),
               markerSettings: const MarkerSettings(
                 isVisible: true,
-                shape: DataMarkerType.circle,
               ),
               dataSource: h.historyRecords
                   .map((final x) => GraphTimeSeriesValue(
@@ -632,8 +628,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
               yValueMapper: (final GraphTimeSeriesValue value, final _) =>
                   value.value,
               pointColorMapper: (final GraphTimeSeriesValue value, final _) =>
-                  value.lineColor,
-              width: 2)
+                  value.lineColor)
         ];
     }
   }
@@ -655,8 +650,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
   }
 
   getNewData(final DateTime dt) {
-    if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch)
+    if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) {
       return;
+    }
     ref.read(_currentShownTimeProvider.notifier).state = dt;
   }
 }

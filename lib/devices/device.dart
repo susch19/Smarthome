@@ -91,8 +91,8 @@ Widget iconWidgetSingle(
 abstract class Device<T extends BaseModel> {
   static const fromJsonFactory = _$DeviceRequestFromJson;
 
-  static Device _$DeviceRequestFromJson(Map<String, dynamic> json) {
-    final types = (json["typeNames"] as List).map((x) => x.toString()).toList();
+  static Device _$DeviceRequestFromJson(final Map<String, dynamic> json) {
+    final types = (json["typeNames"] as List).map((final x) => x.toString()).toList();
     String type = "Device";
     for (final item in types) {
       if (!DeviceManager.stringNameJsonFactory.containsKey(item)) {

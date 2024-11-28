@@ -55,7 +55,7 @@ final _serverHistoryProperties = FutureProvider<List<Map<String, dynamic>>>((fin
 class HistoryConfigureScreen extends ConsumerWidget {
   final String title;
   final bool byDeviceType;
-  const HistoryConfigureScreen(this.title, this.byDeviceType, {final Key? key}) : super(key: key);
+  const HistoryConfigureScreen(this.title, this.byDeviceType, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

@@ -21,7 +21,6 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:tuple/tuple.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'info_icon_provider.dart';
 import 'my_app.dart';
@@ -33,7 +32,7 @@ import 'package:flutter/foundation.dart'
 part 'main.g.dart';
 
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> _firebaseMessagingBackgroundHandler(final RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
   print(message.toMap().entries.join(','));
   print(message.data);
@@ -208,23 +207,18 @@ class _EagerInitialization extends ConsumerWidget {
         options: value,
       );
       await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
+        
       );
 
-      FirebaseMessaging.onMessage.listen((element) {
+      FirebaseMessaging.onMessage.listen((final element) {
         print(element.data);
         print(element.messageId);
         print(element.sentTime?.toIso8601String());
         print(element.notification?.android?.priority);
       });
-      if (Platform.isAndroid)
+      if (Platform.isAndroid) {
         FirebaseMessaging.instance.subscribeToTopic("testsmarthome");
+      }
     });
     return child;
   }

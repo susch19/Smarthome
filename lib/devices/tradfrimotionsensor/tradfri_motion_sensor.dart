@@ -7,8 +7,8 @@ import '../../helper/datetime_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
-  TradfriMotionSensor(final int id, final String typeName, final IconData icon)
-      : super(id, typeName, iconData: icon);
+  TradfriMotionSensor(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -109,8 +109,7 @@ class TradfriMotionSensor extends Device<TradfriMotionSensorModel> {
 
 class TradfriMotionSensorScreen extends ConsumerStatefulWidget {
   final TradfriMotionSensor device;
-  const TradfriMotionSensorScreen(this.device, {final Key? key})
-      : super(key: key);
+  const TradfriMotionSensorScreen(this.device, {super.key});
 
   @override
   TradfriMotionSensorScreenState createState() =>

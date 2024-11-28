@@ -16,9 +16,8 @@ class ZigbeeSwitchModel extends ZigbeeModel {
     return (baseModel as ZigbeeSwitchModel).state;
   });
 
-  const ZigbeeSwitchModel(final int id, final String friendlyName, final String typeName, final bool isConnected,
-      final bool available, final DateTime lastReceived, final int linkQuality, this.state)
-      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
+  const ZigbeeSwitchModel(super.id, super.friendlyName, super.typeName, super.isConnected,
+      super.available, super.lastReceived, super.linkQuality, this.state);
 
   factory ZigbeeSwitchModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeSwitchModelFromJson(json);
 

@@ -8,7 +8,7 @@ class LogScreen extends ConsumerWidget {
   final int _id;
   final GlobalKey<FormState> _scaffoldKey = GlobalKey<FormState>();
 
-  LogScreen(this._logs, this._id, {final Key? key}) : super(key: key);
+  LogScreen(this._logs, this._id, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

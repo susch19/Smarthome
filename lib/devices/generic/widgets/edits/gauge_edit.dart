@@ -23,8 +23,9 @@ class GaugeEdit {
       final LayoutBasePropertyInfo e,
       final WidgetRef ref) {
     final info = e.editInfo;
-    if (valueModel == null || valueModel.currentValue is! num || info == null)
+    if (valueModel == null || valueModel.currentValue is! num || info == null) {
       return const SizedBox();
+    }
     final raw = info.extensionData ?? {};
 
     final startAngle = (raw.containsKey("StartAngle")
@@ -126,10 +127,10 @@ class GaugeEdit {
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
               ),
-              (e.unitOfMeasurement == null
+              (e.unitOfMeasurement == ""
                   ? const SizedBox()
                   : Text(
-                      e.unitOfMeasurement!,
+                      e.unitOfMeasurement,
                       style: const TextStyle(fontSize: 24),
                     ))
             ],
@@ -230,9 +231,10 @@ class GaugeEdit {
                                         Tuple2(e.item2, id)));
                                 if (valStore == null) return const SizedBox();
 
-                                if (e.item1 == "")
+                                if (e.item1 == "") {
                                   return Text(
                                       valStore.getValueAsString() + e.item3);
+                                }
                                 return Text(e.item1 +
                                     valStore.getValueAsString() +
                                     e.item3);

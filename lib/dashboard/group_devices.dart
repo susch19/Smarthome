@@ -6,8 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
 class GroupDevices extends ConsumerWidget {
-  GroupDevices(this.groupName, this.isNewGroup, {final Key? key})
-      : super(key: key);
+  GroupDevices(this.groupName, this.isNewGroup, {super.key});
 
   final tempGroupProvider =
       StateProvider.family<List<String>, int>((final ref, final id) {
@@ -100,7 +99,7 @@ class GroupDevices extends ConsumerWidget {
     groupsState.state = groups;
   }
 
-  Future<bool> _onWillPop(final BuildContext context, bool didPop) async {
+  Future<bool> _onWillPop(final BuildContext context, final bool didPop) async {
     if (!didPop || (!isNewGroup && modifiedDevices.isEmpty)) return true;
 
     final ThemeData theme = Theme.of(context);

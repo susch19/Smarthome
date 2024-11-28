@@ -11,7 +11,7 @@ import 'package:smarthome/models/version_and_url.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AboutPage extends ConsumerWidget {
-  const AboutPage({final Key? key}) : super(key: key);
+  const AboutPage({super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

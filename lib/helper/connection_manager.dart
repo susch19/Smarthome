@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -13,7 +12,6 @@ import 'package:smarthome/helper/settings_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/restapi/swagger.swagger.dart' as sw;
 import '../signalr/smarthome_protocol.dart';
-import 'package:http/http.dart' as http;
 import 'package:signalr_netcore/iretry_policy.dart';
 
 part 'connection_manager.g.dart';
@@ -83,8 +81,9 @@ class ConnectionManager extends StateNotifier<HubConnectionContainer> {
     startConnection();
   }
   Future<void> startConnection() async {
-    if (state.connectionState == HubConnectionState.Connected)
+    if (state.connectionState == HubConnectionState.Connected) {
       state.connection?.stop();
+    }
     final newConnectionState = createHubConnection();
     final connection = newConnectionState.connection;
     if (connection == null) return;

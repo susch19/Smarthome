@@ -14,7 +14,6 @@ import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/icons/smarthome_icons.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:smarthome/icons/icons.dart';
 import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
@@ -24,8 +23,8 @@ import 'temp_scheduling.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Heater extends Device<HeaterModel> {
-  Heater(final int id, final String typeName, final IconData icon)
-      : super(id, typeName, iconData: icon);
+  Heater(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -139,7 +138,7 @@ class Heater extends Device<HeaterModel> {
 class HeaterScreen extends ConsumerStatefulWidget {
   final Heater device;
 
-  const HeaterScreen(this.device, {final Key? key}) : super(key: key);
+  const HeaterScreen(this.device, {super.key});
 
   @override
   _HeaterScreenState createState() => _HeaterScreenState();
@@ -677,8 +676,7 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
 @immutable
 class TemperatureSensorDropdown extends ConsumerWidget {
   final Heater device;
-  const TemperatureSensorDropdown(this.device, {final Key? key})
-      : super(key: key);
+  const TemperatureSensorDropdown(this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

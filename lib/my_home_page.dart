@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:smarthome/dashboard/group_devices.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/device_overview_model.dart';
-import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
@@ -23,7 +21,6 @@ import 'package:smarthome/main.dart';
 import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/screens/settings_page.dart';
-import 'package:tuple/tuple.dart';
 
 final _groupCollapsedProvider =
     StateProvider.family<bool, String>((final _, final __) => false);
@@ -31,7 +28,7 @@ final _addItemSelectorProvider =
     StateProvider.family<bool, int>((final ref, final arg) => false);
 
 class MyHomePage extends ConsumerWidget {
-  const MyHomePage({final Key? key, this.title}) : super(key: key);
+  const MyHomePage({super.key, this.title});
   final String? title;
 
   Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
@@ -249,8 +246,9 @@ class MyHomePage extends ConsumerWidget {
           final groups = groupsState.state.toList();
 
           groups.remove(deviceGroup.key);
-          if (groups.isEmpty)
+          if (groups.isEmpty) {
             removeDevice(context, ref, element.id, pop: false);
+          }
           groupsState.state = groups;
         }
         ref.read(deviceProvider.notifier).saveDeviceGroups();
@@ -484,7 +482,7 @@ class MyHomePage extends ConsumerWidget {
                     ref.read(_addItemSelectorProvider(dev.id).notifier).state =
                         !selected;
                   },
-                  title: Text(dev.friendlyName ?? dev.id.toString(),
+                  title: Text(dev.friendlyName,
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(dev.typeName),
                 ),

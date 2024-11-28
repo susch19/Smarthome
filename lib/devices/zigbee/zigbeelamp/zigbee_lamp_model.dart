@@ -32,18 +32,17 @@ class ZigbeeLampModel extends ZigbeeModel {
   });
 
   const ZigbeeLampModel(
-      final int id,
-      final String friendlyName,
-      final String typeName,
-      final bool isConnected,
-      final bool available,
-      final DateTime lastReceived,
-      final int linkQuality,
+      super.id,
+      super.friendlyName,
+      super.typeName,
+      super.isConnected,
+      super.available,
+      super.lastReceived,
+      super.linkQuality,
       this.brightness,
       this.state,
       this.colortemp,
-      this.transitionTime)
-      : super(id, friendlyName, typeName, isConnected, available, lastReceived, linkQuality);
+      this.transitionTime);
 
   factory ZigbeeLampModel.fromJson(final Map<String, dynamic> json) => _$ZigbeeLampModelFromJson(json);
 

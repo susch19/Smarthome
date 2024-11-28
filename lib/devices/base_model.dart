@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:smarthome/devices/generic/stores/store_service.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 
 part 'base_model.g.dart';
@@ -14,11 +12,11 @@ class BaseModels extends _$BaseModels {
     return [];
   }
 
-  void storeModels(List<BaseModel> baseModels) {
+  void storeModels(final List<BaseModel> baseModels) {
     final oldState = state.toList();
     for (final element in baseModels) {
-      if (oldState.indexWhere((x) => x.id == element.id) case final int index
-          when index > -1) {
+      if (oldState.indexWhere((final x) => x.id == element.id)
+          case final int index when index > -1) {
         oldState[index] = element;
       } else {
         oldState.add(element);
@@ -35,7 +33,7 @@ final baseModelFriendlyNamesMapProvider =
     Provider<Map<int, String>>((final ref) {
   return ref
       .watch(baseModelsProvider)
-      .toMap((final bm) => bm.id, (final bm) => bm.friendlyName ?? "");
+      .toMap((final bm) => bm.id, (final bm) => bm.friendlyName);
 });
 
 const defaultList = <String>[];

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -45,7 +44,7 @@ part 'icon_manager.g.dart';
 // }
 
 @riverpod
-FutureOr<Uint8List?> iconByTypeNames(Ref ref, List<String> names) async {
+FutureOr<Uint8List?> iconByTypeNames(final Ref ref, final List<String> names) async {
   final iconCache = ref.watch(iconManagerProvider);
   for (final name in names) {
     if (iconCache.containsKey(name)) {
@@ -78,6 +77,7 @@ class IconManager extends _$IconManager {
     try {
       return await _getIcon(typeName, "GetIconByTypeName", true);
     } catch (e) {}
+    return null;
   }
 
   FutureOr<Uint8List?> _getIconByName(final String iconName) {

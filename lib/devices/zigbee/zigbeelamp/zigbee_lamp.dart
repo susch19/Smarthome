@@ -9,15 +9,14 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/zigbee/zigbee_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 
 import 'zigbee_lamp_model.dart';
 
 class ZigbeeLamp extends Device<ZigbeeLampModel> {
-  ZigbeeLamp(final int id, final String typeName, final IconData icon)
-      : super(id, typeName, iconData: icon);
+  ZigbeeLamp(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   final stateProvider = Provider.family<bool, int>((final ref, final id) {
     final baseModel = ref.watch(BaseModel.byIdProvider(id));
@@ -81,7 +80,7 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
 
 class ZigbeeLampScreen extends ConsumerStatefulWidget {
   final ZigbeeLamp device;
-  const ZigbeeLampScreen(this.device, {final Key? key}) : super(key: key);
+  const ZigbeeLampScreen(this.device, {super.key});
 
   @override
   _ZigbeeLampScreenState createState() => _ZigbeeLampScreenState();

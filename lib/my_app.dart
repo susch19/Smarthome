@@ -7,7 +7,7 @@ import 'package:smarthome/main.dart';
 import 'my_home_page.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp(this.savedThemeMode, {final Key? key}) : super(key: key);
+  const MyApp(this.savedThemeMode, {super.key});
 
   static late PreferencesManager prefManager;
   final AdaptiveThemeMode savedThemeMode;

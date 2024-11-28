@@ -12,7 +12,6 @@ import 'package:signalr_netcore/itransport.dart';
 import 'package:signalr_netcore/text_message_format.dart';
 import 'package:signalr_netcore/utils.dart';
 import 'package:encrypt/encrypt.dart';
-import 'package:smarthome/cloud/app_cloud_configuration.dart';
 
 class SmarthomeProtocol implements IHubProtocol {
   // Properties
@@ -64,8 +63,9 @@ class SmarthomeProtocol implements IHubProtocol {
           //Therefore filtering it the dirty way, so the connection doesn't have to be reestablished
           if (len == 16 &&
               e.toString() ==
-                  "Invalid argument(s): Invalid or corrupted pad block")
+                  "Invalid argument(s): Invalid or corrupted pad block") {
             return [];
+          }
           rethrow;
         }
 

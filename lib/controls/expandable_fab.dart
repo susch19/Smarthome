@@ -4,11 +4,11 @@ import 'dart:math' as math;
 @immutable
 class ExpandableFab extends StatefulWidget {
   const ExpandableFab({
-    final Key? key,
+    super.key,
     this.initialOpen,
     required this.distance,
     required this.children,
-  }) : super(key: key);
+  });
 
   final bool? initialOpen;
   final double distance;
@@ -143,12 +143,11 @@ class ExpandableFabState extends State<ExpandableFab> with SingleTickerProviderS
 @immutable
 class _ExpandingActionButton extends StatelessWidget {
   const _ExpandingActionButton({
-    final Key? key,
     required this.positionOffsetInPx,
     required this.maxDistance,
     required this.progress,
     required this.child,
-  }) : super(key: key);
+  });
 
   final double positionOffsetInPx;
   final double maxDistance;
@@ -185,10 +184,10 @@ class _ExpandingActionButton extends StatelessWidget {
 @immutable
 class ActionButton extends StatelessWidget {
   const ActionButton({
-    final Key? key,
+    super.key,
     this.onPressed,
     required this.icon,
-  }) : super(key: key);
+  });
 
   final VoidCallback? onPressed;
   final Widget icon;

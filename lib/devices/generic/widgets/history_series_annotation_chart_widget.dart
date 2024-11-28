@@ -13,8 +13,7 @@ class HistorySeriesAnnotationChartWidget extends StatelessWidget {
 
   const HistorySeriesAnnotationChartWidget(
       this.seriesList, this.min, this.max, this.unit, this.valueName, this.shownDate,
-      {final Key? key, this.loadMoreIndicatorBuilder})
-      : super(key: key);
+      {super.key, this.loadMoreIndicatorBuilder});
 
   @override
   Widget build(final BuildContext context) {

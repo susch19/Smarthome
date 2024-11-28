@@ -22,8 +22,9 @@ class ValueStore<T> extends ChangeNotifier {
   }
 
   T getValue() {
-    if (currentValue.runtimeType == (DateTime))
+    if (currentValue.runtimeType == (DateTime)) {
       return ((currentValue as DateTime).toLocal() as T);
+    }
 
     return currentValue;
   }
@@ -65,7 +66,7 @@ class ValueStore<T> extends ChangeNotifier {
   }
 
   String getValueAsString({final int precision = 1, final String? format}) {
-    var val = getValue();
+    final val = getValue();
     if (val.runtimeType == (double)) {
       return (val as double).toStringAsFixed(precision);
     }

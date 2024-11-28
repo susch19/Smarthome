@@ -10,8 +10,7 @@ class DetailValueStoreWidget extends ConsumerWidget {
   final DetailPropertyInfo e;
   final GenericDevice device;
 
-  const DetailValueStoreWidget(this.e, this.device, {final Key? key})
-      : super(key: key);
+  const DetailValueStoreWidget(this.e, this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

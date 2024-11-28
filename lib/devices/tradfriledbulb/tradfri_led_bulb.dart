@@ -5,14 +5,13 @@ import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/shared_controls/shared_controls_exporter.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../restapi/swagger.enums.swagger.dart';
 
 class TradfriLedBulb extends Device<TradfriLedBulbModel> {
-  TradfriLedBulb(final int id, final String typeName, final IconData icon)
-      : super(id, typeName, iconData: icon);
+  TradfriLedBulb(super.id, super.typeName, final IconData icon)
+      : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -88,7 +87,7 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
 @immutable
 class TradfriLedBulbScreen extends ConsumerWidget {
   final TradfriLedBulb device;
-  TradfriLedBulbScreen(this.device, {final Key? key}) : super(key: key);
+  TradfriLedBulbScreen(this.device, {super.key});
 
   static final _rgbProvider =
       StateProvider.family<RGB, Device>((final ref, final device) {

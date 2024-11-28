@@ -3,15 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
-import 'package:smarthome/devices/generic_device.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:tuple/tuple.dart';
 
 class DashboardRightValueStoreWidget extends ConsumerWidget {
   final DashboardPropertyInfo e;
   final GenericDevice device;
-  const DashboardRightValueStoreWidget(this.e, this.device, {final Key? key})
-      : super(key: key);
+  const DashboardRightValueStoreWidget(this.e, this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
@@ -20,8 +18,9 @@ class DashboardRightValueStoreWidget extends ConsumerWidget {
     if (valueModel == null) return const SizedBox();
 
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-    if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation)
+    if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
       return const SizedBox();
+    }
     if (e.specialType == DasboardSpecialType.right) {
       return device.getEditWidget(context, e, valueModel, ref);
     }
