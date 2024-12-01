@@ -4,7 +4,6 @@ import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/settings_manager.dart';
-import 'package:tuple/tuple.dart';
 
 class DashboardValueStoreWidget extends ConsumerWidget {
   final DashboardPropertyInfo e;
@@ -13,8 +12,8 @@ class DashboardValueStoreWidget extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(
-        valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
+    final valueModel =
+        ref.watch(valueStoreChangedProvider(e.name, e.deviceId ?? device.id));
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
     if (valueModel == null ||
@@ -45,7 +44,7 @@ class DashboardValueStoreWidget extends ConsumerWidget {
   //     onSubmitted: (final value) async {
   //       final message = Message(
   //           edit.id ?? deviceId, edit.messageType ?? info.editCommand, edit.command, [value, ...?edit.parameters]);
-  //       await ref.read(hubConnectionProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
+  //       await ref.read(apiProvider).invoke(info.hubMethod ?? "Update", args: <Object>[message.toJson()]);
   //     },
   //     controller: tec,
   //   );

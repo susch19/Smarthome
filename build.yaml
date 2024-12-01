@@ -13,3 +13,4 @@ targets:
                 - "DetailPropertyInfo"
                 - "DashboardPropertyInfo"
                 - "LayoutBasePropertyInfo"
+                - "SvgIcon"

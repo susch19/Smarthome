@@ -8,12 +8,12 @@ class InfoIconProvider extends StateNotifier<IconData>
     with WidgetsBindingObserver {
   final Ref ref;
   InfoIconProvider(this.ref) : super(Icons.refresh) {
-    final connection = ref.watch(hubConnectionProvider);
+    final connectionListen = ref.watch(connectionManagerProvider);
+    final connection = connectionListen.valueOrNull;
 
-    // if (connection == HubConnectionState.disconnected) {
-    if (connection.connectionState == HubConnectionState.Disconnected) {
+    if (connection == null ||
+        connection.connectionState == HubConnectionState.Disconnected) {
       state = Icons.warning;
-      // } else if (connection == HubConnectionState.connected) {
     } else if (connection.connectionState == HubConnectionState.Connected) {
       state = Icons.check;
     }
@@ -37,9 +37,16 @@ class InfoIconProvider extends StateNotifier<IconData>
       // ref.read(hubConnectionProvider.notifier).newHubConnection();
     } else if (state == AppLifecycleState.paused) {
       this.state = Icons.error_outline;
-      final connection = ref.watch(hubConnectionProvider);
+      final connection = ref.watch(connectionManagerProvider);
       // if (connectionState == HubConnectionState.connected) ConnectionManager.hubConnection.stop();
-      connection.connection?.stop();
+
+      switch (connection) {
+        case AsyncData(:final value):
+          value.connection?.stop();
+          break;
+        default:
+          break;
+      }
     }
   }
 

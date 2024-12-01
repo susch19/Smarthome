@@ -2,20 +2,35 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-import 'package:tuple/tuple.dart';
+
+part 'gauge_edit.g.dart';
+
+@riverpod
+class _NewValue extends _$NewValue {
+  @override
+  double build(int id, String key) {
+    return 21.0;
+  }
+
+  void change(double newValue) => state = newValue;
+}
+
+class _Displays {
+  final String label;
+  final String value;
+  final String unit;
+
+  _Displays({required this.label, required this.value, required this.unit});
+}
 
 class GaugeEdit {
-  static final _newValueProvider =
-      StateProvider.family<double, Tuple2<int, String>>((final ref, final key) {
-    return 21.0;
-  });
-
   static Widget getTempGauge(
       final int id,
       final BuildContext context,
@@ -89,7 +104,7 @@ class GaugeEdit {
       stops = [0.3, 0.5, 1];
     }
 
-    final List<Tuple3<String, String, String>> displays = [];
+    final List<_Displays> displays = [];
     if (raw.containsKey("Displays")) {
       final displayInfos = raw["Displays"] as List<dynamic>;
       for (final di in displayInfos) {
@@ -106,14 +121,13 @@ class GaugeEdit {
           if (di.containsKey("Unit")) {
             unit = di["Unit"];
           }
-          displays.add(Tuple3(label, value, unit));
+          displays.add(_Displays(label: label, value: value, unit: unit));
         }
       }
     }
 
     final value = valueModel.currentValue as double;
-    final selectedValue =
-        ref.watch(_newValueProvider(Tuple2(id, valueModel.key)));
+    final selectedValue = ref.watch(_newValueProvider(id, valueModel.key));
 
     return Column(
       children: [
@@ -223,21 +237,20 @@ class GaugeEdit {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: displays.map((e) {
-                            if (e.item2 == "") return Text(e.item1);
+                            if (e.value == "") return Text(e.label);
                             return Consumer(
                               builder: (context, ref, child) {
                                 final valStore = ref.watch(
-                                    valueStoreChangedProvider(
-                                        Tuple2(e.item2, id)));
+                                    valueStoreChangedProvider(e.value, id));
                                 if (valStore == null) return const SizedBox();
 
-                                if (e.item1 == "") {
+                                if (e.label == "") {
                                   return Text(
-                                      valStore.getValueAsString() + e.item3);
+                                      valStore.getValueAsString() + e.unit);
                                 }
-                                return Text(e.item1 +
+                                return Text(e.label +
                                     valStore.getValueAsString() +
-                                    e.item3);
+                                    e.unit);
                               },
                             );
                           }).toList(),
@@ -281,8 +294,8 @@ class GaugeEdit {
 
   static void _setPointerValue(final double value, final int deviceId,
       final String key, final WidgetRef ref) {
-    final curValue =
-        ref.read(_newValueProvider(Tuple2(deviceId, key)).notifier);
-    curValue.state = (value.clamp(5, 35) * 10).roundToDouble() / 10;
+    final curValue = ref.read(_newValueProvider(deviceId, key).notifier);
+
+    curValue.change((value.clamp(5, 35) * 10).roundToDouble() / 10);
   }
 }

@@ -61,7 +61,7 @@ class Message {
   // Message.fromJson(Map data) {
   //   id = data["id"];
   //   messageType = MessageType.values.firstWhere((e) => e.toString() == data["m"]);
-  //   command = Command.values.firstWhere((e) => e.toString() == data["c"]);
+  //   command = Command2.values.firstWhere((e) => e.toString() == data["c"]);
   //   parameters = data["p"];
   // }
 }

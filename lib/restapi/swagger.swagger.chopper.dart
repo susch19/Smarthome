@@ -290,6 +290,17 @@ final class _$Swagger extends Swagger {
   }
 
   @override
+  Future<Response<List<LayoutResponse>>> _appLayoutAllGet() {
+    final Uri $url = Uri.parse('/app/layout/all');
+    final Request $request = Request(
+      'GET',
+      $url,
+      client.baseUrl,
+    );
+    return client.send<List<LayoutResponse>, LayoutResponse>($request);
+  }
+
+  @override
   Future<Response<dynamic>> _appLayoutPatch() {
     final Uri $url = Uri.parse('/app/layout');
     final Request $request = Request(

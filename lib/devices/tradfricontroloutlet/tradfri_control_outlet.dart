@@ -38,7 +38,7 @@ class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
                     : const TextStyle(),
               ),
               onPressed: () => sendToServer(MessageType.update,
-                  Command.singlecolor, [], ref.read(hubConnectionProvider)),
+                  Command2.singlecolor, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -52,8 +52,8 @@ class TradfriControlOutlet extends Device<ZigbeeSwitchModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(MessageType.update, Command.off, [],
-                  ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.off, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -97,11 +97,8 @@ class _TradfriControlOutletScreenState
           onPressed: () {
             final state =
                 ref.watch(ZigbeeSwitchModel.stateProvider(widget.device.id));
-            widget.device.sendToServer(
-                MessageType.update,
-                state ? Command.off : Command.on,
-                [],
-                ref.read(hubConnectionProvider));
+            widget.device.sendToServer(MessageType.update,
+                state ? Command2.off : Command2.on, [], ref.read(apiProvider));
           }),
     );
   }

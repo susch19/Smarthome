@@ -14,49 +14,26 @@ import 'package:smarthome/controls/dashboard_card.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/generic/icons/icon_manager.dart';
-import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/main.dart';
 import 'package:smarthome/models/message.dart' as sm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/restapi/swagger.enums.swagger.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart';
 
 part 'device.g.dart';
 
 @riverpod
-FutureOr<List<HistoryModel>> historyProperty(
-    final Ref ref, final int id, final String dt) async {
-  final hubConnection = ref.watch(hubConnectionConnectedProvider);
-
-  if (hubConnection != null) {
-    final result =
-        await hubConnection.invoke("GetIoBrokerHistories", args: [id, dt]);
-    final resList = result as List<dynamic>;
-    return resList.map((final e) => HistoryModel.fromJson(e)).toList();
-  }
-  return [];
-}
-
-@riverpod
-FutureOr<HistoryModel> historyPropertyName(
+FutureOr<History> historyPropertyName(
     final Ref ref,
     final int id,
     final DateTime fromTime,
     final DateTime toTime,
     final String propertyName) async {
-  final hubConnection = ref.watch(hubConnectionConnectedProvider);
-
-  if (hubConnection != null) {
-    final result = await hubConnection.invoke("GetIoBrokerHistoryRange", args: [
-      id,
-      fromTime.toIso8601String(),
-      toTime.toIso8601String(),
-      propertyName
-    ]);
-    final e = result as Map<String, dynamic>;
-    return HistoryModel.fromJson(e);
-  }
-  return HistoryModel();
+  final api = ref.watch(apiProvider);
+  final res = await api.appHistoryRangeGet(
+      id: id, from: fromTime, to: toTime, propertyName: propertyName);
+  return res.bodyOrThrow;
 }
 
 @riverpod
@@ -67,23 +44,19 @@ Widget iconWidget(
     final AdaptiveThemeManager themeManager,
     final bool withMargin) {
   final brightness = ref.watch(brightnessProvider(themeManager));
-  final iconByName = ref.watch(iconByTypeNamesProvider(typeNames));
-  if (iconByName.hasValue) {
-    print("this has an value");
-  } else {
-    print("no value");
-  }
+  final icon = ref.watch(iconByTypeNamesProvider(typeNames));
 
-  return device._createIcon(brightness, iconByName.valueOrNull, withMargin);
+  return device._createIcon(brightness, icon, withMargin);
 }
 
 @riverpod
 Widget iconWidgetSingle(
-    final Ref ref,
-    final String typeName,
-    final Device device,
-    final AdaptiveThemeManager themeManager,
-    final bool withMargin) {
+  final Ref ref,
+  final String typeName,
+  final Device device,
+  final AdaptiveThemeManager themeManager,
+  final bool withMargin,
+) {
   return ref
       .watch(iconWidgetProvider([typeName], device, themeManager, withMargin));
 }
@@ -92,10 +65,11 @@ abstract class Device<T extends BaseModel> {
   static const fromJsonFactory = _$DeviceRequestFromJson;
 
   static Device _$DeviceRequestFromJson(final Map<String, dynamic> json) {
-    final types = (json["typeNames"] as List).map((final x) => x.toString()).toList();
+    final types =
+        (json["typeNames"] as List).map((final x) => x.toString()).toList();
     String type = "Device";
     for (final item in types) {
-      if (!DeviceManager.stringNameJsonFactory.containsKey(item)) {
+      if (!stringNameJsonFactory.containsKey(item)) {
         continue;
       }
       type = item;
@@ -103,8 +77,9 @@ abstract class Device<T extends BaseModel> {
     }
     final id = json["id"] as int;
 
-    final model = DeviceManager.stringNameJsonFactory[type]!(json, types);
-    final dev = DeviceManager.ctorFactory[type]!(id, types.first);
+    final model = stringNameJsonFactory[type]!(json, types);
+    final dev = deviceCtorFactory[type]!(id, types.first);
+    dev.lastModel = model;
     return dev;
   }
 
@@ -121,18 +96,14 @@ abstract class Device<T extends BaseModel> {
     return [friendlyNameSplit.first];
   });
 
-  IconData? iconData;
+  final IconData? iconData;
   final String typeName;
   final int id;
+  late BaseModel? lastModel;
 
   final Random r = Random();
 
-  Device(this.id, this.typeName,
-      {final IconData? iconData, final Uint8List? iconBytes}) {
-    if (iconData != null) {
-      this.iconData = iconData;
-    }
-  }
+  Device(this.id, this.typeName, {this.iconData, this.lastModel});
 
   Widget _createIcon(final Brightness themeMode, final Uint8List? iconBytes,
       final bool withMargin) {
@@ -210,29 +181,21 @@ abstract class Device<T extends BaseModel> {
   int get hashCode => hash2(id, typeName);
 
   @mustCallSuper
-  Future sendToServer(
-      final MessageType messageType,
-      final Command command,
-      final List<String>? parameters,
-      final HubConnectionContainer container) async {
-    if (container.connectionState != HubConnectionState.Connected ||
-        container.connection == null) {
-      return;
-    }
-
-    final message = sm.Message(id, messageType, command, parameters);
-    final jsonMsg = message.toJson();
-    await container.connection!.invoke("Update", args: <Object>[jsonMsg]);
+  Future sendToServer(final MessageType messageType, final Command2 command,
+      final List<String> parameters, final Swagger container) async {
+    final message = JsonSmarthomeMessage(
+        parameters: parameters,
+        messageType: messageType,
+        command: command,
+        nodeId: id,
+        longNodeId: id);
+    await container.appSmarthomePost(message: message);
   }
 
-  Future updateDeviceOnServer(final int id, final String friendlyName,
-      final HubConnectionContainer container) async {
-    if (container.connectionState != HubConnectionState.Connected ||
-        container.connection == null) {
-      return;
-    }
-    return await container.connection!
-        .invoke("UpdateDevice", args: [id, friendlyName]);
+  Future updateDeviceOnServer(
+      final int id, final String friendlyName, final Swagger api) async {
+    await api.appDevicePatch(
+        request: DeviceRenameRequest(id: id, newName: friendlyName));
   }
 
   DeviceTypes getDeviceType();

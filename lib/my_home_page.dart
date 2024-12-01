@@ -9,7 +9,6 @@ import 'package:smarthome/dashboard/group_devices.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
 import 'package:smarthome/devices/device_overview_model.dart';
-import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
@@ -45,86 +44,60 @@ class MyHomePage extends ConsumerWidget {
       });
     }
 
-    return Container(
-      decoration: ThemeManager.getBackgroundDecoration(context),
-      child: RefreshIndicator(
-        child: ConstrainedBox(
-          constraints: BoxConstraints.tight(Size.infinite),
-          child: OrientationBuilder(
-            builder: (final context, final orientation) {
-              return Consumer(
-                builder: (final context, final ref, final child) {
-                  return MasonryGridView.extent(
-                    maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    itemCount: deviceGroups.length,
-                    itemBuilder: (final context, final i) {
-                      final deviceGroup = deviceGroups.elementAt(i);
-                      //if (deviceGroup == null) return const Text("Empty Entry");
-                      return Container(
-                        margin: const EdgeInsets.only(
-                            left: 2, top: 4, right: 2, bottom: 2),
-                        child: getDashboardCard(deviceGroup, ref),
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        onRefresh: () async => refresh(ref),
-      ),
+    return Consumer(
+      builder: (final context, final ref, final child) {
+        return MasonryGridView.extent(
+          maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          itemCount: deviceGroups.length,
+          itemBuilder: (final context, final i) {
+            final deviceGroup = deviceGroups.elementAt(i);
+            //if (deviceGroup == null) return const Text("Empty Entry");
+            return Container(
+              margin:
+                  const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+              child: getDashboardCard(deviceGroup, ref),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget buildBody(final BuildContext context, final WidgetRef ref) {
-    ref.watch(valueStoreProvider);
     final devices = ref.watch(filteredDevicesProvider);
-    return Container(
-      decoration: ThemeManager.getBackgroundDecoration(context),
-      child: RefreshIndicator(
-        child: ConstrainedBox(
-          constraints: BoxConstraints.tight(Size.infinite),
-          child: OrientationBuilder(
-            builder: (final context, final orientation) {
-              return Consumer(
-                builder: (final context, final ref, final child) {
-                  return MasonryGridView.extent(
-                    maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
-                    itemCount: devices.length,
-                    itemBuilder: (final context, final i) {
-                      final device = devices[i];
-                      //TODO Why was this here?
-                      // if (device is GenericDevice) {
-                      //   final developerMode =
-                      //       ref.watch(debugInformationEnabledProvider);
-                      //   final layout = ref.watch(deviceLayoutsProvider(
-                      //       Tuple2(device.id, device.typeName)));
-                      //   if (layout == null ||
-                      //       (!developerMode && layout.showOnlyInDeveloperMode))
-                      //     return const SizedBox();
-                      // }
-                      return Container(
-                        margin: const EdgeInsets.only(
-                            left: 2, top: 4, right: 2, bottom: 2),
-                        child: device.dashboardView(
-                          () {
-                            deviceAction(context, ref, device);
-                          },
-                        ),
-                      );
-                    },
-                    // staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1)
-                  );
+
+    return Consumer(
+      builder: (final context, final ref, final child) {
+        return MasonryGridView.extent(
+          maxCrossAxisExtent: ref.watch(maxCrossAxisExtentProvider),
+          itemCount: devices.length,
+          itemBuilder: (final context, final i) {
+            final device = devices[i];
+            //TODO Why was this here?
+            // if (device is GenericDevice) {
+            //   final developerMode =
+            //       ref.watch(debugInformationEnabledProvider);
+            //   final layout = ref.watch(deviceLayoutsProvider(
+            //       Tuple2(device.id, device.typeName)));
+            //   if (layout == null ||
+            //       (!developerMode && layout.showOnlyInDeveloperMode))
+            //     return const SizedBox();
+            // }
+            return Container(
+              margin:
+                  const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+              child: device.dashboardView(
+                () {
+                  deviceAction(context, ref, device);
                 },
-              );
-            },
-          ),
-        ),
-        onRefresh: () async => refresh(ref),
-      ),
+              ),
+            );
+          },
+          // staggeredTileBuilder: (final int index) => const StaggeredTile.fit(1)
+        );
+      },
     );
   }
 
@@ -231,7 +204,7 @@ class MyHomePage extends ConsumerWidget {
                 .read(DeviceManager.customGroupNameProvider(deviceGroup.key)),
             onSubmitted: (final s) {
               ref
-                  .read(deviceProvider.notifier)
+                  .read(deviceManagerProvider.notifier)
                   .changeGroupName(deviceGroup.key, s);
             },
             title: "Gruppenname ändern",
@@ -251,7 +224,7 @@ class MyHomePage extends ConsumerWidget {
           }
           groupsState.state = groups;
         }
-        ref.read(deviceProvider.notifier).saveDeviceGroups();
+        ref.read(deviceManagerProvider.notifier).saveDeviceGroups();
 
         break;
       case 'Edit':
@@ -276,12 +249,12 @@ class MyHomePage extends ConsumerWidget {
 
   Future<bool> tryCreateDevice(final DeviceOverviewModel device,
       final String item, final WidgetRef ref) async {
-    if (!DeviceManager.ctorFactory.containsKey(item) ||
-        !DeviceManager.stringNameJsonFactory.containsKey(item)) {
+    if (!deviceCtorFactory.containsKey(item) ||
+        !stringNameJsonFactory.containsKey(item)) {
       return false;
     }
 
-    ref.read(deviceProvider.notifier).subscribeToDevice(device.id);
+    ref.read(deviceManagerProvider.notifier).subscribeToDevice(device.id);
     return true;
   }
 
@@ -341,7 +314,20 @@ class MyHomePage extends ConsumerWidget {
           ),
         ],
       ),
-      body: settings ? buildBodyGrouped(context, ref) : buildBody(context, ref),
+      body: Container(
+        decoration: ThemeManager.getBackgroundDecoration(context),
+        child: RefreshIndicator(
+          child: ConstrainedBox(
+            constraints: BoxConstraints.tight(Size.infinite),
+            child: OrientationBuilder(
+              builder: (final context, final orientation) => settings
+                  ? buildBodyGrouped(context, ref)
+                  : buildBody(context, ref),
+            ),
+          ),
+          onRefresh: () async => ref.invalidate(connectionManagerProvider),
+        ),
+      ),
       floatingActionButton: ExpandableFab(
         distance: 64.0,
         children: [
@@ -369,7 +355,7 @@ class MyHomePage extends ConsumerWidget {
         AdaptiveTheme.of(context).toggleThemeMode();
         break;
       case "RemoveAll":
-        ref.read(deviceProvider.notifier).removeAllDevices();
+        ref.read(deviceManagerProvider.notifier).removeAllDevices();
         break;
       case "Info":
         Navigator.push(context,
@@ -416,7 +402,7 @@ class MyHomePage extends ConsumerWidget {
       {final bool pop = true}) {
     if (pop) Navigator.pop(context);
 
-    final devices = ref.read(deviceProvider.notifier);
+    final devices = ref.read(deviceManagerProvider.notifier);
     devices.removeDevice(id);
   }
 
@@ -432,7 +418,7 @@ class MyHomePage extends ConsumerWidget {
             defaultText: ref.read(BaseModel.friendlyNameProvider(x.id)),
             maxLines: 2,
             onSubmitted: (final s) async {
-              x.updateDeviceOnServer(x.id, s, ref.read(hubConnectionProvider));
+              x.updateDeviceOnServer(x.id, s, ref.read(apiProvider));
             })).then((final x) => Navigator.of(context).pop());
   }
 
@@ -467,7 +453,9 @@ class MyHomePage extends ConsumerWidget {
 
     final serverDevicesList = serverDevices.bodyOrThrow;
 
-    final devices = ref.read(deviceProvider);
+    final devicesFuture = ref.read(deviceManagerProvider);
+    if (!devicesFuture.hasValue) return;
+    final devices = devicesFuture.requireValue;
     final devicesToSelect = <Widget>[];
     for (final dev in serverDevicesList) {
       if (!devices.any((final x) => x.id == dev.id)) {
@@ -541,16 +529,16 @@ class MyHomePage extends ConsumerWidget {
         notifier.state = false;
       }
     }
-    ref.read(deviceProvider.notifier).subscribeToDevices(selectedIds);
+    ref.read(deviceManagerProvider.notifier).subscribeToDevices(selectedIds);
     Navigator.pop(context);
   }
 
   void refresh(final WidgetRef ref) {
     ref
-        .read(hubConnectionProvider.notifier)
+        .read(connectionManagerProvider.notifier)
         .newHubConnection()
         .then((final value) async {
-      await ref.read(deviceProvider.notifier).reloadCurrentDevices();
+      await ref.read(deviceManagerProvider.notifier).reloadCurrentDevices();
     });
   }
 

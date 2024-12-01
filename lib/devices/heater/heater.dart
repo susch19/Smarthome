@@ -17,14 +17,12 @@ import 'package:smarthome/icons/smarthome_icons.dart';
 import 'package:smarthome/icons/icons.dart';
 import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-import 'package:tuple/tuple.dart';
 
 import 'temp_scheduling.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Heater extends Device<HeaterModel> {
-  Heater(super.id, super.typeName, final IconData icon)
-      : super(iconData: icon);
+  Heater(super.id, super.typeName, final IconData icon) : super(iconData: icon);
 
   @override
   void navigateToDevice(final BuildContext context) {
@@ -170,8 +168,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
 
     final xiaomiTempSensor =
         ref.watch(HeaterModel.xiaomiProvider(widget.device.id));
-    final tempSensorDevice = ref.watch(valueStoreChangedProvider(
-        Tuple2("temperature", xiaomiTempSensor ?? -1)));
+    final tempSensorDevice = ref.watch(
+        valueStoreChangedProvider("temperature", xiaomiTempSensor ?? -1));
 
     return DefaultTabController(
       length: 2,
@@ -218,17 +216,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
   _pushTempSettings(final BuildContext context) async {
     final res = await Navigator.push(
         context,
-        MaterialPageRoute<Tuple2<bool, List<HeaterConfig>>>(
+        MaterialPageRoute<(bool, List<HeaterConfig>)>(
             builder: (final BuildContext context) =>
                 TempScheduling(widget.device.id),
             fullscreenDialog: true));
-    if (res == null || !res.item1) return;
+    if (res == null || !res.$1) return;
 
-    widget.device.sendToServer(
-        MessageType.options,
-        Command.temp,
-        res.item2.map((final f) => jsonEncode(f)).toList(),
-        ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.options, Command2.temp,
+        res.$2.map((final f) => jsonEncode(f)).toList(), ref.read(apiProvider));
   }
 
   _pushLogView(final BuildContext context) async {
@@ -331,8 +326,8 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
 
   void handlePointerValueChangedEnd(final double value) {
     handlePointerValueChanged(value);
-    widget.device.sendToServer(MessageType.update, Command.temp,
-        <String>[_annotationValue], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.update, Command2.temp,
+        <String>[_annotationValue], ref.read(apiProvider));
   }
 
   void handlePointerValueChanging(final ValueChangingArgs args) {
@@ -392,14 +387,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                 return Switch(
                   value: !disableHeater,
                   onChanged: (final val) {
-                    Command command;
+                    Command2 command;
                     if (val) {
-                      command = Command.on;
+                      command = Command2.on;
                     } else {
-                      command = Command.off;
+                      command = Command2.off;
                     }
-                    widget.device.sendToServer(MessageType.update, command, [],
-                        ref.read(hubConnectionProvider));
+                    widget.device.sendToServer(
+                        MessageType.update, command, [], ref.read(apiProvider));
                   },
                 );
               }),
@@ -423,14 +418,14 @@ class _HeaterScreenState extends ConsumerState<HeaterScreen> {
                   return Switch(
                     value: !disableLed,
                     onChanged: (final val) {
-                      Command command;
+                      Command2 command;
                       if (val) {
-                        command = Command.on;
+                        command = Command2.on;
                       } else {
-                        command = Command.off;
+                        command = Command2.off;
                       }
                       widget.device.sendToServer(MessageType.options, command,
-                          [], ref.read(hubConnectionProvider));
+                          [], ref.read(apiProvider));
                     },
                   );
                 },
@@ -702,9 +697,9 @@ class TemperatureSensorDropdown extends ConsumerWidget {
       onChanged: (final dynamic a) {
         device.sendToServer(
             MessageType.update,
-            Command.devicemapping,
+            Command2.devicemapping,
             [a.id.toString(), currentDevice?.id.toString() ?? "0"],
-            ref.read(hubConnectionProvider));
+            ref.read(apiProvider));
         final newList = ref.read(baseModelsProvider).toList();
         newList.remove(model);
         newList.add(model.copyWith(xiaomiTempSensor: a.id));

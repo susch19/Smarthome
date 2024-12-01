@@ -49,7 +49,7 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
                     : const TextStyle(),
               ),
               onPressed: () => sendToServer(MessageType.update,
-                  Command.singlecolor, [], ref.read(hubConnectionProvider)),
+                  Command2.singlecolor, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -63,8 +63,8 @@ class ZigbeeLamp extends Device<ZigbeeLampModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(MessageType.update, Command.off, [],
-                  ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.off, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -119,18 +119,18 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
   }
 
   void changeDelay(final double? delay) {
-    widget.device.sendToServer(MessageType.options, Command.delay,
-        [delay.toString()], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.options, Command2.delay,
+        [delay.toString()], ref.read(apiProvider));
   }
 
   void changeBrightness(final double brightness) {
-    widget.device.sendToServer(MessageType.update, Command.brightness,
-        [brightness.round().toString()], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.update, Command2.brightness,
+        [brightness.round().toString()], ref.read(apiProvider));
   }
 
   void changeColorTemp(final double colorTemp) {
-    widget.device.sendToServer(MessageType.update, Command.temp,
-        [colorTemp.round().toString()], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.update, Command2.temp,
+        [colorTemp.round().toString()], ref.read(apiProvider));
   }
 
   @override
@@ -153,9 +153,9 @@ class _ZigbeeLampScreenState extends ConsumerState<ZigbeeLampScreen> {
 
           widget.device.sendToServer(
               MessageType.update,
-              state ? Command.off : Command.singlecolor,
+              state ? Command2.off : Command2.singlecolor,
               [],
-              ref.read(hubConnectionProvider));
+              ref.read(apiProvider));
         },
       ),
     );

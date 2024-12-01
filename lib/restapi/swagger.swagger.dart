@@ -10,6 +10,7 @@ import 'package:chopper/chopper.dart';
 import 'client_mapping.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart' show MultipartFile;
 import 'package:chopper/chopper.dart' as chopper;
 import 'swagger.enums.swagger.dart' as enums;
 export 'swagger.enums.swagger.dart';
@@ -364,6 +365,18 @@ abstract class Swagger extends ChopperService {
   @Get(path: '/app/layout/multi')
   Future<chopper.Response<List<LayoutResponse>>> _appLayoutMultiGet(
       {@Query('request') required List<dynamic>? request});
+
+  ///
+  Future<chopper.Response<List<LayoutResponse>>> appLayoutAllGet() {
+    generatedMapping.putIfAbsent(
+        LayoutResponse, () => LayoutResponse.fromJsonFactory);
+
+    return _appLayoutAllGet();
+  }
+
+  ///
+  @Get(path: '/app/layout/all')
+  Future<chopper.Response<List<LayoutResponse>>> _appLayoutAllGet();
 
   ///
   Future<chopper.Response> appLayoutPatch() {
@@ -7753,6 +7766,7 @@ extension $LayoutResponseExtension on LayoutResponse {
 class DeviceLayout {
   const DeviceLayout({
     required this.uniqueName,
+    required this.iconName,
     this.typeName,
     this.typeNames,
     this.ids,
@@ -7772,6 +7786,8 @@ class DeviceLayout {
 
   @JsonKey(name: 'uniqueName')
   final String uniqueName;
+  @JsonKey(name: 'iconName')
+  final String iconName;
   @JsonKey(name: 'typeName')
   final String? typeName;
   @JsonKey(name: 'typeNames', defaultValue: <String>[])
@@ -7799,6 +7815,9 @@ class DeviceLayout {
             (identical(other.uniqueName, uniqueName) ||
                 const DeepCollectionEquality()
                     .equals(other.uniqueName, uniqueName)) &&
+            (identical(other.iconName, iconName) ||
+                const DeepCollectionEquality()
+                    .equals(other.iconName, iconName)) &&
             (identical(other.typeName, typeName) ||
                 const DeepCollectionEquality()
                     .equals(other.typeName, typeName)) &&
@@ -7833,6 +7852,7 @@ class DeviceLayout {
   @override
   int get hashCode =>
       const DeepCollectionEquality().hash(uniqueName) ^
+      const DeepCollectionEquality().hash(iconName) ^
       const DeepCollectionEquality().hash(typeName) ^
       const DeepCollectionEquality().hash(typeNames) ^
       const DeepCollectionEquality().hash(ids) ^
@@ -7848,6 +7868,7 @@ class DeviceLayout {
 extension $DeviceLayoutExtension on DeviceLayout {
   DeviceLayout copyWith(
       {String? uniqueName,
+      String? iconName,
       String? typeName,
       List<String>? typeNames,
       List<int>? ids,
@@ -7859,6 +7880,7 @@ extension $DeviceLayoutExtension on DeviceLayout {
       String? hash}) {
     return DeviceLayout(
         uniqueName: uniqueName ?? this.uniqueName,
+        iconName: iconName ?? this.iconName,
         typeName: typeName ?? this.typeName,
         typeNames: typeNames ?? this.typeNames,
         ids: ids ?? this.ids,
@@ -7874,6 +7896,7 @@ extension $DeviceLayoutExtension on DeviceLayout {
 
   DeviceLayout copyWithWrapped(
       {Wrapped<String>? uniqueName,
+      Wrapped<String>? iconName,
       Wrapped<String?>? typeName,
       Wrapped<List<String>?>? typeNames,
       Wrapped<List<int>?>? ids,
@@ -7885,6 +7908,7 @@ extension $DeviceLayoutExtension on DeviceLayout {
       Wrapped<String>? hash}) {
     return DeviceLayout(
         uniqueName: (uniqueName != null ? uniqueName.value : this.uniqueName),
+        iconName: (iconName != null ? iconName.value : this.iconName),
         typeName: (typeName != null ? typeName.value : this.typeName),
         typeNames: (typeNames != null ? typeNames.value : this.typeNames),
         ids: (ids != null ? ids.value : this.ids),
@@ -7959,7 +7983,7 @@ extension $DashboardDeviceLayoutExtension on DashboardDeviceLayout {
 class TextSettings {
   const TextSettings({
     this.fontSize,
-    required this.fontFamily,
+    this.fontFamily,
     required this.fontWeight,
     required this.fontStyle,
   });
@@ -7973,7 +7997,7 @@ class TextSettings {
   @JsonKey(name: 'fontSize')
   final double? fontSize;
   @JsonKey(name: 'fontFamily')
-  final String fontFamily;
+  final String? fontFamily;
   @JsonKey(
     name: 'fontWeight',
     toJson: fontWeightSettingToJson,
@@ -8033,7 +8057,7 @@ extension $TextSettingsExtension on TextSettings {
 
   TextSettings copyWithWrapped(
       {Wrapped<double?>? fontSize,
-      Wrapped<String>? fontFamily,
+      Wrapped<String?>? fontFamily,
       Wrapped<enums.FontWeightSetting>? fontWeight,
       Wrapped<enums.FontStyleSetting>? fontStyle}) {
     return TextSettings(
@@ -8658,94 +8682,6 @@ extension $HistoryPropertyInfoExtension on HistoryPropertyInfo {
             ? darkThemeColor.value
             : this.darkThemeColor),
         chartType: (chartType != null ? chartType.value : this.chartType));
-  }
-}
-
-@JsonSerializable(explicitToJson: true)
-class SvgIcon {
-  const SvgIcon({
-    required this.name,
-    required this.hash,
-    required this.path,
-    this.data,
-    required this.typeName,
-  });
-
-  factory SvgIcon.fromJson(Map<String, dynamic> json) =>
-      _$SvgIconFromJson(json);
-
-  static const toJsonFactory = _$SvgIconToJson;
-  Map<String, dynamic> toJson() => _$SvgIconToJson(this);
-
-  @JsonKey(name: 'name')
-  final String name;
-  @JsonKey(name: 'hash')
-  final String hash;
-  @JsonKey(name: 'path')
-  final String path;
-  @JsonKey(name: 'data')
-  final String? data;
-  @JsonKey(name: 'typeName')
-  final String typeName;
-  static const fromJsonFactory = _$SvgIconFromJson;
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other is SvgIcon &&
-            (identical(other.name, name) ||
-                const DeepCollectionEquality().equals(other.name, name)) &&
-            (identical(other.hash, hash) ||
-                const DeepCollectionEquality().equals(other.hash, hash)) &&
-            (identical(other.path, path) ||
-                const DeepCollectionEquality().equals(other.path, path)) &&
-            (identical(other.data, data) ||
-                const DeepCollectionEquality().equals(other.data, data)) &&
-            (identical(other.typeName, typeName) ||
-                const DeepCollectionEquality()
-                    .equals(other.typeName, typeName)));
-  }
-
-  @override
-  String toString() => jsonEncode(this);
-
-  @override
-  int get hashCode =>
-      const DeepCollectionEquality().hash(name) ^
-      const DeepCollectionEquality().hash(hash) ^
-      const DeepCollectionEquality().hash(path) ^
-      const DeepCollectionEquality().hash(data) ^
-      const DeepCollectionEquality().hash(typeName) ^
-      runtimeType.hashCode;
-}
-
-extension $SvgIconExtension on SvgIcon {
-  SvgIcon copyWith(
-      {String? name,
-      String? hash,
-      String? path,
-      String? data,
-      String? typeName}) {
-    return SvgIcon(
-        name: name ?? this.name,
-        hash: hash ?? this.hash,
-        path: path ?? this.path,
-        data: data ?? this.data,
-        typeName: typeName ?? this.typeName);
-  }
-
-  SvgIcon copyWithWrapped(
-      {Wrapped<String>? name,
-      Wrapped<String>? hash,
-      Wrapped<String>? path,
-      Wrapped<String?>? data,
-      Wrapped<String>? typeName}) {
-    return SvgIcon(
-        name: (name != null ? name.value : this.name),
-        hash: (hash != null ? hash.value : this.hash),
-        path: (path != null ? path.value : this.path),
-        data: (data != null ? data.value : this.data),
-        typeName: (typeName != null ? typeName.value : this.typeName));
   }
 }
 

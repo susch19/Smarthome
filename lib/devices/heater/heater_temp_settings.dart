@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-import 'package:tuple/tuple.dart';
 
 import 'heater_config.dart';
 
 class HeaterTempSettings extends StatefulWidget {
   final List<HeaterConfig> configs;
-  final Tuple2<TimeOfDay?, double?> timeTemp;
+  final (TimeOfDay?, double?) timeTemp;
   const HeaterTempSettings(this.timeTemp, this.configs, {super.key});
 
   @override
@@ -30,9 +29,10 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   void initState() {
     super.initState();
     heaterConfigs = widget.configs;
-    selected = widget.configs.bitOr((final x) => dayOfWeekToFlagMap[x.dayOfWeek]!);
-    _setPointerValue(widget.timeTemp.item2!);
-    selectedDate = widget.timeTemp.item1!;
+    selected =
+        widget.configs.bitOr((final x) => dayOfWeekToFlagMap[x.dayOfWeek]!);
+    _setPointerValue(widget.timeTemp.$2!);
+    selectedDate = widget.timeTemp.$1!;
     //"${widget.timeTemp.item1!.hour.toString().padLeft(2, "0")}:${widget.timeTemp.item1!.minute.toString().padLeft(2, "0")}";
   }
 
@@ -40,12 +40,14 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
     if (!_saveNeeded) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!.copyWith(color: theme.textTheme.bodySmall!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!
+        .copyWith(color: theme.textTheme.bodySmall!.color);
 
     return await (showDialog<bool>(
             context: context,
             builder: (final BuildContext context) => AlertDialog(
-                    content: Text("Neue Temperatureinstellung verwerfen?", style: dialogTextStyle),
+                    content: Text("Neue Temperatureinstellung verwerfen?",
+                        style: dialogTextStyle),
                     actions: <Widget>[
                       TextButton(
                           child: const Text("Abbrechen"),
@@ -73,7 +75,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
       form.save();
       //double realWeight = recursiveParsing(weight);
       if (_saveNeeded == false) {
-        Navigator.of(context).pop(const Tuple2(false, <HeaterConfig>[]));
+        Navigator.of(context).pop(const (false, <HeaterConfig>[]));
         return true;
       }
       final configs = <HeaterConfig>[];
@@ -86,7 +88,7 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
 
         configs.add(HeaterConfig(dayOfWeek, tod, _value));
       }
-      Navigator.of(context).pop(Tuple2(true, configs));
+      Navigator.of(context).pop((true, configs));
     }
     return true;
   }
@@ -116,8 +118,11 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
   }
 
   Future displayTimePicker(
-      final BuildContext context, final TimeOfDay initalTime, final Function(TimeOfDay time) selectedValue) async {
-    final time = await showTimePicker(context: context, initialTime: initalTime);
+      final BuildContext context,
+      final TimeOfDay initalTime,
+      final Function(TimeOfDay time) selectedValue) async {
+    final time =
+        await showTimePicker(context: context, initialTime: initalTime);
 
     if (time != null) {
       selectedValue(time);
@@ -184,8 +189,15 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           maximum: 35,
                           interval: 1,
                           axisLineStyle: const AxisLineStyle(
-                              gradient:
-                                  SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                              gradient: SweepGradient(colors: [
+                                Colors.blue,
+                                Colors.amber,
+                                Colors.red
+                              ], stops: [
+                                0.3,
+                                0.5,
+                                1
+                              ]),
                               color: Colors.red,
                               thickness: 0.04,
                               thicknessUnit: GaugeSizeUnit.factor),
@@ -198,7 +210,8 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           labelsPosition: ElementsPosition.outside,
                           minorTicksPerInterval: 10,
                           minorTickStyle: const MinorTickStyle(length: 0.1),
-                          majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                          majorTickStyle: const MajorTickStyle(
+                              length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                         ),
                         RadialAxis(
                           startAngle: 150,
@@ -208,8 +221,15 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           maximum: 35,
                           interval: 5,
                           axisLineStyle: const AxisLineStyle(
-                              gradient:
-                                  SweepGradient(colors: [Colors.blue, Colors.amber, Colors.red], stops: [0.3, 0.5, 1]),
+                              gradient: SweepGradient(colors: [
+                                Colors.blue,
+                                Colors.amber,
+                                Colors.red
+                              ], stops: [
+                                0.3,
+                                0.5,
+                                1
+                              ]),
                               color: Colors.red,
                               thickness: 0.04,
                               thicknessUnit: GaugeSizeUnit.factor),
@@ -221,7 +241,8 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           labelsPosition: ElementsPosition.outside,
                           minorTicksPerInterval: 0,
                           minorTickStyle: const MinorTickStyle(length: 0.1),
-                          majorTickStyle: const MajorTickStyle(length: 0.05, lengthUnit: GaugeSizeUnit.factor),
+                          majorTickStyle: const MajorTickStyle(
+                              length: 0.05, lengthUnit: GaugeSizeUnit.factor),
                           pointers: <GaugePointer>[
                             // RangePointer(
                             //     color: Colors.transparent,
@@ -250,16 +271,20 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                           ],
                           annotations: [
                             GaugeAnnotation(
-                              widget: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-                                Text(
-                                  _annotationValue,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 56),
-                                ),
-                                const Text(
-                                  ' °C',
-                                  style: TextStyle(fontSize: 56),
-                                ),
-                              ]),
+                              widget: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Text(
+                                      _annotationValue,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 56),
+                                    ),
+                                    const Text(
+                                      ' °C',
+                                      style: TextStyle(fontSize: 56),
+                                    ),
+                                  ]),
                               verticalAlignment: GaugeAlignment.far,
                               angle: 90,
                               positionFactor: 0.1,
@@ -274,7 +299,8 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           MaterialButton(
-                            onPressed: () => handlePointerValueChanged(_value - 0.1),
+                            onPressed: () =>
+                                handlePointerValueChanged(_value - 0.1),
                             child: const Text(
                               "−",
                               style: TextStyle(
@@ -284,7 +310,8 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
                             ),
                           ),
                           MaterialButton(
-                            onPressed: () => handlePointerValueChanged(_value + 0.1),
+                            onPressed: () =>
+                                handlePointerValueChanged(_value + 0.1),
                             child: const Text(
                               "+",
                               style: TextStyle(
@@ -326,9 +353,16 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
               labelStyle: TextStyle(
                 color: (selected & (dayOfWeekStringToFlagMap[value] ?? 0) < 1
                     ? Theme.of(context).textTheme.bodyLarge!.color
-                    : (Theme.of(context).colorScheme.secondary.computeLuminance() > 0.5 ? Colors.black : Colors.white)),
+                    : (Theme.of(context)
+                                .colorScheme
+                                .secondary
+                                .computeLuminance() >
+                            0.5
+                        ? Colors.black
+                        : Colors.white)),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
               selectedColor: Theme.of(context).colorScheme.secondary,
               label: Text(value),
             ),
@@ -338,13 +372,22 @@ class HeaterTempSettingsState extends State<HeaterTempSettings> {
         .toList(growable: false);
   }
 
-  final List<String> weekdayListText = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  final List<String> weekdayListText = [
+    "Mo",
+    "Di",
+    "Mi",
+    "Do",
+    "Fr",
+    "Sa",
+    "So"
+  ];
   final List<DropdownMenuItem> itemsForDropdown = buildItems();
 
   static List<DropdownMenuItem> buildItems() {
     final menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
-      menuItems.add(DropdownMenuItem(value: (d * 10).round(), child: Text(d.toStringAsFixed(1))));
+      menuItems.add(DropdownMenuItem(
+          value: (d * 10).round(), child: Text(d.toStringAsFixed(1))));
     }
     return menuItems;
   }

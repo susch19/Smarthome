@@ -614,6 +614,31 @@
         }
       }
     },
+    "/app/layout/all": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "operationId": "Layout_GetAll",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "responses": {
+          "200": {
+            "x-nullable": false,
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/LayoutResponse"
+              }
+            }
+          }
+        }
+      }
+    },
     "/app/layout": {
       "patch": {
         "tags": [
@@ -3269,6 +3294,7 @@
       "additionalProperties": {},
       "required": [
         "uniqueName",
+        "iconName",
         "additionalData",
         "version",
         "showOnlyInDeveloperMode",
@@ -3276,6 +3302,9 @@
       ],
       "properties": {
         "uniqueName": {
+          "type": "string"
+        },
+        "iconName": {
           "type": "string"
         },
         "typeName": {
@@ -3429,7 +3458,6 @@
     "TextSettings": {
       "type": "object",
       "required": [
-        "fontFamily",
         "fontWeight",
         "fontStyle"
       ],

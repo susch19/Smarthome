@@ -37,8 +37,8 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(MessageType.update, Command.on, [],
-                  ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.on, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -52,8 +52,8 @@ class OsramPlug extends Device<ZigbeeSwitchModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(MessageType.update, Command.off, [],
-                  ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.off, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -86,11 +86,8 @@ class OsramPlugScreen extends ConsumerWidget {
           child: const Icon(Icons.power_settings_new),
           onPressed: () {
             final state = ref.watch(ZigbeeSwitchModel.stateProvider(device.id));
-            device.sendToServer(
-                MessageType.update,
-                state ? Command.off : Command.on,
-                [],
-                ref.read(hubConnectionProvider));
+            device.sendToServer(MessageType.update,
+                state ? Command2.off : Command2.on, [], ref.read(apiProvider));
           }),
     );
   }

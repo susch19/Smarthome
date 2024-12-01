@@ -1,13 +1,12 @@
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
-import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/restapi/swagger.enums.swagger.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,8 +16,7 @@ import 'package:smarthome/helper/theme_manager.dart';
 import '../../helper/datetime_helper.dart';
 
 class XiaomiTempSensor extends Device<TempSensorModel> {
-  XiaomiTempSensor(super.id, super.typeName,
-      {final IconData? icon, super.iconBytes})
+  XiaomiTempSensor(super.id, super.typeName, {final IconData? icon})
       : super(iconData: icon);
 
   @override
@@ -139,22 +137,21 @@ class XiaomiTempSensorScreen extends ConsumerStatefulWidget {
 
 class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
     with SingleTickerProviderStateMixin {
-  late List<HistoryModel> histories;
+  late List<History> histories;
   late DateTime currentShownTime;
 
   @override
   void initState() {
     super.initState();
     currentShownTime = DateTime.now();
-    histories = <HistoryModel>[];
-    widget.device
-        .getFromServer(
-            "GetIoBrokerHistories",
-            [widget.device.id, currentShownTime.toString()],
-            ref.read(hubConnectionProvider))
-        .then((final x) {
-      for (final hist in x) {
-        histories.add(HistoryModel.fromJson(hist));
+    histories = <History>[];
+    ref
+        .read(apiProvider)
+        .appHistoryGet(id: widget.device.id, dt: currentShownTime)
+        .then((x) {
+      histories.clear();
+      for (final hist in x.bodyOrThrow) {
+        histories.add(hist);
       }
       setState(() {});
     });
@@ -163,8 +160,8 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
   void changeColor() {}
 
   void changeDelay(final int delay) {
-    widget.device.sendToServer(MessageType.options, Command.delay,
-        ["delay=$delay"], ref.read(hubConnectionProvider));
+    widget.device.sendToServer(MessageType.options, Command2.delay,
+        ["delay=$delay"], ref.read(apiProvider));
   }
 
   @override
@@ -334,10 +331,10 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
     );
   }
 
-  Widget buildTimeSeriesRangeAnnotationChart(final HistoryModel h,
-      final String unit, final String valueName, final Color lineColor) {
-    h.historyRecords = h.historyRecords
-        .where((final x) => x.value != null)
+  Widget buildTimeSeriesRangeAnnotationChart(final History h, final String unit,
+      final String valueName, final Color lineColor) {
+    final historyRecords = h.historyRecords
+        .where((final x) => x.val != null)
         .toList(growable: false);
     return Flex(
       direction: Axis.vertical,
@@ -351,12 +348,12 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
                   markerSettings: const MarkerSettings(
                     isVisible: true,
                   ),
-                  dataSource: h.historyRecords
+                  dataSource: historyRecords
                       .map((final x) => TimeSeriesValue(
                           DateTime.utc(1)
-                              .add(Duration(milliseconds: x.timeStamp))
+                              .add(Duration(milliseconds: x.ts))
                               .toLocal(),
-                          x.value,
+                          x.val,
                           lineColor))
                       .toList(),
                   xValueMapper: (final TimeSeriesValue value, final _) =>
@@ -366,16 +363,8 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
                   pointColorMapper: (final TimeSeriesValue value, final _) =>
                       value.lineColor)
             ],
-            h.historyRecords
-                .where((final x) => x.value != null)
-                .map((final x) => x.value!)
-                .minBy(10000, (final e) => e)
-                .toDouble(),
-            h.historyRecords
-                .where((final x) => x.value != null)
-                .map((final x) => x.value!)
-                .maxBy(0, (final e) => e)
-                .toDouble(),
+            historyRecords.minBy(10000, (final e) => e.val!).toDouble(),
+            historyRecords.maxBy(0, (final e) => e.val!).toDouble(),
             unit,
             valueName,
             currentShownTime,
@@ -429,17 +418,11 @@ class _XiaomiTempSensorScreenState extends ConsumerState<XiaomiTempSensorScreen>
     if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) {
       return;
     }
-    widget.device
-        .getFromServer("GetIoBrokerHistories",
-            [widget.device.id, dt.toString()], ref.read(hubConnectionProvider))
-        .then((final x) {
+    ref.read(apiProvider).appHistoryGet(id: widget.device.id, dt: dt).then((x) {
       currentShownTime = dt;
       histories.clear();
-      for (final hist in x) {
-        final histo = HistoryModel.fromJson(hist);
-        histo.historyRecords =
-            histo.historyRecords.where((final x) => x.value != null).toList();
-        histories.add(histo);
+      for (final hist in x.bodyOrThrow) {
+        histories.add(hist);
       }
       setState(() {});
     });

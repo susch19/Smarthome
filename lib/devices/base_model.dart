@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 
 part 'base_model.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class BaseModels extends _$BaseModels {
   @override
   List<BaseModel> build() {
@@ -74,15 +75,14 @@ class BaseModel {
 
   // @JsonKey(includeFromJson: false, includeToJson: false)
   final List<String> typeNames;
+  final Map<String, dynamic>? dynamicStateData;
 
   @protected
   BaseModel getModelFromJson(final Map<String, dynamic> json) {
     return BaseModel.fromJson(json, defaultList);
   }
 
-  BaseModel updateFromJson(final Map<String, dynamic> json) {
-    final updatedModel = getModelFromJson(json);
-
+  BaseModel mergeWith(final BaseModel updatedModel) {
     bool updated = false;
     if (updatedModel != this) {
       updated = true;
@@ -97,13 +97,13 @@ class BaseModel {
   }
 
   const BaseModel(this.id, this.friendlyName, this.typeName,
-      [this.typeNames = defaultList]);
+      {this.typeNames = defaultList, this.dynamicStateData = const {}});
 
   factory BaseModel.fromJson(
       final Map<String, dynamic> json, final List<String> typeNames) {
     final bm = BaseModel(json['id'] as int,
-        json['friendlyName'] as String? ?? "", json['typeName'], typeNames);
-    // StoreService.updateAndGetStores(bm.id, json);
+        json['friendlyName'] as String? ?? "", json['typeName'],
+        typeNames: typeNames, dynamicStateData: json["dynamicStateData"]);
     return bm;
   }
 

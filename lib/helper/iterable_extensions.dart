@@ -76,10 +76,12 @@ extension Iterables<E> on Iterable<E> {
     return list;
   }
 
-  Map<K, List<E>> groupBy<K>(final K Function(E) keyFunction) => fold(<K, List<E>>{},
-      (final Map<K, List<E>> map, final E element) => map..putIfAbsent(keyFunction(element), () => <E>[]).add(element));
+  Map<K, List<E>> groupBy<K>(final K Function(E) keyFunction) => fold(
+      <K, List<E>>{},
+      (final Map<K, List<E>> map, final E element) =>
+          map..putIfAbsent(keyFunction(element), () => <E>[]).add(element));
 
-  Map<K, List<E>> groupManyBy<K>(final List<K> Function(E) keyFunction) =>
+  Map<K, List<E>> groupManyBy<K>(final Iterable<K> Function(E) keyFunction) =>
       fold(<K, List<E>>{}, (final Map<K, List<E>> map, final E element) {
         for (final r in keyFunction(element)) {
           map.putIfAbsent(r, () => <E>[]).add(element);
@@ -137,7 +139,8 @@ extension Iterables<E> on Iterable<E> {
   }
 
   Map<TKey, TValue> toMap<TKey, TValue>(
-      final TKey Function(E element) keyFunction, final TValue Function(E element) valueFunction) {
+      final TKey Function(E element) keyFunction,
+      final TValue Function(E element) valueFunction) {
     final map = <TKey, TValue>{};
     for (final item in [...this]) {
       map[keyFunction(item)] = valueFunction(item);

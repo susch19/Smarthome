@@ -6,7 +6,6 @@ import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
-import 'package:tuple/tuple.dart';
 
 class StatelessDashboardCard extends ConsumerWidget {
   final Device device;
@@ -85,7 +84,7 @@ class StatelessDashboardCard extends ConsumerWidget {
                               if (device is GenericDevice) {
                                 isConnected = ref
                                     .watch(valueStoreChangedProvider(
-                                        Tuple2("isConnected", device.id)))
+                                        "isConnected", device.id))
                                     ?.currentValue;
                               } else {
                                 isConnected = ref.watch(

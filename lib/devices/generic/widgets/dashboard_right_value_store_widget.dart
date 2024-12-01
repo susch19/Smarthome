@@ -4,7 +4,6 @@ import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/settings_manager.dart';
-import 'package:tuple/tuple.dart';
 
 class DashboardRightValueStoreWidget extends ConsumerWidget {
   final DashboardPropertyInfo e;
@@ -13,8 +12,8 @@ class DashboardRightValueStoreWidget extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(
-        valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
+    final valueModel =
+        ref.watch(valueStoreChangedProvider(e.name, e.deviceId ?? device.id));
     if (valueModel == null) return const SizedBox();
 
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);

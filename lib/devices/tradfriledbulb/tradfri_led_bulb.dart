@@ -54,8 +54,8 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(MessageType.update, Command.on, [],
-                  ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.on, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -69,8 +69,8 @@ class TradfriLedBulb extends Device<TradfriLedBulbModel> {
                     ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
                     : const TextStyle(),
               ),
-              onPressed: () => sendToServer(MessageType.update, Command.off, [],
-                  ref.read(hubConnectionProvider)),
+              onPressed: () => sendToServer(
+                  MessageType.update, Command2.off, [], ref.read(apiProvider)),
             );
           },
         ),
@@ -111,13 +111,13 @@ class TradfriLedBulbScreen extends ConsumerWidget {
     return model?.brightness ?? 0;
   });
   void changeBrightness(final double brightness, final WidgetRef ref) {
-    device.sendToServer(MessageType.update, Command.brightness,
-        [brightness.round().toString()], ref.read(hubConnectionProvider));
+    device.sendToServer(MessageType.update, Command2.brightness,
+        [brightness.round().toString()], ref.read(apiProvider));
   }
 
   void changeColor(final RGB rgb, final WidgetRef ref) {
-    device.sendToServer(MessageType.update, Command.color,
-        ["#${rgb.hr + rgb.hg + rgb.hb}"], ref.read(hubConnectionProvider));
+    device.sendToServer(MessageType.update, Command2.color,
+        ["#${rgb.hr + rgb.hg + rgb.hb}"], ref.read(apiProvider));
   }
 
   @override
@@ -135,11 +135,8 @@ class TradfriLedBulbScreen extends ConsumerWidget {
         onPressed: () {
           final state = ref.read(TradfriLedBulbModel.stateProvider(device.id));
 
-          device.sendToServer(
-              MessageType.update,
-              state ? Command.off : Command.on,
-              [],
-              ref.read(hubConnectionProvider));
+          device.sendToServer(MessageType.update,
+              state ? Command2.off : Command2.on, [], ref.read(apiProvider));
         },
       ),
     );

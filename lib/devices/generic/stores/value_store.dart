@@ -6,7 +6,7 @@ import 'package:smarthome/restapi/swagger.enums.swagger.dart';
 class ValueStore<T> extends ChangeNotifier {
   T currentValue;
   String key;
-  Command command;
+  Command2 command;
   int id;
   bool sendToServer = false;
   bool _debugDisposes = false;

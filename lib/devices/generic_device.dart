@@ -1,5 +1,6 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:smarthome/controls/blurry_card.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/device_manager.dart';
@@ -9,14 +10,14 @@ import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/devices/generic/widgets/edits/basic_edit_types.dart';
 import 'package:smarthome/devices/generic/widgets/edits/gauge_edit.dart';
-import 'package:smarthome/devices/zigbee/iobroker_history_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 import 'package:smarthome/models/message.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tuple/tuple.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
 import 'package:visibility_detector/visibility_detector.dart';
 
 import '../helper/theme_manager.dart';
@@ -45,8 +46,7 @@ class GenericDevice extends Device<BaseModel> {
         final baseModel = ref.watch(BaseModel.byIdProvider(id));
         if (baseModel == null) return const SizedBox();
         final dashboardDeviceLayout = ref.watch(
-            dashboardNoSpecialTypeLayoutProvider(
-                Tuple2(id, baseModel.typeName)));
+            dashboardNoSpecialTypeLayoutProvider(id, baseModel.typeName));
         if (dashboardDeviceLayout?.isEmpty ?? true) return const SizedBox();
 
         return DashboardLayoutWidget(this, dashboardDeviceLayout!);
@@ -62,8 +62,8 @@ class GenericDevice extends Device<BaseModel> {
 
         if (baseModel == null) return const SizedBox();
 
-        final properties = ref.watch(
-            dashboardSpecialTypeLayoutProvider(Tuple2(id, baseModel.typeName)));
+        final properties = ref
+            .watch(dashboardSpecialTypeLayoutProvider(id, baseModel.typeName));
         if (properties?.isEmpty ?? true) return const SizedBox();
 
         properties!.sort((final a, final b) => a.order.compareTo(b.order));
@@ -93,18 +93,21 @@ class GenericDevice extends Device<BaseModel> {
     switch (e.editInfo?.editType) {
       case EditType.button:
       case EditType.raisedbutton:
-        return BasicEditTypes.buildButton(id, context, valueModel, e, ref,
-            e.editInfo!.editType == EditType.raisedbutton);
+        return BasicButton(
+            id: id,
+            valueModel: valueModel,
+            info: e,
+            raisedButton: e.editInfo!.editType == EditType.raisedbutton);
       case EditType.toggle:
-        return BasicEditTypes.buildToggle(id, valueModel, e, ref);
+        return BasicToggle(id: id, valueModel: valueModel, info: e);
       case EditType.dropdown:
-        return BasicEditTypes.buildDropdown(id, valueModel, e, ref);
+        return BasicDropdown(id: id, valueModel: valueModel, info: e);
       case EditType.slider:
-        return BasicEditTypes.buildSlider(context, id, valueModel, e, ref);
+        return BasicSlider(id: id, valueModel: valueModel, info: e);
       case EditType.iconbutton:
-        return BasicEditTypes.iconButton(id, valueModel, e, ref);
+        return BasicIconButton(id: id, valueModel: valueModel, info: e);
       case EditType.icon:
-        return BasicEditTypes.icon(valueModel, e, ref);
+        return BasicIcon(valueModel: valueModel, info: e);
       case EditType.radial:
         return GaugeEdit.getTempGauge(id, context, valueModel, e, ref);
       // case EditType.input:
@@ -171,88 +174,72 @@ class GenericDevice extends Device<BaseModel> {
   }
 }
 
-class GenericDeviceScreen extends ConsumerStatefulWidget {
+class GenericDeviceScreen extends HookConsumerWidget {
   final GenericDevice genericDevice;
   const GenericDeviceScreen(this.genericDevice, {super.key});
 
   @override
-  GenericDeviceScreenState createState() => GenericDeviceScreenState();
-}
-
-class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
-  final _currentShownTimeProvider =
-      StateProvider<DateTime>((final _) => DateTime.now());
-
-  final _currentShownTabProvider =
-      StateProvider.family<bool, Tuple2<int, String>>((final ref, final _) {
-    return false;
-  });
-  final _tabKeyProvider = StateProvider.autoDispose
-      .family<Key, Tuple2<int, String>>((final ref, final key) {
-    return Key(key.toString());
-  });
-  GenericDeviceScreenState();
-
-  @override
-  Widget build(final BuildContext context) {
-    final name = ref.watch(BaseModel.typeNameProvider(widget.genericDevice.id));
-    final historyProps = ref.watch(
-        detailHistoryLayoutProvider(Tuple2(widget.genericDevice.id, name)));
-    final tabInfos = ref.watch(
-        detailTabInfoLayoutProvider(Tuple2(widget.genericDevice.id, name)));
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final name = ref.watch(BaseModel.typeNameProvider(genericDevice.id));
+    final historyProps =
+        ref.watch(detailHistoryLayoutProvider(genericDevice.id, name));
+    final tabInfos =
+        ref.watch(detailTabInfoLayoutProvider(genericDevice.id, name));
 
     if (historyProps?.isEmpty ?? true) {
-      return buildWithoutHistory(context, tabInfos);
+      return buildWithoutHistory(context, ref, tabInfos);
     }
-    return buildWithHistory(context, historyProps!, tabInfos);
+    return buildWithHistory(context, ref, historyProps!, tabInfos);
   }
 
-  Widget buildWithoutHistory(
-      final BuildContext context, final List<DetailTabInfo>? tabInfos) {
+  Widget buildWithoutHistory(final BuildContext context, final WidgetRef ref,
+      final List<DetailTabInfo>? tabInfos) {
     final friendlyName =
-        ref.watch(BaseModel.friendlyNameProvider(widget.genericDevice.id));
+        ref.watch(BaseModel.friendlyNameProvider(genericDevice.id));
     if (tabInfos == null || tabInfos.isEmpty || tabInfos.length == 1) {
       return Scaffold(
-          floatingActionButton: _buildFab(),
+          floatingActionButton: _GenericDeviceFab(genericDevice: genericDevice),
           appBar: AppBar(
             title: Text(friendlyName),
           ),
-          body: buildBody(tabInfos?.first));
+          body: buildBody(ref, tabInfos?.first));
     }
     return DefaultTabController(
         length: tabInfos.length,
         child: Scaffold(
-            floatingActionButton: _buildFab(),
+            floatingActionButton:
+                _GenericDeviceFab(genericDevice: genericDevice),
             appBar: AppBar(
               title: TabBar(
                 tabs: tabInfos.map((final e) {
                   final icon = ref.watch(iconWidgetSingleProvider(e.iconName,
-                      widget.genericDevice, AdaptiveTheme.of(context), true));
+                      genericDevice, AdaptiveTheme.of(context), true));
                   return Tab(icon: icon);
                 }).toList(),
               ),
             ),
             body: TabBarView(
                 children: tabInfos
-                    .map((final e) => buildBody(e))
+                    .map((final e) => buildBody(ref, e))
                     .toList(growable: false))));
   }
 
   Widget buildWithHistory(
       final BuildContext context,
+      final WidgetRef ref,
       final List<HistoryPropertyInfo> histProps,
       final List<DetailTabInfo>? tabInfos) {
     if (tabInfos == null || tabInfos.isEmpty) {
       return DefaultTabController(
         length: histProps.length + 1,
         child: Scaffold(
-          floatingActionButton: _buildFab(),
+          floatingActionButton: _GenericDeviceFab(genericDevice: genericDevice),
           appBar: AppBar(
             title: TabBar(
               tabs: histProps
                   .map((final e) {
                     final icon = ref.watch(iconWidgetSingleProvider(e.iconName,
-                        widget.genericDevice, AdaptiveTheme.of(context), true));
+                        genericDevice, AdaptiveTheme.of(context), true));
                     return Tab(icon: icon);
                   })
                   .injectForIndex((final index) =>
@@ -264,9 +251,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
             decoration: ThemeManager.getBackgroundDecoration(context),
             child: TabBarView(
               children: histProps
-                  .map((final e) => buildGraph(e))
+                  .map((final e) => buildGraph(context, ref, e))
                   .injectForIndex(
-                      (final index) => index == 0 ? buildBody() : null)
+                      (final index) => index == 0 ? buildBody(ref) : null)
                   .toList(),
             ),
           ),
@@ -276,18 +263,18 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     return DefaultTabController(
       length: histProps.length + tabInfos.length,
       child: Scaffold(
-        floatingActionButton: _buildFab(),
+        floatingActionButton: _GenericDeviceFab(genericDevice: genericDevice),
         appBar: AppBar(
           title: TabBar(
             tabs: [
               ...tabInfos.map((final e) {
                 final icon = ref.watch(iconWidgetSingleProvider(e.iconName,
-                    widget.genericDevice, AdaptiveTheme.of(context), true));
+                    genericDevice, AdaptiveTheme.of(context), true));
                 return Tab(icon: icon);
               }),
               ...histProps.map((final e) {
                 final icon = ref.watch(iconWidgetSingleProvider(e.iconName,
-                    widget.genericDevice, AdaptiveTheme.of(context), true));
+                    genericDevice, AdaptiveTheme.of(context), true));
                 return Tab(icon: icon);
               }),
             ].toList(),
@@ -297,8 +284,8 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
           decoration: ThemeManager.getBackgroundDecoration(context),
           child: TabBarView(
             children: [
-              ...tabInfos.map((final e) => buildBody(e)),
-              ...histProps.map((final e) => buildGraph(e))
+              ...tabInfos.map((final e) => buildBody(ref, e)),
+              ...histProps.map((final e) => buildGraph(context, ref, e))
             ].toList(),
           ),
         ),
@@ -306,41 +293,11 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     );
   }
 
-  Widget? _buildFab() {
-    final name = ref.watch(BaseModel.typeNameProvider(widget.genericDevice.id));
-    final fabLayout =
-        ref.watch(fabLayoutProvider(Tuple2(widget.genericDevice.id, name)));
-    if (fabLayout == null) return null;
-
-    final valueModel = ref.watch(valueStoreChangedProvider(
-        Tuple2(fabLayout.name, fabLayout.deviceId ?? widget.genericDevice.id)));
-    if (valueModel == null) return null;
-    // final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-
-    final info = fabLayout.editInfo!;
-    final EditParameter edit;
-    edit = GenericDevice.getEditParameter(valueModel, info);
-    final message = Message(edit.id ?? widget.genericDevice.id,
-        edit.messageType ?? info.editCommand, edit.command, edit.parameters);
-
-    return FloatingActionButton(
-      onPressed: (() async {
-        await ref.read(hubConnectionConnectedProvider)?.invoke(
-            info.hubMethod ?? "Update",
-            args: <Object>[message.toJson()]);
-      }),
-      child: Icon(
-        IconData(edit.extensionData!["CodePoint"] as int,
-            fontFamily: edit.extensionData!["FontFamily"] ?? 'MaterialIcons'),
-      ),
-    );
-  }
-
   final emptyContainer = const SizedBox();
-  Widget buildBody([final DetailTabInfo? tabInfo]) {
-    final name = ref.watch(BaseModel.typeNameProvider(widget.genericDevice.id));
-    var detailProperties = ref.watch(detailPropertyInfoLayoutProvider(
-        Tuple2(widget.genericDevice.id, name)));
+  Widget buildBody(final WidgetRef ref, [final DetailTabInfo? tabInfo]) {
+    final name = ref.watch(BaseModel.typeNameProvider(genericDevice.id));
+    var detailProperties =
+        ref.watch(detailPropertyInfoLayoutProvider(genericDevice.id, name));
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
     if (detailProperties == null || detailProperties.isEmpty) {
       return const SizedBox();
@@ -353,7 +310,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     detailProperties.sort((final a, final b) => a.order.compareTo(b.order));
 
     // for (final detProp in detailProperties) {
-    //   widgets.add(DetailValueStoreWidget(detProp, widget.genericDevice));
+    //   widgets.add(DetailValueStoreWidget(detProp, genericDevice));
     // }
     // return ListView(
     //   children: widgets,
@@ -370,9 +327,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
       final children = elements.map((final e) {
         final exp = e.expanded;
         if (exp == null || !exp) {
-          return DetailValueStoreWidget(e, widget.genericDevice);
+          return DetailValueStoreWidget(e, genericDevice);
         }
-        return Expanded(child: DetailValueStoreWidget(e, widget.genericDevice));
+        return Expanded(child: DetailValueStoreWidget(e, genericDevice));
       }).toList(growable: false);
 
       final displayBlurry =
@@ -407,25 +364,27 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     );
   }
 
-  Widget buildGraph(final HistoryPropertyInfo info) {
-    final currentShownTime = ref.watch(_currentShownTimeProvider);
-    final showBody = ref.watch(_currentShownTabProvider(
-        Tuple2(widget.genericDevice.id, info.propertyName)));
-    final from = DateTime.utc(
-            currentShownTime.year, currentShownTime.month, currentShownTime.day)
-        .subtract(currentShownTime.timeZoneOffset);
+  Widget buildGraph(final BuildContext context, final WidgetRef ref,
+      final HistoryPropertyInfo info) {
+    final currentShownTime = useState(DateTime.now());
+    final showBody = useState(false);
+
+    final from = DateTime.utc(currentShownTime.value.year,
+            currentShownTime.value.month, currentShownTime.value.day)
+        .subtract(currentShownTime.value.timeZoneOffset);
+
     return VisibilityDetector(
-        key: ref.watch(_tabKeyProvider(
-            Tuple2(widget.genericDevice.id, info.propertyName))),
-        child: !showBody
+        key: Key(genericDevice.id.toString() + info.propertyName),
+        child: !showBody.value
             ? const SizedBox()
             : ref
-                .watch(historyPropertyNameProvider(widget.genericDevice.id,
-                    from, from.add(Duration(days: 1)), info.propertyName))
+                .watch(historyPropertyNameProvider(genericDevice.id, from,
+                    from.add(Duration(days: 1)), info.propertyName))
                 .when(
                   data: (final data) {
                     if (data.historyRecords.isNotEmpty) {
                       return buildHistorySeriesAnnotationChart(
+                          context,
                           data,
                           info,
                           AdaptiveTheme.of(context).brightness ==
@@ -434,7 +393,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                               : Color(info.darkThemeColor),
                           currentShownTime);
                     }
-                    return buildDataMissing(currentShownTime);
+                    return buildDataMissing(context, currentShownTime);
                   },
                   error: (final e, final o) => Text(e.toString()),
                   loading: () => Column(
@@ -454,19 +413,13 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                   ),
                 ),
         onVisibilityChanged: (final i) {
-          try {
-            ref
-                .read(_currentShownTabProvider(
-                        Tuple2(widget.genericDevice.id, info.propertyName))
-                    .notifier)
-                .state = !i.visibleBounds.isEmpty;
-          } catch (e) {
-            //Happends in debug when exiting in the history tab
-          }
+          showBody.value = !i.visibleBounds.isEmpty;
         });
   }
 
-  Widget buildDataMissing(final DateTime currentShownTime) {
+  Widget buildDataMissing(
+      final BuildContext context, final ValueNotifier<DateTime> notifier) {
+    final currentShownTime = notifier.value;
     return Flex(
       direction: Axis.vertical,
       children: <Widget>[
@@ -480,19 +433,21 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                 child: MaterialButton(
               child: const Text("Früher"),
               onPressed: () {
-                getNewData(currentShownTime.subtract(const Duration(days: 1)));
+                getNewData(currentShownTime.subtract(const Duration(days: 1)),
+                    notifier);
               },
             )),
             Expanded(
               child: MaterialButton(
-                  onPressed: () => _openDatePicker(currentShownTime),
+                  onPressed: () => _openDatePicker(context, notifier),
                   child: const Text('Datum auswählen')),
             ),
             Expanded(
                 child: MaterialButton(
               child: const Text("Später"),
               onPressed: () {
-                getNewData(currentShownTime.add(const Duration(days: 1)));
+                getNewData(
+                    currentShownTime.add(const Duration(days: 1)), notifier);
               },
             )),
           ],
@@ -502,12 +457,13 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
   }
 
   Widget buildHistorySeriesAnnotationChart(
-      final HistoryModel h,
+      final BuildContext context,
+      final History h,
       final HistoryPropertyInfo info,
       final Color lineColor,
-      final DateTime currentShownTime) {
-    h.historyRecords = h.historyRecords
-        .where((final x) => x.value != null)
+      final ValueNotifier<DateTime> currentShownTime) {
+    final historyRecords = h.historyRecords
+        .where((final x) => x.val != null)
         .toList(growable: false);
     final chartType = info.chartType;
     final dynamic seriesList = _getSeriesList(chartType, h, lineColor);
@@ -517,33 +473,24 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
         Expanded(
           child: HistorySeriesAnnotationChartWidget(
             seriesList,
-            h.historyRecords
-                .where((final x) => x.value != null)
-                .map((final x) => x.value!)
-                .minBy(10000, (final e) => e)
-                .toDouble(),
-            h.historyRecords
-                .where((final x) => x.value != null)
-                .map((final x) => x.value!)
-                .maxBy(0, (final e) => e)
-                .toDouble(),
+            historyRecords.minBy(10000, (final e) => e.val!).toDouble(),
+            historyRecords.maxBy(0, (final e) => e.val!).toDouble(),
             info.unitOfMeasurement,
             info.xAxisName,
-            currentShownTime,
+            currentShownTime.value,
             loadMoreIndicatorBuilder: (final context, final direction) {
               return Consumer(
                 builder: (final context, final ref, final child) {
                   Future<void>.delayed(const Duration(milliseconds: 10), (() {
-                    final current =
-                        ref.read(_currentShownTimeProvider.notifier);
+                    final current = currentShownTime;
                     if (direction == ChartSwipeDirection.end) {
-                      if (current.state.day < DateTime.now().day) {
-                        current.state =
-                            current.state.add(const Duration(days: 1));
+                      if (current.value.day < DateTime.now().day) {
+                        current.value =
+                            current.value.add(const Duration(days: 1));
                       }
                     } else {
-                      current.state =
-                          current.state.add(const Duration(days: -1));
+                      current.value =
+                          current.value.add(const Duration(days: -1));
                     }
                   }));
                   return const SizedBox();
@@ -559,15 +506,17 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                 child: MaterialButton(
               child: const Text("Früher"),
               onPressed: () {
-                getNewData(currentShownTime.subtract(const Duration(days: 1)));
+                getNewData(
+                    currentShownTime.value.subtract(const Duration(days: 1)),
+                    currentShownTime);
               },
             )),
             Expanded(
               child: MaterialButton(
-                  onPressed: () => _openDatePicker(currentShownTime),
+                  onPressed: () => _openDatePicker(context, currentShownTime),
                   child: const Text('Datum auswählen')),
             ),
-            currentShownTime
+            currentShownTime.value
                     .isAfter(DateTime.now().add(const Duration(hours: -23)))
                 ? Expanded(
                     child: const SizedBox(),
@@ -576,7 +525,9 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
                     child: MaterialButton(
                     child: const Text("Später"),
                     onPressed: () {
-                      getNewData(currentShownTime.add(const Duration(days: 1)));
+                      getNewData(
+                          currentShownTime.value.add(const Duration(days: 1)),
+                          currentShownTime);
                     },
                   )),
           ],
@@ -586,7 +537,7 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
   }
 
   dynamic _getSeriesList(
-      final String charType, final HistoryModel h, final Color lineColor) {
+      final String charType, final History h, final Color lineColor) {
     switch (charType) {
       case "step":
         return [
@@ -598,8 +549,8 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
               ),
               dataSource: h.historyRecords
                   .map((final x) => GraphTimeSeriesValue(
-                      DateTime.utc(1).add(Duration(milliseconds: x.timeStamp)),
-                      x.value,
+                      DateTime.utc(1).add(Duration(milliseconds: x.ts)),
+                      x.val,
                       lineColor))
                   .toList(),
               xValueMapper: (final GraphTimeSeriesValue value, final _) =>
@@ -619,8 +570,8 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
               ),
               dataSource: h.historyRecords
                   .map((final x) => GraphTimeSeriesValue(
-                      DateTime.utc(1).add(Duration(milliseconds: x.timeStamp)),
-                      x.value,
+                      DateTime.utc(1).add(Duration(milliseconds: x.ts)),
+                      x.val,
                       lineColor))
                   .toList(),
               xValueMapper: (final GraphTimeSeriesValue value, final _) =>
@@ -633,11 +584,12 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
     }
   }
 
-  void _openDatePicker(final DateTime initial) {
+  void _openDatePicker(
+      final BuildContext context, final ValueNotifier<DateTime> initial) {
     // showDatePicker is a pre-made funtion of Flutter
     showDatePicker(
             context: context,
-            initialDate: initial,
+            initialDate: initial.value,
             firstDate: DateTime(2018),
             lastDate: DateTime.now())
         .then((final pickedDate) {
@@ -645,14 +597,55 @@ class GenericDeviceScreenState extends ConsumerState<GenericDeviceScreen> {
       if (pickedDate == null) {
         return;
       }
-      getNewData(pickedDate);
+      getNewData(pickedDate, initial);
     });
   }
 
-  getNewData(final DateTime dt) {
+  getNewData(final DateTime dt, final ValueNotifier<DateTime> state) {
     if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) {
       return;
     }
-    ref.read(_currentShownTimeProvider.notifier).state = dt;
+    state.value = dt;
+  }
+}
+
+class _GenericDeviceFab extends ConsumerWidget {
+  const _GenericDeviceFab({
+    super.key,
+    required this.genericDevice,
+  });
+
+  final GenericDevice genericDevice;
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final name = ref.watch(BaseModel.typeNameProvider(genericDevice.id));
+    final fabLayout = ref.watch(fabLayoutProvider(genericDevice.id, name));
+    if (fabLayout == null) return const SizedBox();
+
+    final valueModel = ref.watch(valueStoreChangedProvider(
+      fabLayout.name,
+      fabLayout.deviceId ?? genericDevice.id,
+    ));
+    if (valueModel == null) return const SizedBox();
+    // final showDebugInformation = ref.watch(debugInformationEnabledProvider);
+
+    final info = fabLayout.editInfo!;
+    final EditParameter edit;
+    edit = GenericDevice.getEditParameter(valueModel, info);
+    final message = Message(edit.id ?? genericDevice.id,
+        edit.messageType ?? info.editCommand, edit.command, edit.parameters);
+
+    return FloatingActionButton(
+      onPressed: (() async {
+        await ref.read(hubConnectionConnectedProvider)?.invoke(
+            info.hubMethod ?? "Update",
+            args: <Object>[message.toJson()]);
+      }),
+      child: Icon(
+        IconData(edit.extensionData!["CodePoint"] as int,
+            fontFamily: edit.extensionData!["FontFamily"] ?? 'MaterialIcons'),
+      ),
+    );
   }
 }

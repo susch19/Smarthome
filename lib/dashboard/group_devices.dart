@@ -43,7 +43,7 @@ class GroupDevices extends ConsumerWidget {
             ref.read(Device.groupsByIdProvider(device.id).notifier).state =
                 ref.read(tempGroupProvider(device.id));
           }
-          ref.read(deviceProvider.notifier).saveDeviceGroups();
+          ref.read(deviceManagerProvider.notifier).saveDeviceGroups();
           Navigator.of(context).pop(true);
         },
       ),
@@ -52,7 +52,9 @@ class GroupDevices extends ConsumerWidget {
 
   List<Widget> mapDevices(final WidgetRef ref) {
     final widgets = <Widget>[];
-    final devices = ref.watch(deviceProvider);
+    final devicesFuture = ref.watch(deviceManagerProvider);
+    if (!devicesFuture.hasValue) return [];
+    final devices = devicesFuture.requireValue;
 
     for (final device in devices) {
       final groups = ref.watch(tempGroupProvider(device.id));

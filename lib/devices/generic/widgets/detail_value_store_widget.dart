@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/settings_manager.dart';
-import 'package:tuple/tuple.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DetailValueStoreWidget extends ConsumerWidget {
@@ -14,8 +13,8 @@ class DetailValueStoreWidget extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel = ref.watch(
-        valueStoreChangedProvider(Tuple2(e.name, e.deviceId ?? device.id)));
+    final valueModel =
+        ref.watch(valueStoreChangedProvider(e.name, e.deviceId ?? device.id));
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
     if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
