@@ -165,7 +165,7 @@ class DeviceManager extends _$DeviceManager {
 
   static bool showDebugInformation = false;
 
-  late final HubConnection? _connection;
+  HubConnection? _connection;
 
   static final Map<String, String> _groupNames = <String, String>{};
   static final customGroupNameProvider =
@@ -175,6 +175,9 @@ class DeviceManager extends _$DeviceManager {
 
   @override
   FutureOr<List<Device<BaseModel>>> build() async {
+    // final time = ref.watch(newConnectionProvider);
+    // if (time + 100 > DateTime.timestamp().millisecondsSinceEpoch)
+    //   _deviceIds.clear();
     final manager = ref.watch(connectionManagerProvider);
     if (!manager.hasValue) return [];
     final connection = manager.requireValue.connection;

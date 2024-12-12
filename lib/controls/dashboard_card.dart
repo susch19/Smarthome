@@ -2,6 +2,8 @@
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/controls/controls_exporter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,14 +80,19 @@ class StatelessDashboardCard extends ConsumerWidget {
                           margin: const EdgeInsets.only(left: 12, top: 8),
                           height: 16,
                           width: 12,
-                          child: Consumer(
+                          child: HookConsumer(
                             builder: (final _, final ref, final __) {
                               final bool? isConnected;
                               if (device is GenericDevice) {
-                                isConnected = ref
-                                    .watch(valueStoreChangedProvider(
-                                        "isConnected", device.id))
-                                    ?.currentValue;
+                                final valueModel = ref.watch(
+                                    valueStoreChangedProvider(
+                                        "isConnected", device.id));
+                                if (valueModel == null)
+                                  isConnected = false;
+                                else {
+                                  useListenable(valueModel);
+                                  isConnected = valueModel.currentValue;
+                                }
                               } else {
                                 isConnected = ref.watch(
                                     ConnectionBaseModel.isConnectedProvider(

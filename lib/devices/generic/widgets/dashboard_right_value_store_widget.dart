@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/helper/settings_manager.dart';
 
-class DashboardRightValueStoreWidget extends ConsumerWidget {
-  final DashboardPropertyInfo e;
+class DashboardRightValueStoreWidget extends HookConsumerWidget {
+  final DashboardPropertyInfo info;
   final GenericDevice device;
-  const DashboardRightValueStoreWidget(this.e, this.device, {super.key});
+  const DashboardRightValueStoreWidget(this.info, this.device, {super.key});
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final valueModel =
-        ref.watch(valueStoreChangedProvider(e.name, e.deviceId ?? device.id));
+    final valueModel = ref.watch(
+        valueStoreChangedProvider(info.name, info.deviceId ?? device.id));
     if (valueModel == null) return const SizedBox();
+    useListenable(valueModel);
 
     final showDebugInformation = ref.watch(debugInformationEnabledProvider);
-    if ((e.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
+    if ((info.showOnlyInDeveloperMode ?? false) && !showDebugInformation) {
       return const SizedBox();
     }
-    if (e.specialType == DasboardSpecialType.right) {
-      return device.getEditWidget(context, e, valueModel, ref);
+    if (info.specialType == DasboardSpecialType.right) {
+      return device.getEditWidget(info, valueModel);
     }
 
     // else if (e.specialType == SpecialType.disabled) {

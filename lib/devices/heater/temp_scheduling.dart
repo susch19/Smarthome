@@ -129,7 +129,7 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-          title: const Text("Temperatur Einstellungen"),
+          title: Text("Temperatur Einstellungen"),
           actions: <Widget>[
             IconButton(
                 icon: const Icon(Icons.save),
@@ -192,66 +192,64 @@ class TempSchedulingState extends ConsumerState<TempScheduling> {
     return Container(
       padding: const EdgeInsets.only(top: 8.0),
       child: BlurryCard(
-        child: GestureDetector(
-          child: MaterialButton(
-            onPressed: () async {
-              final res = await Navigator.push(
-                  context,
-                  MaterialPageRoute<(bool, List<HeaterConfig>)>(
-                      builder: (final BuildContext context) =>
-                          HeaterTempSettings(x, value),
-                      fullscreenDialog: true));
-              storeNewTempConfigs(res, value);
-            },
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Wrap(
-                        children: value
-                            .map((final x) => dayOfWeekChip(x.dayOfWeek))
-                            .toList(growable: false),
-                      ),
+        child: MaterialButton(
+          onPressed: () async {
+            final res = await Navigator.push(
+                context,
+                MaterialPageRoute<(bool, List<HeaterConfig>)>(
+                    builder: (final BuildContext context) =>
+                        HeaterTempSettings(x, value),
+                    fullscreenDialog: true));
+            storeNewTempConfigs(res, value);
+          },
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      children: value
+                          .map((final x) => dayOfWeekChip(x.dayOfWeek))
+                          .toList(growable: false),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        final heaterConfigsNotifier =
-                            ref.read(heaterConfigProvider(widget.id).notifier);
-                        final heaterConfigs =
-                            heaterConfigsNotifier.state.toList();
-                        heaterConfigs.removeElements(value);
-                        heaterConfigsNotifier.state = heaterConfigs;
-                        _saveNeeded = true;
-                      },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      final heaterConfigsNotifier =
+                          ref.read(heaterConfigProvider(widget.id).notifier);
+                      final heaterConfigs =
+                          heaterConfigsNotifier.state.toList();
+                      heaterConfigs.removeElements(value);
+                      heaterConfigsNotifier.state = heaterConfigs;
+                      _saveNeeded = true;
+                    },
+                  ),
+                ],
+              ),
+              Container(
+                margin: const EdgeInsetsDirectional.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      x.$1!.format(context),
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                    ),
+                    Text(
+                      "${x.$2!.toStringAsFixed(1)}°C",
+                      style: const TextStyle(fontSize: 18),
                     ),
                   ],
                 ),
-                Container(
-                  margin: const EdgeInsetsDirectional.only(bottom: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        x.$1!.format(context),
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
-                      ),
-                      Text(
-                        "${x.$2!.toStringAsFixed(1)}°C",
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              // crossAxisAlignment: CrossAxisAlignment.start,
-            ),
+              ),
+            ],
+            // crossAxisAlignment: CrossAxisAlignment.start,
           ),
         ),
       ),

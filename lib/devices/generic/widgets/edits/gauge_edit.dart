@@ -1,7 +1,9 @@
 // ignore_for_file: prefer_final_parameters
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:smarthome/devices/device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
@@ -30,18 +32,61 @@ class _Displays {
   _Displays({required this.label, required this.value, required this.unit});
 }
 
-class GaugeEdit {
-  static Widget getTempGauge(
-      final int id,
-      final BuildContext context,
-      final ValueStore? valueModel,
-      final LayoutBasePropertyInfo e,
-      final WidgetRef ref) {
-    final info = e.editInfo;
-    if (valueModel == null || valueModel.currentValue is! num || info == null) {
+class GaugeEdit extends ConsumerWidget {
+  final int id;
+  final ValueStore? valueModel;
+  final LayoutBasePropertyInfo info;
+
+  const GaugeEdit({
+    super.key,
+    required this.id,
+    required this.valueModel,
+    required this.info,
+  });
+
+  static void _handlePointerValueChanged(final double value, final int deviceId,
+      final String key, final WidgetRef ref) {
+    _setPointerValue(value, deviceId, key, ref);
+  }
+
+  static Future _handlePointerValueChangedEnd(
+      final double value,
+      final int deviceId,
+      final String key,
+      final PropertyEditInformation info,
+      final WidgetRef ref) async {
+    _handlePointerValueChanged(value, deviceId, key, ref);
+
+    final msg =
+        GenericDevice.getMessage(info, info.editParameter.first, deviceId);
+    msg.parameters = [value, ...msg.parameters ?? []];
+    await ref
+        .read(hubConnectionConnectedProvider)
+        ?.invoke(info.hubMethod ?? "Update", args: <Object>[msg.toJson()]);
+  }
+
+  static void _handlePointerValueChanging(final ValueChangingArgs args,
+      final int deviceId, final String key, final WidgetRef ref) {
+    _setPointerValue(args.value, deviceId, key, ref);
+  }
+
+  static void _setPointerValue(final double value, final int deviceId,
+      final String key, final WidgetRef ref) {
+    final curValue = ref.read(_newValueProvider(deviceId, key).notifier);
+
+    curValue.change((value.clamp(5, 35) * 10).roundToDouble() / 10);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final editInfo = info.editInfo;
+    final valueModel = this.valueModel;
+    if (valueModel == null ||
+        valueModel.currentValue is! num ||
+        editInfo == null) {
       return const SizedBox();
     }
-    final raw = info.extensionData ?? {};
+    final raw = editInfo.extensionData ?? {};
 
     final startAngle = (raw.containsKey("StartAngle")
             ? double.tryParse(raw["StartAngle"].toString())
@@ -141,10 +186,10 @@ class GaugeEdit {
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
               ),
-              (e.unitOfMeasurement == ""
+              (info.unitOfMeasurement == ""
                   ? const SizedBox()
                   : Text(
-                      e.unitOfMeasurement,
+                      info.unitOfMeasurement,
                       style: const TextStyle(fontSize: 24),
                     ))
             ],
@@ -195,7 +240,7 @@ class GaugeEdit {
                 labelOffset: 0.05,
                 offsetUnit: GaugeSizeUnit.factor,
                 onAxisTapped: (final v) => _handlePointerValueChangedEnd(
-                    v, id, valueModel.key, info, ref),
+                    v, id, valueModel.key, editInfo, ref),
                 labelsPosition: ElementsPosition.outside,
                 minorTicksPerInterval: 0,
                 minorTickStyle: const MinorTickStyle(length: 0.1),
@@ -213,7 +258,7 @@ class GaugeEdit {
                         _handlePointerValueChanged(v, id, valueModel.key, ref),
                     onValueChangeEnd: (final v) =>
                         _handlePointerValueChangedEnd(
-                            v, id, valueModel.key, info, ref),
+                            v, id, valueModel.key, editInfo, ref),
                     onValueChanging: (final v) =>
                         _handlePointerValueChanging(v, id, valueModel.key, ref),
                     borderColor: Colors.black,
@@ -238,12 +283,12 @@ class GaugeEdit {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: displays.map((e) {
                             if (e.value == "") return Text(e.label);
-                            return Consumer(
+                            return HookConsumer(
                               builder: (context, ref, child) {
                                 final valStore = ref.watch(
                                     valueStoreChangedProvider(e.value, id));
                                 if (valStore == null) return const SizedBox();
-
+                                useListenable(valStore);
                                 if (e.label == "") {
                                   return Text(
                                       valStore.getValueAsString() + e.unit);
@@ -264,38 +309,5 @@ class GaugeEdit {
         ),
       ],
     );
-  }
-
-  static void _handlePointerValueChanged(final double value, final int deviceId,
-      final String key, final WidgetRef ref) {
-    _setPointerValue(value, deviceId, key, ref);
-  }
-
-  static Future _handlePointerValueChangedEnd(
-      final double value,
-      final int deviceId,
-      final String key,
-      final PropertyEditInformation info,
-      final WidgetRef ref) async {
-    _handlePointerValueChanged(value, deviceId, key, ref);
-
-    final msg =
-        GenericDevice.getMessage(info, info.editParameter.first, deviceId);
-    msg.parameters = [value, ...msg.parameters ?? []];
-    await ref
-        .read(hubConnectionConnectedProvider)
-        ?.invoke(info.hubMethod ?? "Update", args: <Object>[msg.toJson()]);
-  }
-
-  static void _handlePointerValueChanging(final ValueChangingArgs args,
-      final int deviceId, final String key, final WidgetRef ref) {
-    _setPointerValue(args.value, deviceId, key, ref);
-  }
-
-  static void _setPointerValue(final double value, final int deviceId,
-      final String key, final WidgetRef ref) {
-    final curValue = ref.read(_newValueProvider(deviceId, key).notifier);
-
-    curValue.change((value.clamp(5, 35) * 10).roundToDouble() / 10);
   }
 }

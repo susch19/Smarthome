@@ -78,18 +78,11 @@ class GenericDevice extends Device<BaseModel> {
   }
 
   Widget getEditWidget(
-          final BuildContext context,
-          final LayoutBasePropertyInfo e,
-          final ValueStore? valueModel,
-          final WidgetRef ref) =>
-      GenericDevice.getEditWidgetFor(context, id, e, valueModel, ref);
+          final LayoutBasePropertyInfo e, final ValueStore? valueModel) =>
+      GenericDevice.getEditWidgetFor(id, e, valueModel);
 
-  static Widget getEditWidgetFor(
-      final BuildContext context,
-      final int id,
-      final LayoutBasePropertyInfo e,
-      final ValueStore? valueModel,
-      final WidgetRef ref) {
+  static Widget getEditWidgetFor(final int id, final LayoutBasePropertyInfo e,
+      final ValueStore? valueModel) {
     switch (e.editInfo?.editType) {
       case EditType.button:
       case EditType.raisedbutton:
@@ -109,7 +102,7 @@ class GenericDevice extends Device<BaseModel> {
       case EditType.icon:
         return BasicIcon(valueModel: valueModel, info: e);
       case EditType.radial:
-        return GaugeEdit.getTempGauge(id, context, valueModel, e, ref);
+        return GaugeEdit(id: id, valueModel: valueModel, info: e);
       // case EditType.input:
       //   return _buildInput(valueModel, e, ref);
       //https://github.com/mchome/flutter_colorpicker
@@ -134,8 +127,11 @@ class GenericDevice extends Device<BaseModel> {
     if (setting.fontFamily != "") {
       ts = ts.copyWith(fontFamily: setting.fontFamily);
     }
-    ts = ts.copyWith(fontStyle: FontStyle.values[setting.fontStyle.index]);
-    ts = ts.copyWith(fontWeight: FontWeight.values[setting.fontWeight.index]);
+    ts = ts.copyWith(fontStyle: FontStyle.values[setting.fontStyle.index - 1]);
+    ts = ts.copyWith(
+        fontWeight: setting.fontWeight == FontWeightSetting.bold
+            ? FontWeight.bold
+            : FontWeight.normal);
     return ts;
   }
 
@@ -609,7 +605,7 @@ class GenericDeviceScreen extends HookConsumerWidget {
   }
 }
 
-class _GenericDeviceFab extends ConsumerWidget {
+class _GenericDeviceFab extends HookConsumerWidget {
   const _GenericDeviceFab({
     super.key,
     required this.genericDevice,
@@ -628,6 +624,7 @@ class _GenericDeviceFab extends ConsumerWidget {
       fabLayout.deviceId ?? genericDevice.id,
     ));
     if (valueModel == null) return const SizedBox();
+    useListenable(valueModel);
     // final showDebugInformation = ref.watch(debugInformationEnabledProvider);
 
     final info = fabLayout.editInfo!;

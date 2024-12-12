@@ -44,11 +44,11 @@ class DashboardPropertyInfo extends LayoutBasePropertyInfo {
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        (other is LayoutBasePropertyInfo && super == (other)) ||
-        (other is DashboardPropertyInfo &&
-            (identical(other.specialType, specialType) ||
-                const DeepCollectionEquality()
-                    .equals(other.specialType, specialType)));
+        ((other is LayoutBasePropertyInfo && super == (other)) &&
+            (other is DashboardPropertyInfo &&
+                (identical(other.specialType, specialType) ||
+                    const DeepCollectionEquality()
+                        .equals(other.specialType, specialType))));
   }
 
   @override

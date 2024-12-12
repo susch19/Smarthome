@@ -68,7 +68,7 @@ class HubConnectionContainer {
 }
 
 @Riverpod(keepAlive: true)
-int _dummyApiRefresh(Ref ref) => DateTime.timestamp().millisecondsSinceEpoch;
+int newConnection(Ref ref) => DateTime.timestamp().millisecondsSinceEpoch;
 
 @Riverpod(keepAlive: true)
 class ConnectionManager extends _$ConnectionManager {
@@ -91,7 +91,7 @@ class ConnectionManager extends _$ConnectionManager {
       connection.on("Update", _updateState);
       connection.on(
           "UpdateUi", ref.read(layoutIconsProvider.notifier).updateFromServer);
-      ref.invalidate(_dummyApiRefreshProvider);
+      ref.invalidate(newConnectionProvider);
       state = AsyncData(HubConnectionContainer(connection, connection.state));
     });
     connection.onclose(({final Exception? error}) async {
@@ -130,7 +130,7 @@ class ConnectionManager extends _$ConnectionManager {
         "UpdateUi", ref.read(layoutIconsProvider.notifier).updateFromServer);
     if (serverUrl != "") {
       await connection.start();
-      ref.invalidate(_dummyApiRefreshProvider);
+      ref.invalidate(newConnectionProvider);
       connectionIconChanged.value = Icons.check;
     }
     return HubConnectionContainer(connection, connection.state);
@@ -253,7 +253,7 @@ class PermanentRetryPolicy extends IRetryPolicy {
 class Api extends _$Api {
   @override
   sw.Swagger build() {
-    ref.watch(_dummyApiRefreshProvider);
+    ref.watch(newConnectionProvider);
     final serverUrl = ref.watch(serverUrlProvider);
     final parsed = Uri.parse(serverUrl);
     final uri =

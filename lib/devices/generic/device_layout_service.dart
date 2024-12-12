@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -95,10 +96,11 @@ DashboardDeviceLayout? dashboardDeviceLayout(
     final Ref ref, final int id, final String typeName) {
   ref.watch(deviceLayoutsProvider);
 
-  return ref
+  final ret = ref
       .read(deviceLayoutsProvider.notifier)
       .getLayout(id, typeName)
       ?.dashboardDeviceLayout;
+  return ret;
 }
 
 @riverpod
