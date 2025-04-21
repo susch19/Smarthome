@@ -254,7 +254,7 @@ class GenericDeviceScreen extends HookConsumerWidget {
                   ),
                 ),
         onVisibilityChanged: (final i) {
-          showBody.value = !i.visibleBounds.isEmpty;
+          if (context.mounted) showBody.value = !i.visibleBounds.isEmpty;
         });
   }
 

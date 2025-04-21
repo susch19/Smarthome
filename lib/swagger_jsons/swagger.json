@@ -794,6 +794,37 @@
         }
       }
     },
+    "/app/layout/iconByName": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "operationId": "Layout_GetAllIcons",
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "type": "string",
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "x-nullable": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "x-nullable": false,
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/SvgIcon"
+            }
+          }
+        }
+      }
+    },
     "/app/layout": {
       "patch": {
         "tags": [
@@ -896,7 +927,7 @@
       }
     },
     "/notification/sendNotification": {
-      "get": {
+      "post": {
         "tags": [
           "Notification"
         ],
@@ -978,7 +1009,7 @@
             "name": "deviceId",
             "in": "query",
             "required": true,
-            "format": "int32",
+            "format": "int64",
             "x-nullable": true
           }
         ],
@@ -1217,12 +1248,21 @@
     },
     "LayoutResponse": {
       "type": "object",
+      "required": [
+        "additionalIcons"
+      ],
       "properties": {
         "layout": {
           "$ref": "#/definitions/DeviceLayout"
         },
         "icon": {
-          "$ref": "#/definitions/SvgIcon"
+          "$ref": "#/definitions/IconResponse"
+        },
+        "additionalIcons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IconResponse"
+          }
         }
       }
     },
@@ -1757,6 +1797,21 @@
         },
         "global": {
           "type": "boolean"
+        }
+      }
+    },
+    "IconResponse": {
+      "type": "object",
+      "required": [
+        "icon",
+        "name"
+      ],
+      "properties": {
+        "icon": {
+          "$ref": "#/definitions/SvgIcon"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },
