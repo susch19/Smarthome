@@ -26,6 +26,9 @@ class SvgIcon {
   factory SvgIcon.fromJson(final Map<String, dynamic> json) =>
       _$SvgIconFromJson(json);
 
+  factory SvgIcon.fromJsonFactory(final Map<String, dynamic> json) =>
+      _$SvgIconFromJson(json);
+
   Map<String, dynamic> toJson() => _$SvgIconToJson(this);
 
   static Uint8List? _dataFromJson(final dynamic jsonData) {

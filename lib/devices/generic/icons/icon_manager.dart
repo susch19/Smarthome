@@ -15,6 +15,10 @@ Uint8List? iconByTypeNames(final Ref ref, final List<String> names) {
   for (final name in names) {
     if (icons.containsKey(name)) return icons[name]?.data;
   }
+  for (final name in names) {
+    final data = ref.read(iconByNameProvider(name));
+    if (data != null) return data;
+  }
   return null;
 }
 
@@ -57,7 +61,7 @@ Map<String, SvgIcon> _iconTypeNames(final Ref ref) {
             x.layout!.typeNames!.isNotEmpty)
         .groupManyBy((final x) => x.layout!.typeNames!)
         .entries
-        .toMap((final x) => x.key, (final x) => x.value.first.icon!),
+        .toMap((final x) => x.key, (final x) => x.value.first.icon!.icon),
     _ => {},
   };
 }
@@ -70,7 +74,7 @@ Map<String, SvgIcon> _iconTypeName(final Ref ref) {
         .where((final x) => x.icon != null && x.layout?.typeName != null)
         .groupBy((final x) => (x.layout!.typeName!, x.icon!))
         .keys
-        .toMap((final x) => x.$1, (final x) => x.$2),
+        .toMap((final x) => x.$1, (final x) => x.$2.icon),
     _ => {},
   };
 }
@@ -80,10 +84,10 @@ Map<String, SvgIcon> _iconName(final Ref ref) {
   final layoutsRes = ref.watch(layoutIconsProvider);
   return switch (layoutsRes) {
     AsyncData(:final value) => value
-        .where((final x) => x.icon != null && x.layout != null)
-        .groupBy((final x) => (x.layout!.iconName, x.icon!))
-        .keys
-        .toMap((final x) => x.$1, (final x) => x.$2),
+        .where((final x) => x.icon != null)
+        .mapMany((x) => [x.icon!, ...x.additionalIcons])
+        .distinct()
+        .toMap((final x) => x.name, (final x) => x.icon),
     _ => {},
   };
 }

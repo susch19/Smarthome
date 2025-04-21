@@ -10,6 +10,7 @@ import 'package:chopper/chopper.dart';
 import 'client_mapping.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart' show MultipartFile;
 import 'package:chopper/chopper.dart' as chopper;
 import 'swagger.enums.swagger.dart' as enums;
 export 'swagger.enums.swagger.dart';
@@ -461,6 +462,21 @@ abstract class Swagger extends ChopperService {
   Future<chopper.Response<List<LayoutResponse>>> _appLayoutAllGet();
 
   ///
+  ///@param name
+  Future<chopper.Response<SvgIcon>> appLayoutIconByNameGet(
+      {required String? name}) {
+    generatedMapping.putIfAbsent(SvgIcon, () => SvgIcon.fromJsonFactory);
+
+    return _appLayoutIconByNameGet(name: name);
+  }
+
+  ///
+  ///@param name
+  @Get(path: '/app/layout/iconByName')
+  Future<chopper.Response<SvgIcon>> _appLayoutIconByNameGet(
+      {@Query('name') required String? name});
+
+  ///
   Future<chopper.Response> appLayoutPatch() {
     return _appLayoutPatch();
   }
@@ -513,18 +529,18 @@ abstract class Swagger extends ChopperService {
 
   ///
   ///@param notification
-  Future<chopper.Response<List<int>>> notificationSendNotificationGet(
+  Future<chopper.Response<List<int>>> notificationSendNotificationPost(
       {required AppNotification? notification}) {
     generatedMapping.putIfAbsent(
         AppNotification, () => AppNotification.fromJsonFactory);
 
-    return _notificationSendNotificationGet(notification: notification);
+    return _notificationSendNotificationPost(notification: notification);
   }
 
   ///
   ///@param notification
-  @Get(path: '/notification/sendNotification')
-  Future<chopper.Response<List<int>>> _notificationSendNotificationGet(
+  @Post(path: '/notification/sendNotification')
+  Future<chopper.Response<List<int>>> _notificationSendNotificationPost(
       {@Body() required AppNotification? notification});
 
   ///
@@ -1214,6 +1230,7 @@ class LayoutResponse {
   const LayoutResponse({
     this.layout,
     this.icon,
+    required this.additionalIcons,
   });
 
   factory LayoutResponse.fromJson(Map<String, dynamic> json) =>
@@ -1225,7 +1242,9 @@ class LayoutResponse {
   @JsonKey(name: 'layout')
   final DeviceLayout? layout;
   @JsonKey(name: 'icon')
-  final SvgIcon? icon;
+  final IconResponse? icon;
+  @JsonKey(name: 'additionalIcons', defaultValue: <IconResponse>[])
+  final List<IconResponse> additionalIcons;
   static const fromJsonFactory = _$LayoutResponseFromJson;
 
   @override
@@ -1235,7 +1254,10 @@ class LayoutResponse {
             (identical(other.layout, layout) ||
                 const DeepCollectionEquality().equals(other.layout, layout)) &&
             (identical(other.icon, icon) ||
-                const DeepCollectionEquality().equals(other.icon, icon)));
+                const DeepCollectionEquality().equals(other.icon, icon)) &&
+            (identical(other.additionalIcons, additionalIcons) ||
+                const DeepCollectionEquality()
+                    .equals(other.additionalIcons, additionalIcons)));
   }
 
   @override
@@ -1245,20 +1267,31 @@ class LayoutResponse {
   int get hashCode =>
       const DeepCollectionEquality().hash(layout) ^
       const DeepCollectionEquality().hash(icon) ^
+      const DeepCollectionEquality().hash(additionalIcons) ^
       runtimeType.hashCode;
 }
 
 extension $LayoutResponseExtension on LayoutResponse {
-  LayoutResponse copyWith({DeviceLayout? layout, SvgIcon? icon}) {
+  LayoutResponse copyWith(
+      {DeviceLayout? layout,
+      IconResponse? icon,
+      List<IconResponse>? additionalIcons}) {
     return LayoutResponse(
-        layout: layout ?? this.layout, icon: icon ?? this.icon);
+        layout: layout ?? this.layout,
+        icon: icon ?? this.icon,
+        additionalIcons: additionalIcons ?? this.additionalIcons);
   }
 
   LayoutResponse copyWithWrapped(
-      {Wrapped<DeviceLayout?>? layout, Wrapped<SvgIcon?>? icon}) {
+      {Wrapped<DeviceLayout?>? layout,
+      Wrapped<IconResponse?>? icon,
+      Wrapped<List<IconResponse>>? additionalIcons}) {
     return LayoutResponse(
         layout: (layout != null ? layout.value : this.layout),
-        icon: (icon != null ? icon.value : this.icon));
+        icon: (icon != null ? icon.value : this.icon),
+        additionalIcons: (additionalIcons != null
+            ? additionalIcons.value
+            : this.additionalIcons));
   }
 }
 
@@ -2283,6 +2316,58 @@ extension $NotificationSetupExtension on NotificationSetup {
         times: (times != null ? times.value : this.times),
         deviceIds: (deviceIds != null ? deviceIds.value : this.deviceIds),
         global: (global != null ? global.value : this.global));
+  }
+}
+
+@JsonSerializable(explicitToJson: true)
+class IconResponse {
+  const IconResponse({
+    required this.icon,
+    required this.name,
+  });
+
+  factory IconResponse.fromJson(Map<String, dynamic> json) =>
+      _$IconResponseFromJson(json);
+
+  static const toJsonFactory = _$IconResponseToJson;
+  Map<String, dynamic> toJson() => _$IconResponseToJson(this);
+
+  @JsonKey(name: 'icon')
+  final SvgIcon icon;
+  @JsonKey(name: 'name')
+  final String name;
+  static const fromJsonFactory = _$IconResponseFromJson;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is IconResponse &&
+            (identical(other.icon, icon) ||
+                const DeepCollectionEquality().equals(other.icon, icon)) &&
+            (identical(other.name, name) ||
+                const DeepCollectionEquality().equals(other.name, name)));
+  }
+
+  @override
+  String toString() => jsonEncode(this);
+
+  @override
+  int get hashCode =>
+      const DeepCollectionEquality().hash(icon) ^
+      const DeepCollectionEquality().hash(name) ^
+      runtimeType.hashCode;
+}
+
+extension $IconResponseExtension on IconResponse {
+  IconResponse copyWith({SvgIcon? icon, String? name}) {
+    return IconResponse(icon: icon ?? this.icon, name: name ?? this.name);
+  }
+
+  IconResponse copyWithWrapped(
+      {Wrapped<SvgIcon>? icon, Wrapped<String>? name}) {
+    return IconResponse(
+        icon: (icon != null ? icon.value : this.icon),
+        name: (name != null ? name.value : this.name));
   }
 }
 

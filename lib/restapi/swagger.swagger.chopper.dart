@@ -378,6 +378,19 @@ final class _$Swagger extends Swagger {
   }
 
   @override
+  Future<Response<SvgIcon>> _appLayoutIconByNameGet({required String? name}) {
+    final Uri $url = Uri.parse('/app/layout/iconByName');
+    final Map<String, dynamic> $params = <String, dynamic>{'name': name};
+    final Request $request = Request(
+      'GET',
+      $url,
+      client.baseUrl,
+      parameters: $params,
+    );
+    return client.send<SvgIcon, SvgIcon>($request);
+  }
+
+  @override
   Future<Response<dynamic>> _appLayoutPatch() {
     final Uri $url = Uri.parse('/app/layout');
     final Request $request = Request(
@@ -432,12 +445,12 @@ final class _$Swagger extends Swagger {
   }
 
   @override
-  Future<Response<List<int>>> _notificationSendNotificationGet(
+  Future<Response<List<int>>> _notificationSendNotificationPost(
       {required AppNotification? notification}) {
     final Uri $url = Uri.parse('/notification/sendNotification');
     final $body = notification;
     final Request $request = Request(
-      'GET',
+      'POST',
       $url,
       client.baseUrl,
       body: $body,
