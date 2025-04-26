@@ -40,7 +40,6 @@ class NotificationService extends _$NotificationService {
     if (connection == null) return;
     connection.invoke("activate");
     connection.on("Notify", processNotification);
-    PreferencesManager.instance.setNotificationTopics([]);
     final topics = PreferencesManager.instance.getNotificationTopics();
     final origLength = topics.length;
     final api = ref.read(apiProvider);
@@ -55,7 +54,8 @@ class NotificationService extends _$NotificationService {
   void processNotification(final List<Object?>? arguments) {
     final notification = AppNotification.fromJson(arguments!.first as dynamic);
     final topics = PreferencesManager.instance.getNotificationTopics();
-    final topic = topics.firstOrDefault((final x) => x.topic == notification.topic);
+    final topic =
+        topics.firstOrDefault((final x) => x.topic == notification.topic);
     if (topic == null) return;
     if (notification.wasOneTime) {
       final idx = topics.indexOf(topic);
@@ -122,7 +122,8 @@ class NotificationService extends _$NotificationService {
           final widgets = <Widget>[];
           for (final (_, id, element) in grp.value) {
             final topic = useState(topics.firstWhere(
-              (final x) => x.uniqueName == element.uniqueName && x.deviceId == id,
+              (final x) =>
+                  x.uniqueName == element.uniqueName && x.deviceId == id,
               orElse: () {
                 final oneTime = element.times == 1;
                 final String topic;
@@ -204,7 +205,8 @@ class NotificationService extends _$NotificationService {
             })
       ],
     );
-    final dialogRes = await showDialog(context: context, builder: (final ctx) => ad);
+    final dialogRes =
+        await showDialog(context: context, builder: (final ctx) => ad);
     if (dialogRes == true) {
       final validTopics = topics
           .where((final x) => x.topic.isNotEmpty && (!x.oneTime || x.enabled))
