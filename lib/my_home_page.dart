@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smarthome/controls/dashboard_card.dart';
 import 'package:smarthome/controls/expandable_fab.dart';
 import 'package:smarthome/dashboard/group_devices.dart';
@@ -26,8 +28,6 @@ import 'package:smarthome/screens/settings_page.dart';
 
 final _groupCollapsedProvider =
     StateProvider.family<bool, String>((final _, final __) => false);
-final _addItemSelectorProvider =
-    StateProvider.family<bool, int>((final ref, final arg) => false);
 
 class DashboardGroup extends ConsumerWidget {
   const DashboardGroup({super.key, required this.deviceGroup});
@@ -401,7 +401,8 @@ class MyHomePage extends ConsumerWidget {
         final perDevice = devices
             .map((final x) => (x, layoutNotifier.getLayout(x.id, x.typeName)))
             .where((final x) => x.$2?.notificationSetup?.isNotEmpty ?? false)
-            .mapMany((final x) => x.$2!.notificationSetup!.map((final y) => (x.$1, y)))
+            .mapMany((final x) =>
+                x.$2!.notificationSetup!.map((final y) => (x.$1, y)))
             .where((final x) =>
                 !x.$2.global &&
                 (x.$2.deviceIds == null ||
@@ -480,81 +481,93 @@ class MyHomePage extends ConsumerWidget {
 
     final devicesFuture = ref.read(deviceManagerProvider);
     if (!devicesFuture.hasValue) return;
-    final devices = devicesFuture.requireValue;
-    final devicesToSelect = <Widget>[];
-    for (final dev in serverDevicesList) {
-      if (!devices.any((final x) => x.id == dev.id)) {
-        devicesToSelect.add(
-          Consumer(
-            builder: (final context, final ref, final child) {
-              final selected = ref.read(_addItemSelectorProvider(dev.id));
-              return SimpleDialogOption(
-                child: CheckboxListTile(
-                  value: selected,
-                  onChanged: (final c) {
-                    ref.read(_addItemSelectorProvider(dev.id).notifier).state =
-                        !selected;
-                  },
-                  title: Text(dev.friendlyName,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(dev.typeName),
-                ),
-              );
-            },
-          ),
-        );
-      }
-    }
-    if (devicesToSelect.length > 1) {
-      devicesToSelect.insert(
-        0,
-        SimpleDialogOption(
-          child: const Text("Select all"),
-          onPressed: () async {
-            for (final dev in serverDevicesList) {
-              ref.watch(_addItemSelectorProvider(dev.id).notifier).state = true;
-            }
-          },
-        ),
-      );
-    }
-    devicesToSelect.add(
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          SimpleDialogOption(
-            child: MaterialButton(
-              onPressed: () => subscribeTo(context, ref, serverDevicesList),
-              child: const Text("Subscribe to selected"),
-            ),
-            onPressed: () {
-              subscribeTo(context, ref, serverDevicesList);
-            },
-          ),
-        ],
-      ),
-    );
 
     final dialog = SimpleDialog(
-      title: Text((devicesToSelect.isEmpty
-          ? "No new Devices found"
-          : "Add new Smarthome Device")),
-      children: devicesToSelect,
+      title: Text("Add new Smarthome Device"),
+      children: [
+        HookConsumer(
+          builder: (final context, final ref, final child) {
+            final devices = devicesFuture.requireValue;
+            final devicesToSelect = <Widget>[];
+            final selecteds = useState<List<int>>([]);
+            for (final dev in serverDevicesList) {
+              if (!devices.any((final x) => x.id == dev.id)) {
+                devicesToSelect.add(
+                  Consumer(
+                    builder: (final context, final ref, final child) {
+                      final selected = selecteds.value.contains(dev.id);
+                      return SimpleDialogOption(
+                        child: CheckboxListTile(
+                          value: selected,
+                          onChanged: (final c) {
+                            if (selected) {
+                              selecteds.value = [
+                                ...selecteds.value
+                                    .where((final x) => x != dev.id)
+                              ];
+                            } else {
+                              selecteds.value = [...selecteds.value, dev.id];
+                            }
+                          },
+                          title: Text(dev.friendlyName,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(dev.typeName),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }
+            }
+            final allSelected =
+                selecteds.value.length == serverDevicesList.length;
+            if (devicesToSelect.length > 1) {
+              devicesToSelect.insert(
+                0,
+                SimpleDialogOption(
+                  child: allSelected
+                      ? const Text("Deselect all")
+                      : const Text("Select all"),
+                  onPressed: () async {
+                    selecteds.value = allSelected
+                        ? []
+                        : serverDevicesList.map((final x) => x.id).toList();
+                  },
+                ),
+              );
+            }
+            devicesToSelect.add(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  SimpleDialogOption(
+                    child: MaterialButton(
+                      onPressed: () =>
+                          subscribeTo(context, ref, selecteds.value),
+                      child: const Text("Subscribe to selected"),
+                    ),
+                    onPressed: () {
+                      subscribeTo(context, ref, selecteds.value);
+                    },
+                  ),
+                ],
+              ),
+            );
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: devicesToSelect,
+            );
+          },
+        )
+      ],
     );
     await showDialog(context: context, builder: (final b) => dialog);
   }
 
   static void subscribeTo(final BuildContext context, final WidgetRef ref,
-      final List<DeviceOverview> serverDevicesList) {
-    final List<int> selectedIds = [];
-    for (final dev in serverDevicesList) {
-      final notifier = ref.read(_addItemSelectorProvider(dev.id).notifier);
-      if (notifier.state) {
-        selectedIds.add(dev.id);
-        notifier.state = false;
-      }
-    }
-    ref.read(deviceManagerProvider.notifier).subscribeToDevices(selectedIds);
+      final List<int> devices) {
+    ref.read(deviceManagerProvider.notifier).subscribeToDevices(devices);
     Navigator.pop(context);
   }
 

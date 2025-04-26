@@ -30,7 +30,7 @@ import 'my_app.dart';
 import 'package:firebase_core/firebase_core.dart'
     show Firebase, FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show TargetPlatform, defaultTargetPlatform, kDebugMode, kIsWeb;
 
 part 'main.g.dart';
 
@@ -156,6 +156,7 @@ StreamController<NotificationResponse> onDidReceiveNotificationResponse =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kDebugMode) SharedPreferences.setPrefix("debug");
   final prefs = await SharedPreferences.getInstance();
   // prefs.clear();
   final String certificate =
