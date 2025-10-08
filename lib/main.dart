@@ -8,6 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // // import 'package:signalr_client/signalr_client.dart';
@@ -156,7 +157,11 @@ StreamController<NotificationResponse> onDidReceiveNotificationResponse =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kDebugMode) SharedPreferences.setPrefix("debug");
+  if (kDebugMode) {
+    SharedPreferences.setPrefix("debug.");
+  } else {
+    SharedPreferences.setPrefix("test.");
+  }
   final prefs = await SharedPreferences.getInstance();
   // prefs.clear();
   final String certificate =

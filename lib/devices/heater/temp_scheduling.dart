@@ -5,6 +5,7 @@ import 'package:smarthome/controls/controls_exporter.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'heater_config.dart';
 import 'heater_temp_settings.dart';

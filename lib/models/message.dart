@@ -7,32 +7,7 @@ part 'message.g.dart';
 
 // enum MessageType { Get, Update, Options }
 
-// enum Command {
-//   None,
-//   Off,
-//   On,
-//   WhoIAm,
-//   IP,
-//   Time,
-//   Temp,
-//   Brightness,
-//   RelativeBrightness,
-//   Color,
-//   Mode,
-//   OnChangedConnections,
-//   OnNewConnection,
-//   Mesh,
-//   Delay,
-//   RGB,
-//   Strobo,
-//   RGBCycle,
-//   LightWander,
-//   RGBWander,
-//   Reverse,
-//   SingleColor,
-//   DeviceMapping,
-//   Calibration,
-// }
+
 
 @JsonSerializable()
 class Message {
@@ -40,7 +15,7 @@ class Message {
   @JsonKey(name: "m")
   MessageType messageType;
   @JsonKey(name: "c")
-  Command command;
+  int command;
   @JsonKey(name: "p")
   List<Object?>? parameters;
 
@@ -61,7 +36,7 @@ class Message {
   // Message.fromJson(Map data) {
   //   id = data["id"];
   //   messageType = MessageType.values.firstWhere((e) => e.toString() == data["m"]);
-  //   command = Command2.values.firstWhere((e) => e.toString() == data["c"]);
+  //   command = Command.values.firstWhere((e) => e.toString() == data["c"]);
   //   parameters = data["p"];
   // }
 }

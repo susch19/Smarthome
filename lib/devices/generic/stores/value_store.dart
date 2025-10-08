@@ -3,12 +3,12 @@ import 'package:json_path/json_path.dart';
 import 'package:smarthome/devices/property_info.dart';
 import 'package:smarthome/helper/datetime_helper.dart';
 import 'package:smarthome/helper/extension_export.dart';
-import 'package:smarthome/restapi/swagger.enums.swagger.dart';
+import 'package:smarthome/models/command.dart';
 
 class ValueStore<T> extends ChangeNotifier {
   T currentValue;
   String key;
-  Command2 command;
+  Command command;
   int id;
   bool sendToServer = false;
   bool _debugDisposes = false;

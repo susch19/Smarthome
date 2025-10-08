@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
@@ -88,11 +89,6 @@ class BaseModel {
     }
 
     return updated ? updatedModel : this;
-  }
-
-  @protected
-  bool updateModelFromJson(final Map<String, dynamic> json) {
-    return false;
   }
 
   const BaseModel(this.id, this.friendlyName, this.typeName,

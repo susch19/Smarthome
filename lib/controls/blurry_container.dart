@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/helper/preference_manager.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 const EdgeInsetsGeometry kDefaultPadding = EdgeInsets.all(0);
 const EdgeInsetsGeometry kDefaultMargin = EdgeInsets.all(0);

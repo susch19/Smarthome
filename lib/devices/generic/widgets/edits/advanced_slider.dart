@@ -123,7 +123,12 @@ class AdvancedSlider extends HookConsumerWidget {
               valueModel.value = value as double;
             },
             onChangeEnd: (final value) async {
-              Device.postMessage(id, editInfo, ref.read(apiProvider), value);
+            await Device.postMessage(
+              id,
+              editInfo,
+              ref.read(apiProvider),
+              value,
+            );
             },
             value: (valueModel.currentValue as num).toDouble(),
             // color: valueModel.currentValue < 20

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 // import 'package:signalr_core/signalr_core.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/icons/svg_icon.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
@@ -85,7 +84,7 @@ Map<String, SvgIcon> _iconName(final Ref ref) {
   return switch (layoutsRes) {
     AsyncData(:final value) => value
         .where((final x) => x.icon != null)
-        .mapMany((x) => [x.icon!, ...x.additionalIcons])
+        .mapMany((final x) => [x.icon!, ...x.additionalIcons])
         .distinct()
         .toMap((final x) => x.name, (final x) => x.icon),
     _ => {},

@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import 'package:smarthome/helper/connection_manager.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 class InfoIconProvider extends StateNotifier<IconData>
     with WidgetsBindingObserver {
   final Ref ref;
   InfoIconProvider(this.ref) : super(Icons.refresh) {
     final connectionListen = ref.watch(connectionManagerProvider);
-    final connection = connectionListen.valueOrNull;
+    final connection = connectionListen.value;
 
     if (connection == null ||
         connection.connectionState == HubConnectionState.Disconnected) {

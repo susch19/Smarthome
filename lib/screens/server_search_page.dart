@@ -7,6 +7,7 @@ import 'package:smarthome/helper/mdns_manager.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/models/server_record.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final _currentAppVersionProvider =
     FutureProvider<PackageInfo>((final ref) async {

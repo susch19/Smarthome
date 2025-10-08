@@ -442,7 +442,7 @@ class GenericDeviceScreen extends HookConsumerWidget {
     });
   }
 
-  getNewData(final DateTime dt, final ValueNotifier<DateTime> state) {
+  void getNewData(final DateTime dt, final ValueNotifier<DateTime> state) {
     if (dt.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch) {
       return;
     }

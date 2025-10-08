@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:smarthome/devices/base_model.dart';
 
 import '../connection_base_model.dart';
 
@@ -46,15 +45,6 @@ class LedStripModel extends ConnectionBaseModel {
     return LedStripModel.fromJson(json);
   }
 
-  @override
-  BaseModel updateFromJson(final Map<String, dynamic> json) {
-    final updatedModel = getModelFromJson(json);
-    bool updated = false;
-    if (updatedModel != this) {
-      updated = true;
-    }
-    return updated ? updatedModel : this;
-  }
 
   @override
   int get hashCode => Object.hash(super.hashCode, colorMode, delay,

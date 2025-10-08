@@ -15,3 +15,4 @@ targets:
                 - "LayoutBasePropertyInfo"
                 - "SvgIcon"
                 - "AppNotification"
+                - "Command"
