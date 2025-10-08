@@ -1,0 +1,18 @@
+targets:
+  $default:
+    builders:
+      swagger_dart_code_generator:
+        options:
+          input_folder: 'lib/swagger_jsons/'
+          output_folder: 'lib/restapi/'
+          overriden_models:
+            - file_name: "swagger"
+              import_url: "../devices/device_exporter.dart"
+              overriden_models:
+                - "Device"
+                - "DetailPropertyInfo"
+                - "DashboardPropertyInfo"
+                - "LayoutBasePropertyInfo"
+                - "SvgIcon"
+                - "AppNotification"
+                - "Command"

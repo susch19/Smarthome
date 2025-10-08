@@ -4,21 +4,22 @@ import 'dart:math' as math;
 @immutable
 class ExpandableFab extends StatefulWidget {
   const ExpandableFab({
-    Key? key,
+    super.key,
     this.initialOpen,
     required this.distance,
     required this.children,
-  }) : super(key: key);
+  });
 
   final bool? initialOpen;
   final double distance;
   final List<Widget> children;
 
   @override
-  _ExpandableFabState createState() => _ExpandableFabState();
+  ExpandableFabState createState() => ExpandableFabState();
 }
 
-class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProviderStateMixin {
+class ExpandableFabState extends State<ExpandableFab>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _expandAnimation;
   bool _open = false;
@@ -57,7 +58,7 @@ class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProvider
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return SizedBox.expand(
       child: Stack(
         alignment: Alignment.bottomRight,
@@ -82,8 +83,8 @@ class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProvider
           elevation: 4.0,
           child: InkWell(
             onTap: _toggle,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
               child: Icon(
                 Icons.close,
               ),
@@ -97,14 +98,19 @@ class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProvider
   List<Widget> _buildExpandingActionButtons() {
     final children = <Widget>[];
     final count = widget.children.length;
-    final step = 56.0; //90.0 / (count - 1);
-    for (var i = 0, angleInDegrees = step + 8.0; i < count; i++, angleInDegrees += step) {
+    const step = 56.0; //90.0 / (count - 1);
+    for (var i = 0, angleInDegrees = step + 8.0;
+        i < count;
+        i++, angleInDegrees += step) {
       children.add(
         _ExpandingActionButton(
           positionOffsetInPx: angleInDegrees,
           maxDistance: widget.distance,
           progress: _expandAnimation,
-          child: widget.children[i],
+          child: IgnorePointer(
+            ignoring: !_open,
+            child: widget.children[i],
+          ),
         ),
       );
     }
@@ -139,13 +145,12 @@ class _ExpandableFabState extends State<ExpandableFab> with SingleTickerProvider
 
 @immutable
 class _ExpandingActionButton extends StatelessWidget {
-  _ExpandingActionButton({
-    Key? key,
+  const _ExpandingActionButton({
     required this.positionOffsetInPx,
     required this.maxDistance,
     required this.progress,
     required this.child,
-  }) : super(key: key);
+  });
 
   final double positionOffsetInPx;
   final double maxDistance;
@@ -153,10 +158,10 @@ class _ExpandingActionButton extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return AnimatedBuilder(
       animation: progress,
-      builder: (context, child) {
+      builder: (final context, final child) {
         final offset = Offset.fromDirection(
           90 * (math.pi / 180.0),
           positionOffsetInPx,
@@ -182,16 +187,16 @@ class _ExpandingActionButton extends StatelessWidget {
 @immutable
 class ActionButton extends StatelessWidget {
   const ActionButton({
-    Key? key,
+    super.key,
     this.onPressed,
     required this.icon,
-  }) : super(key: key);
+  });
 
   final VoidCallback? onPressed;
   final Widget icon;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final theme = Theme.of(context);
     return Material(
       shape: const CircleBorder(),

@@ -1,91 +1,261 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:quiver/core.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
-import 'package:smarthome/controls/dashboard_card.dart';
+// import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 import 'package:smarthome/devices/base_model.dart';
 import 'package:smarthome/devices/device_manager.dart';
-import 'package:smarthome/models/message.dart' as sm;
+import 'package:smarthome/devices/generic/icons/icon_manager.dart';
+import 'package:smarthome/helper/connection_manager.dart';
+import 'package:smarthome/main.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/models/command.dart';
+import 'package:smarthome/restapi/swagger.swagger.dart';
+
+part 'device.g.dart';
+
+@riverpod
+FutureOr<History> historyPropertyName(
+  final Ref ref,
+  final int id,
+  final DateTime fromTime,
+  final DateTime toTime,
+  final String propertyName,
+) async {
+  final api = ref.watch(apiProvider);
+  final res = await api.appHistoryRangeGet(
+    id: id,
+    from: fromTime,
+    to: toTime,
+    propertyName: propertyName,
+  );
+  return res.bodyOrThrow;
+}
+
+@riverpod
+Widget iconWidget(
+  final Ref ref,
+  final List<String> typeNames,
+  final Device device,
+  final AdaptiveThemeManager themeManager,
+  final bool withMargin,
+) {
+  final brightness = ref.watch(brightnessProvider(themeManager));
+  final icon = ref.watch(iconByTypeNamesProvider(typeNames));
+
+  return device._createIcon(brightness, icon, withMargin);
+}
+
+@riverpod
+Widget iconWidgetSingle(
+  final Ref ref,
+  final String typeName,
+  final Device device,
+  final AdaptiveThemeManager themeManager,
+  final bool withMargin,
+) {
+  return ref.watch(
+    iconWidgetProvider([typeName], device, themeManager, withMargin),
+  );
+}
 
 abstract class Device<T extends BaseModel> {
-  final IconData icon;
-  final String typeName;
-  final int? id;
-  T baseModel;
-  HubConnection connection;
-  final List<String> groups = [];
+  static const fromJsonFactory = _$DeviceRequestFromJson;
 
-  @protected
-  StreamController<T> controller = StreamController<T>.broadcast();
+  static Device _$DeviceRequestFromJson(final Map<String, dynamic> json) {
+    final types = (json["typeNames"] as List)
+        .map((final x) => x.toString())
+        .toList();
+    String type = "Device";
+    for (final item in types) {
+      if (!stringNameJsonFactory.containsKey(item)) {
+        continue;
+      }
+      type = item;
+      break;
+    }
+    final id = json["id"] as int;
+
+    final model = stringNameJsonFactory[type]!(json, types);
+    final dev = deviceCtorFactory[type]!(id, types.first);
+    dev.lastModel = model;
+    return dev;
+  }
+
+  final baseModelTProvider = Provider.family<T?, int>((final ref, final id) {
+    final baseModel = ref.watch(BaseModel.byIdProvider(id));
+    if (baseModel is T) return baseModel;
+    return null;
+  });
+
+  static final groupsByIdProvider = StateProvider.family<List<String>, int>((
+    final ref,
+    final id,
+  ) {
+    final friendlyNameSplit = ref
+        .watch(BaseModel.friendlyNameProvider(id))
+        .split(" ");
+    return [friendlyNameSplit.first];
+  });
+
+  final IconData? iconData;
+  final String typeName;
+  final int id;
+  late BaseModel? lastModel;
 
   final Random r = Random();
 
-  @mustCallSuper
-  Device(this.id, this.typeName, this.baseModel, this.connection, this.icon) {
-    // groups.add("All");
-    groups.add(baseModel.friendlyName.split(' ').first);
-    // var rand = r.nextInt(6);
-    // groups.add("Random" + rand.toString());
+  Device(this.id, this.typeName, {this.iconData, this.lastModel});
+
+  Widget _createIcon(
+    final Brightness themeMode,
+    final Uint8List? iconBytes,
+    final bool withMargin,
+  ) {
+    if (iconData != null) {
+      return Icon(iconData);
+    }
+    if (iconBytes != null) {
+      return createIconFromSvgByteList(iconBytes, themeMode, withMargin);
+    }
+    return const SizedBox();
   }
 
-  bool get isConnected => baseModel.isConnected;
-
-  StreamSubscription<T> listenOnUpdateFromServer(void Function(T)? onData) {
-    return controller.stream.listen(onData);
+  Widget createIconFromSvgByteList(
+    final Uint8List list,
+    final Brightness brightness,
+    final bool withMargin,
+  ) {
+    if (withMargin) {
+      return Container(
+        margin: const EdgeInsets.all(8),
+        child: Center(
+          child: SvgPicture.memory(
+            list,
+            colorFilter: ColorFilter.mode(
+              brightness == Brightness.light ? Colors.black : Colors.white,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Center(
+        child: SvgPicture.memory(
+          list,
+          colorFilter: ColorFilter.mode(
+            brightness == Brightness.light ? Colors.black : Colors.white,
+            BlendMode.srcIn,
+          ),
+        ),
+      );
+    }
   }
 
-  Widget? lowerLeftWidget() {
-    return null;
+  Widget getRightWidgets() {
+    return const SizedBox();
   }
 
   Widget dashboardCardBody() => const Text("");
 
-  Widget dashboardView(void Function() onLongPress) {
-    return StatelessDashboardCard(device: this, onLongPress: onLongPress, tag: this.id!);
+  // @mustCallSuper
+  // BaseModel updateFromServer(final Map<String, dynamic> message) {
+  //   return baseModel.updateFromJson(message);
+  // }
+
+  Future<dynamic> getFromServer(
+    final String methodName,
+    final List<Object>? args,
+    final HubConnectionContainer container,
+  ) async {
+    if (container.connectionState != HubConnectionState.Connected ||
+        container.connection == null) {
+      return;
+    }
+
+    return await container.connection!.invoke(methodName, args: args);
   }
+
+  @override
+  bool operator ==(final Object other) =>
+      other is Device && other.id == id && other.typeName == typeName;
+
+  @override
+  int get hashCode => hash2(id, typeName);
 
   @mustCallSuper
-  void updateFromServer(Map<String, dynamic> message) {
-    var func = DeviceManager.jsonFactory[T];
-    if (func != null) {
-      baseModel = func(message) as T;
-      controller.add(baseModel);
-    }
+  Future sendToServer(
+    final MessageType messageType,
+    final Command command,
+    final List<String> parameters,
+    final Swagger container,
+  ) async {
+    final message = JsonApiSmarthomeMessage(
+      parameters: parameters,
+      messageType: messageType,
+      command: command.value!,
+      id: id,
+    );
+    await container.appSmarthomePost(body: message);
   }
 
-  Future<dynamic> getFromServer(String methodName, List<Object?> args) async {
-    if (connection.state == HubConnectionState.disconnected) {
-      await connection.start();
+  static Future postMessage(
+    final int id,
+    final PropertyEditInformation editInfo,
+    final Swagger api,
+    final dynamic value, [
+    final List<Object> preParameters = const [],
+    final List<Object> postParamters = const [],
+  ]) async {
+    final editParameter =
+        editInfo.editParameter.firstWhereOrNull((final x) => x.$value == value) ??
+        editInfo.editParameter.firstOrNull;
+    if (editParameter == null) return;
+    dynamic valueParam = value;
+    if (editParameter.extensionData?.containsKey("Digits") ?? false) {
+      if (value is double) {
+        valueParam = value.toStringAsFixed(
+          editParameter.extensionData!["Digits"],
+        );
+      }
     }
 
-    return await connection.invoke(methodName, args: args);
+    await api.appSmarthomePost(
+      body: JsonApiSmarthomeMessage(
+        parameters: [
+          ...preParameters,
+          ...(editParameter.parameters ?? []),
+          valueParam,
+          ...postParamters,
+        ],
+        id: id,
+        messageType: editParameter.messageType ?? editInfo.messageType,
+        command: editParameter.command,
+      ),
+    );
   }
 
-  @mustCallSuper
-  Future sendToServer(sm.MessageType messageType, sm.Command command, List<String>? parameters) async {
-    if (connection.state == HubConnectionState.disconnected) {
-      await connection.start();
-    }
-    var message = new sm.Message(id, messageType, command, parameters);
-    var jsonMsg = message.toJson();
-    await connection.invoke("Update", args: <Object>[jsonMsg]);
-  }
-
-  Future updateDeviceOnServer() async {
-    if (connection.state == HubConnectionState.disconnected) {
-      await connection.start();
-    }
-    return await connection.invoke("UpdateDevice", args: [baseModel.id, baseModel.friendlyName]);
-  }
-
-  void stop() {
-    controller.close();
+  Future updateDeviceOnServer(
+    final int id,
+    final String friendlyName,
+    final Swagger api,
+  ) async {
+    await api.appDevicePatch(
+      body: DeviceRenameRequest(id: id, newName: friendlyName),
+    );
   }
 
   DeviceTypes getDeviceType();
-  void navigateToDevice(BuildContext context);
-}
+  void navigateToDevice(final BuildContext context);
 
-abstract class DeviceScreen extends StatefulWidget {}
+  void iconPressed(final BuildContext context, final WidgetRef ref) {}
+}

@@ -1,0 +1,2336 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "AppBrokerASP",
+    "version": "1.0"
+  },
+  "paths": {
+    "/app": {
+      "get": {
+        "tags": [
+          "App"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "App"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "newName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/app/settings": {
+      "get": {
+        "tags": [
+          "App"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "App"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/device/rebuild/{id}": {
+      "patch": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/device": {
+      "patch": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "onlyNew",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Device"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestCreatedDevice"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestCreatedDevice"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestCreatedDevice"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestCreatedDevice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "includeState",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/device/states/{id}": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/device/history/{id}": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "propName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/device/state/{id}/{name}": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/device/state/{id}": {
+      "post": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/app/device": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Device"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRenameRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRenameRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRenameRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRenameRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/app/device/overview": {
+      "get": {
+        "tags": [
+          "Device"
+        ],
+        "parameters": [
+          {
+            "name": "onlyShowInApp",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceOverview"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceOverview"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceOverview"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/history/settings": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryPropertyState"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryPropertyState"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryPropertyState"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/history": {
+      "patch": {
+        "tags": [
+          "History"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetHistoryRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetHistoryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetHistoryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetHistoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "dt",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/History"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/History"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/History"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/history/range": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "propertyName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/History"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/History"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/History"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/layout/single": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "parameters": [
+          {
+            "name": "TypeName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "IconName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "DeviceId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/layout/multi": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "parameters": [
+          {
+            "name": "request",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LayoutRequest"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayoutResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayoutResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayoutResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/layout/all": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayoutResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayoutResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayoutResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/layout/iconByName": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SvgIcon"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SvgIcon"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SvgIcon"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/layout": {
+      "patch": {
+        "tags": [
+          "Layout"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/notification/sendNotification": {
+      "post": {
+        "tags": [
+          "Notification"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppNotification"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppNotification"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppNotification"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppNotification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/notification/firebaseOptions": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/FirebaseOptions"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/FirebaseOptions"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/FirebaseOptions"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notification/nextNotificationId": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "parameters": [
+          {
+            "name": "uniqueName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deviceId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notification/allOneTimeNotifications": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllOneTimeNotifications"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllOneTimeNotifications"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllOneTimeNotifications"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notification/allGlobalNotifications": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationSetup"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationSetup"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationSetup"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/painless/time": {
+      "put": {
+        "tags": [
+          "Painless"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/security": {
+      "get": {
+        "tags": [
+          "Security"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppCloudConfiguration"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppCloudConfiguration"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppCloudConfiguration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/smarthome": {
+      "post": {
+        "tags": [
+          "Smarthome"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonApiSmarthomeMessage"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonApiSmarthomeMessage"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonApiSmarthomeMessage"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonApiSmarthomeMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Smarthome"
+        ],
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/app/smarthome/log": {
+      "post": {
+        "tags": [
+          "Smarthome"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AppLog"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AppLog"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AppLog"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AppLog"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/windmill": {
+      "post": {
+        "tags": [
+          "Windmill"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindmillSmarthomeMessage"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindmillSmarthomeMessage"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindmillSmarthomeMessage"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindmillSmarthomeMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AllOneTimeNotifications": {
+        "required": [
+          "topics"
+        ],
+        "type": "object",
+        "properties": {
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AppCloudConfiguration": {
+        "required": [
+          "host",
+          "id",
+          "key",
+          "port"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "key": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AppLog": {
+        "required": [
+          "logLevel",
+          "message",
+          "timeStamp"
+        ],
+        "type": "object",
+        "properties": {
+          "logLevel": {
+            "$ref": "#/components/schemas/AppLogLevel"
+          },
+          "timeStamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          },
+          "loggerName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AppLogLevel": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32",
+        "x-enumNames": [
+          "Fatal",
+          "Error",
+          "Warning",
+          "Info",
+          "Debug"
+        ],
+        "x-enum-varnames": [
+          "Fatal",
+          "Error",
+          "Warning",
+          "Info",
+          "Debug"
+        ]
+      },
+      "AppNotification": {
+        "required": [
+          "topic",
+          "typeName",
+          "wasOneTime"
+        ],
+        "type": "object",
+        "properties": {
+          "typeName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "topic": {
+            "type": "string"
+          },
+          "wasOneTime": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Command": {
+        "type": "integer",
+        "format": "int32"
+      },
+      "DasboardSpecialType": {
+        "enum": [
+          "None",
+          "Right",
+          "Availability",
+          "Color",
+          "Disabled",
+          "Battery"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "None",
+          "Right",
+          "Availability",
+          "Color",
+          "Disabled",
+          "Battery"
+        ],
+        "x-enum-varnames": [
+          "None",
+          "Right",
+          "Availability",
+          "Color",
+          "Disabled",
+          "Battery"
+        ]
+      },
+      "DashboardDeviceLayout": {
+        "required": [
+          "dashboardProperties"
+        ],
+        "type": "object",
+        "properties": {
+          "dashboardProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPropertyInfo"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardPropertyInfo": {
+        "required": [
+          "displayName",
+          "format",
+          "name",
+          "order",
+          "specialType",
+          "unitOfMeasurement"
+        ],
+        "type": "object",
+        "properties": {
+          "specialType": {
+            "$ref": "#/components/schemas/DasboardSpecialType"
+          },
+          "name": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "textStyle": {
+            "$ref": "#/components/schemas/TextSettings"
+          },
+          "editInfo": {
+            "$ref": "#/components/schemas/PropertyEditInformation"
+          },
+          "rowNr": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "unitOfMeasurement": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "showOnlyInDeveloperMode": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "deviceId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "expanded": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "precision": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "extensionData": {
+            "type": "object",
+            "additionalProperties": { },
+            "nullable": true,
+            "readOnly": true
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": { }
+      },
+      "DetailDeviceLayout": {
+        "required": [
+          "historyProperties",
+          "propertyInfos",
+          "tabInfos"
+        ],
+        "type": "object",
+        "properties": {
+          "propertyInfos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailPropertyInfo"
+            }
+          },
+          "tabInfos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailTabInfo"
+            }
+          },
+          "historyProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryPropertyInfo"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DetailPropertyInfo": {
+        "required": [
+          "blurryCard",
+          "displayName",
+          "format",
+          "name",
+          "order",
+          "specialType",
+          "unitOfMeasurement"
+        ],
+        "type": "object",
+        "properties": {
+          "tabInfoId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "blurryCard": {
+            "type": "boolean"
+          },
+          "specialType": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "textStyle": {
+            "$ref": "#/components/schemas/TextSettings"
+          },
+          "editInfo": {
+            "$ref": "#/components/schemas/PropertyEditInformation"
+          },
+          "rowNr": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "unitOfMeasurement": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "showOnlyInDeveloperMode": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "deviceId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "expanded": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "precision": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "extensionData": {
+            "type": "object",
+            "additionalProperties": { },
+            "nullable": true,
+            "readOnly": true
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": { }
+      },
+      "DetailTabInfo": {
+        "required": [
+          "iconName",
+          "id",
+          "order",
+          "showOnlyInDeveloperMode"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "linkedDevice": {
+            "$ref": "#/components/schemas/LinkedDeviceTab"
+          },
+          "showOnlyInDeveloperMode": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Device": {
+        "required": [
+          "friendlyName",
+          "id",
+          "startAutomatically",
+          "typeName",
+          "typeNames"
+        ],
+        "type": "object",
+        "properties": {
+          "typeNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "typeName": {
+            "type": "string"
+          },
+          "friendlyName": {
+            "type": "string"
+          },
+          "startAutomatically": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": { }
+      },
+      "DeviceLayout": {
+        "required": [
+          "additionalData",
+          "hash",
+          "iconName",
+          "showOnlyInDeveloperMode",
+          "uniqueName",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "uniqueName": {
+            "type": "string"
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "typeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "nullable": true
+          },
+          "dashboardDeviceLayout": {
+            "$ref": "#/components/schemas/DashboardDeviceLayout"
+          },
+          "detailDeviceLayout": {
+            "$ref": "#/components/schemas/DetailDeviceLayout"
+          },
+          "notificationSetup": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationSetup"
+            },
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "showOnlyInDeveloperMode": {
+            "type": "boolean"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "additionalData": {
+            "type": "object",
+            "additionalProperties": { },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "DeviceOverview": {
+        "required": [
+          "friendlyName",
+          "id",
+          "typeName",
+          "typeNames"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "friendlyName": {
+            "type": "string"
+          },
+          "typeName": {
+            "type": "string"
+          },
+          "typeNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeviceRenameRequest": {
+        "required": [
+          "id",
+          "newName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditParameter": {
+        "required": [
+          "command",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "command": {
+            "$ref": "#/components/schemas/Command"
+          },
+          "value": { },
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "messageType": {
+            "$ref": "#/components/schemas/MessageType"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "array",
+            "items": { },
+            "nullable": true
+          },
+          "extensionData": {
+            "type": "object",
+            "additionalProperties": { },
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "FirebaseOptions": {
+        "required": [
+          "apiKey",
+          "appId",
+          "messagingSenderId",
+          "projectId",
+          "storageBucket"
+        ],
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string"
+          },
+          "appId": {
+            "type": "string"
+          },
+          "messagingSenderId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "storageBucket": {
+            "type": "string"
+          },
+          "iosBundleId": {
+            "type": "string",
+            "nullable": true
+          },
+          "authDomain": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FontStyleSetting": {
+        "enum": [
+          "Normal",
+          "Italic"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "Normal",
+          "Italic"
+        ],
+        "x-enum-varnames": [
+          "Normal",
+          "Italic"
+        ]
+      },
+      "FontWeightSetting": {
+        "enum": [
+          "Normal",
+          "Bold"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "Normal",
+          "Bold"
+        ],
+        "x-enum-varnames": [
+          "Normal",
+          "Bold"
+        ]
+      },
+      "History": {
+        "required": [
+          "historyRecords",
+          "propertyName"
+        ],
+        "type": "object",
+        "properties": {
+          "historyRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryRecord"
+            }
+          },
+          "propertyName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistoryPropertyInfo": {
+        "required": [
+          "brightThemeColor",
+          "chartType",
+          "darkThemeColor",
+          "iconName",
+          "propertyName",
+          "unitOfMeasurement",
+          "xAxisName"
+        ],
+        "type": "object",
+        "properties": {
+          "propertyName": {
+            "type": "string"
+          },
+          "xAxisName": {
+            "type": "string"
+          },
+          "unitOfMeasurement": {
+            "type": "string"
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "brightThemeColor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "darkThemeColor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "chartType": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistoryPropertyState": {
+        "required": [
+          "deviceId",
+          "enabled",
+          "propertyName"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "propertyName": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistoryRecord": {
+        "required": [
+          "ts"
+        ],
+        "type": "object",
+        "properties": {
+          "val": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "ts": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IconResponse": {
+        "required": [
+          "icon",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "icon": {
+            "$ref": "#/components/schemas/SvgIcon"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JsonApiSmarthomeMessage": {
+        "required": [
+          "command",
+          "id",
+          "messageType",
+          "parameters"
+        ],
+        "type": "object",
+        "properties": {
+          "parameters": {
+            "type": "array",
+            "items": { }
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "messageType": {
+            "$ref": "#/components/schemas/MessageType"
+          },
+          "command": {
+            "$ref": "#/components/schemas/Command"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LayoutRequest": {
+        "required": [
+          "deviceId",
+          "iconName",
+          "typeName"
+        ],
+        "type": "object",
+        "properties": {
+          "typeName": {
+            "type": "string"
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LayoutResponse": {
+        "required": [
+          "additionalIcons"
+        ],
+        "type": "object",
+        "properties": {
+          "layout": {
+            "$ref": "#/components/schemas/DeviceLayout"
+          },
+          "icon": {
+            "$ref": "#/components/schemas/IconResponse"
+          },
+          "additionalIcons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IconResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "LinkedDeviceTab": {
+        "required": [
+          "deviceIdPropertyName",
+          "deviceType"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceIdPropertyName": {
+            "type": "string"
+          },
+          "deviceType": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MessageType": {
+        "enum": [
+          "Get",
+          "Update",
+          "Options",
+          "Relay"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "Get",
+          "Update",
+          "Options",
+          "Relay"
+        ],
+        "x-enum-varnames": [
+          "Get",
+          "Update",
+          "Options",
+          "Relay"
+        ]
+      },
+      "NotificationSetup": {
+        "required": [
+          "global",
+          "times",
+          "translatableName",
+          "uniqueName"
+        ],
+        "type": "object",
+        "properties": {
+          "uniqueName": {
+            "type": "string"
+          },
+          "translatableName": {
+            "type": "string"
+          },
+          "times": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deviceIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "nullable": true
+          },
+          "global": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PropertyEditInformation": {
+        "required": [
+          "editParameter",
+          "editType",
+          "messageType"
+        ],
+        "type": "object",
+        "properties": {
+          "messageType": {
+            "$ref": "#/components/schemas/MessageType"
+          },
+          "editParameter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EditParameter"
+            }
+          },
+          "editType": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string",
+            "nullable": true
+          },
+          "hubMethod": {
+            "type": "string",
+            "nullable": true
+          },
+          "valueName": {
+            "type": "string",
+            "nullable": true
+          },
+          "activeValue": {
+            "nullable": true
+          },
+          "dialog": {
+            "type": "string",
+            "nullable": true
+          },
+          "extensionData": {
+            "type": "object",
+            "additionalProperties": { },
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "RestCreatedDevice": {
+        "required": [
+          "friendlyName",
+          "id",
+          "startAutomatically",
+          "typeName",
+          "typeNames"
+        ],
+        "type": "object",
+        "properties": {
+          "typeNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "typeName": {
+            "type": "string"
+          },
+          "friendlyName": {
+            "type": "string"
+          },
+          "startAutomatically": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": { }
+      },
+      "SetHistoryRequest": {
+        "required": [
+          "enable",
+          "ids",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "enable": {
+            "type": "boolean"
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SvgIcon": {
+        "required": [
+          "hash",
+          "name",
+          "typeName"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "typeName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TextSettings": {
+        "required": [
+          "fontStyle",
+          "fontWeight"
+        ],
+        "type": "object",
+        "properties": {
+          "fontSize": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "fontFamily": {
+            "type": "string",
+            "nullable": true
+          },
+          "fontWeight": {
+            "$ref": "#/components/schemas/FontWeightSetting"
+          },
+          "fontStyle": {
+            "$ref": "#/components/schemas/FontStyleSetting"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WindmillSmarthomeMessage": {
+        "required": [
+          "command",
+          "id",
+          "idHex",
+          "messageType",
+          "parameters"
+        ],
+        "type": "object",
+        "properties": {
+          "parameters": {
+            "type": "array",
+            "items": { }
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "idHex": {
+            "type": "string"
+          },
+          "messageType": {
+            "$ref": "#/components/schemas/MessageType"
+          },
+          "command": {
+            "$ref": "#/components/schemas/Command"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

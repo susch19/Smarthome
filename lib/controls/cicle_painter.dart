@@ -8,14 +8,14 @@ class CirclePainter extends CustomPainter {
   CirclePainter(this.circleRadius, this.color, this.offset);
 
   @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint();
+  void paint(final Canvas canvas, final Size size) {
+    final paint = Paint();
     paint.color = color;
     canvas.drawCircle(offset, circleRadius, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+  bool shouldRepaint(covariant final CustomPainter oldDelegate) {
     return true;
   }
 }

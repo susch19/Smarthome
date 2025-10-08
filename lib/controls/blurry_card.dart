@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:smarthome/helper/theme_manager.dart';
 
 import 'blurry_container.dart';
 
@@ -14,16 +13,15 @@ const EdgeInsets defaultMargin = EdgeInsets.all(0);
 class BlurryCard extends StatelessWidget {
   final Widget? child;
   final BorderRadius borderRadius;
-  final double blur;
   final MaterialColor lightColor;
   final MaterialColor darkColor;
   final Color lightShadowColor;
   final Color darkShadowColor;
   final EdgeInsets margin;
-  BlurryCard(
-      {this.child,
+  const BlurryCard(
+      {super.key,
+      this.child,
       this.borderRadius = defaultBorderRadius,
-      this.blur = 5,
       this.lightColor = defaultLightColor,
       this.darkColor = defaultBlackColor,
       this.lightShadowColor = defaultLightShadowColor,
@@ -31,14 +29,15 @@ class BlurryCard extends StatelessWidget {
       this.margin = defaultMargin});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return ClipRRect(
       borderRadius: borderRadius,
       child: Container(
         margin: margin,
         child: BlurryContainer(
-            color: ThemeManager.isLightTheme ? defaultLightShadowColor : defaultDarkShadowColor,
-          blur: blur,
+          color: AdaptiveTheme.of(context).brightness == Brightness.light
+              ? defaultLightShadowColor
+              : defaultDarkShadowColor,
           child: Card(
             color: Colors.transparent,
             shadowColor: Colors.transparent,

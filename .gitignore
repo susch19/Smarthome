@@ -27,6 +27,7 @@
 .pub-cache/
 .pub/
 build/
+android/app/.cxx/
 
 # Android related
 **/android/**/gradle-wrapper.jar
@@ -72,3 +73,6 @@ build/
 lib/syncfusion.dart
 .flutter-plugins-dependencies
 ios/Flutter/flutter_export_environment.sh
+.flutter-plugins-dependencies
+*.g.dart
+**/.vs/*

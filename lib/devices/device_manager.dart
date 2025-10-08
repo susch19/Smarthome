@@ -1,191 +1,458 @@
-// ignore_for_file: unused_import
+// ignore_for_file: unused_import, constant_identifier_names
 
+import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:signalr_client/signalr_client.dart';
-import 'package:signalr_core/signalr_core.dart';
+// import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
+import 'package:smarthome/devices/generic/device_layout_service.dart';
+import 'package:smarthome/devices/generic/generic_device_exporter.dart';
+import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
+import 'package:smarthome/helper/connection_manager.dart';
+import 'package:smarthome/helper/firebase_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../icons/smarthome_icons.dart';
 import 'device_exporter.dart';
 
-class DeviceManager {
-  static final devices = <Device>[];
-  static SortTypes currentSort = SortTypes.NameAsc;
+part 'device_manager.g.dart';
+
+// final deviceIdProvider = StateProvider<List<int>>((final _) => []);
+// final deviceIdProvider = StateNotifierProvider<DeviceIdManager, List<int>>((final _) => DeviceIdManager([]));
+
+// class DeviceIdManager extends StateNotifier<List<int>> {
+//   DeviceIdManager(super.state);
+
+//   void subscribeToDevice(final int device) {
+//     state = [...state, device];
+//   }
+
+//   void subscribeToDevices(final List<int> deviceIds) {
+//     state = [...state, ...deviceIds];
+//   }
+// }
+
+@riverpod
+Device? deviceById(final Ref ref, final int id) {
+  final dm = ref.watch(deviceManagerProvider);
+
+  return switch (dm) {
+    AsyncData(:final value) => value.firstOrDefault((final e) => e.id == id),
+    _ => null,
+  };
+}
+
+@riverpod
+Device? deviceByIdValueStoreKey(
+  final Ref ref,
+  final String valueKey,
+  final int id,
+) {
+  final dm = ref.watch(deviceByIdProvider(id));
+  final valueStores = ref.watch(valueStoreChangedProvider(valueKey, id));
+  if (valueStores != null) {
+    return dm;
+  }
+
+  return null;
+}
+
+final devicesByValueStoreKeyProvider = Provider.family<List<Device>, String>((
+  final ref,
+  final key,
+) {
+  final dm = ref.watch(deviceManagerProvider);
+  if (!dm.hasValue) return [];
+
+  final List<Device> devices = [];
+  for (final device in dm.value!) {
+    final valueStores = ref.watch(valueStoreChangedProvider(key, device.id));
+    if (valueStores != null) devices.add(device);
+  }
+  return devices;
+});
+
+final sortedDeviceProvider = Provider<List<Device>>((final ref) {
+  final sort = ref.watch(deviceSortProvider);
+  final devicesManager = ref.watch(deviceManagerProvider);
+  final baseModels = ref.watch(baseModelFriendlyNamesMapProvider);
+  if (!devicesManager.hasValue) return [];
+  final devices = devicesManager.requireValue;
+
+  switch (sort) {
+    case SortTypes.NameAsc:
+      devices.sort(
+        (final x, final b) => baseModels[x.id]!.compareTo(baseModels[b.id]!),
+      );
+      break;
+    case SortTypes.NameDesc:
+      devices.sort(
+        (final x, final b) => baseModels[b.id]!.compareTo(baseModels[x.id]!),
+      );
+      break;
+    case SortTypes.TypeAsc:
+      devices.sort(
+        (final x, final b) => x.typeName.runtimeType.toString().compareTo(
+          b.runtimeType.toString(),
+        ),
+      );
+      break;
+    case SortTypes.TypeDesc:
+      devices.sort(
+        (final x, final b) => b.typeName.runtimeType.toString().compareTo(
+          x.runtimeType.toString(),
+        ),
+      );
+      break;
+    case SortTypes.IdAsd:
+      devices.sort((final x, final b) => x.id.compareTo(b.id));
+      break;
+    case SortTypes.IdDesc:
+      devices.sort((final x, final b) => b.id.compareTo(x.id));
+      break;
+  }
+
+  return devices.toList();
+});
+
+final deviceSortProvider = StateProvider<SortTypes>(
+  (final _) => SortTypes.NameAsc,
+);
+
+enum Action { removed, added }
+
+class DiffIdModel {
+  int id;
+  Action action;
+
+  DiffIdModel(this.id, this.action);
+}
+
+final deviceCtorFactory = <String, Device Function(int id, String typeName)>{
+  'Heater': (final i, final n) => Heater(i, n, Icons.whatshot),
+  'LedStrip': (final i, final n) => LedStrip(i, n, Icons.lightbulb_outline),
+  'Device': (final i, final n) => GenericDevice(i, n),
+};
+final stringNameJsonFactory =
+    <String, BaseModel Function(Map<String, dynamic>, List<String>)>{
+      'Heater': (final m, final _) => HeaterModel.fromJson(m),
+      'LedStrip': (final m, final _) => LedStripModel.fromJson(m),
+      'Device': (final m, final t) => BaseModel.fromJson(m, t),
+    };
+
+@Riverpod(keepAlive: true)
+class DeviceManager extends _$DeviceManager {
+  HashSet<int> _deviceIds = HashSet<int>();
+
+  // late List<DiffIdModel> _diffIds = [];
+
   static bool showDebugInformation = false;
 
-  static final notSubscribedDevices = <Device>[];
-  static bool sub = false;
-  static Map<String, String> groupNames = Map<String, String>();
+  late HubConnection? _connection;
+
+  static final Map<String, String> _groupNames = <String, String>{};
+  static final customGroupNameProvider = StateProvider.family<String, String>((
+    final ref,
+    final name,
+  ) {
+    return _groupNames[name] ?? name;
+  });
+
+  @override
+  FutureOr<List<Device<BaseModel>>> build() async {
+    final manager = ref.watch(connectionManagerProvider);
+    if (!manager.hasValue) return [];
+    final connection = manager.requireValue.connection;
+    if (connection == null) return [];
+
+    _connection = connection;
+
+    final ids = HashSet<int>();
+    for (final key in PreferencesManager.instance.getKeys().where(
+      (final x) => x.startsWith("SHD"),
+    )) {
+      final id = PreferencesManager.instance.getInt(key);
+      if (id == null) continue;
+      ids.add(id);
+    }
+    _deviceIds = ids;
+    return await _syncDevices(
+      [],
+      ids.map((final x) => DiffIdModel(x, Action.added)).toList(),
+    );
+  }
 
   static void init() {
-    var names = PreferencesManager.instance.getStringList("customGroupNames");
+    final names = PreferencesManager.instance.getStringList("customGroupNames");
 
     if (names != null) {
-      for (var name in names) {
-        var values = name.split('\u0001');
-        groupNames[values[0]] = values[1];
+      for (final name in names) {
+        final values = name.split('\u0001');
+
+        _groupNames[values[0]] = values[1];
       }
     }
   }
 
-  static void saveDeviceGroups() {
-    var deviceGroups = devices.map((e) => e.id.toString() + "\u0002" + e.groups.join("\u0003")).join("\u0001");
+  Future subscribeToDevice(final int id) async {
+    if (!_deviceIds.add(id)) return;
+    await _syncDevices(state.value ?? [], [DiffIdModel(id, Action.added)]);
+  }
+
+  Future subscribeToDevices(final List<int> deviceIds) async {
+    final diffs = <DiffIdModel>[];
+    for (final id in deviceIds) {
+      if (_deviceIds.add(id)) diffs.add(DiffIdModel(id, Action.added));
+    }
+    if (diffs.isEmpty) return;
+
+    await _syncDevices(state.value ?? [], diffs);
+  }
+
+  Future removeDevice(final int id) async {
+    if (!_deviceIds.remove(id)) return;
+    await _syncDevices(state.value ?? [], [DiffIdModel(id, Action.removed)]);
+  }
+
+  void saveDeviceGroups() {
+    final current = state.value;
+    if (current == null) return;
+
+    final deviceGroups = current
+        .map(
+          (final e) =>
+              "${e.id}\u0002${ref.read(Device.groupsByIdProvider(e.id)).join("\u0003")}",
+        )
+        .join("\u0001");
     PreferencesManager.instance.setString("deviceGroups", deviceGroups);
   }
 
-  static String getGroupName(String key) {
-    var name = groupNames[key];
-    return name ?? key;
-  }
+  // static String getGroupName(final String key) {
+  //   final name = groupNames[key];
+  //   return name ?? key;
+  // }
 
-  static void changeGroupName(String key, String newName) {
-    groupNames[key] = newName;
+  void changeGroupName(final String key, final String newName) {
+    ref.read(customGroupNameProvider(key).notifier).state = newName;
+    _groupNames[key] = newName;
 
-    var strs = groupNames.select((key, value) => key + "\u0001" + value);
+    final strs = _groupNames.select(
+      (final key, final value) => "$key\u0001$value",
+    );
     PreferencesManager.instance.setStringList("customGroupNames", strs);
   }
 
-  static List<T> getDevicesOfType<T extends Device>() {
-    return devices.whereType<T>().toList(); // where((x) => x.getDeviceType() == type).toList();
-  }
+  List<Device<BaseModel>> _loadDevices(final List subs, final List<int> ids) {
+    final List<BaseModel> baseModels = ref.read(baseModelsProvider).toList();
 
-  static Device getDeviceWithId(int? id) {
-    return devices.firstWhere((x) => x.id == id);
-  }
-
-  static Future subToNonSubscribed(HubConnection? con) async {
-    if (sub) return;
-    sub = true;
-    while (sub) {
-      if (notSubscribedDevices.length == 0) {
-        sub = false;
+    final devices = <Device>[];
+    // final futures = <Future>[];
+    for (final id in ids) {
+      final sub = subs.firstOrDefault((final x) => x["id"] == id);
+      if (sub == null) {
         continue;
       }
-      var removeD = <Device>[];
-      for (var dev in notSubscribedDevices.toList()) {
-        var list = <int>[];
-        list.add(dev.id ?? 0);
-        var d = await con!.invoke("Subscribe", args: [list]);
-        if (d != null) {
-          if (dev.baseModel.friendlyName.endsWith("(NC)"))
-            dev.baseModel.friendlyName = dev.baseModel.friendlyName.substring(0, dev.baseModel.friendlyName.length - 4);
-          removeD.add(dev);
-        } else {
-          if (!dev.baseModel.friendlyName.endsWith("(NC)")) dev.baseModel.friendlyName += "(NC)";
+      final types =
+          PreferencesManager.instance.getStringList("Types$id") ?? <String>[];
+      BaseModel? model;
+      String? type;
+      if (types.isEmpty) {
+        for (final item in sub["typeNames"]) {
+          types.add(item.toString());
         }
       }
-      for (var d in removeD) {
-        notSubscribedDevices.remove(d);
+      final preferenceId = "Types$id";
+      if (!PreferencesManager.instance.containsKey(preferenceId)) {
+        PreferencesManager.instance.setStringList(preferenceId, types);
       }
-      await Future.delayed(Duration(seconds: 10));
-    }
-  }
 
-  static void sortDevices() {
-    //currentSort .sort(sortDevices)
-    switch (DeviceManager.currentSort) {
-      case SortTypes.NameAsc:
-        devices.sort((x, b) => x.baseModel.friendlyName.compareTo(b.baseModel.friendlyName));
-        break;
-      case SortTypes.NameDesc:
-        devices.sort((x, b) => b.baseModel.friendlyName.compareTo(x.baseModel.friendlyName));
-        break;
-      case SortTypes.TypeAsc:
-        devices.sort((x, b) => x.baseModel.runtimeType.toString().compareTo(b.runtimeType.toString()));
-        break;
-      case SortTypes.TypeDesc:
-        devices.sort((x, b) => b.baseModel.runtimeType.toString().compareTo(x.runtimeType.toString()));
-        break;
-      case SortTypes.IdAsd:
-        devices.sort((x, b) => x.baseModel.id.compareTo(b.baseModel.id));
-        break;
-      case SortTypes.IdDesc:
-        devices.sort((x, b) => b.baseModel.id.compareTo(x.baseModel.id));
-        break;
-    }
-    PreferencesManager.instance.setInt("SortOrder", DeviceManager.currentSort.index);
-  }
-
-  static final ctorFactory = <String, Object Function(int? id, BaseModel model, HubConnection con)>{
-    //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
-    'Heater': (i, s, h) => Heater(i, "Heizung", s as HeaterModel, h, Icons.whatshot),
-    'XiaomiTempSensor': (i, s, h) => XiaomiTempSensor(i, "Temperatursensor", s as TempSensorModel, h, SmarthomeIcons.xiaomiTempSensor),
-    'LedStrip': (i, s, h) => LedStrip(i, "Ledstrip", s as LedStripModel, h, Icons.lightbulb_outline),
-    'FloaltPanel': (i, s, h) => FloaltPanel(i, "Floalt Panel", s as FloaltPanelModel, h, Icons.crop_square),
-    'OsramB40RW': (i, s, h) => OsramB40RW(i, "Osram B40", s as OsramB40RWModel, h, Icons.lightbulb_outline),
-    'OsramPlug': (i, s, h) => OsramPlug(i, "Osram Plug", s as OsramPlugModel, h, Icons.radio_button_checked),
-    'TradfriLedBulb': (i, s, h) => TradfriLedBulb(i, "Tradfi RGB Bulb", s as TradfriLedBulbModel, h, Icons.lightbulb_outline)
-  };
-  static final stringNameJsonFactory = <String, BaseModel Function(Map<String, dynamic>)>{
-    // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-    'Heater': (m) => HeaterModel.fromJson(m),
-    'XiaomiTempSensor': (m) => TempSensorModel.fromJson(m),
-    'LedStrip': (m) => LedStripModel.fromJson(m),
-    'FloaltPanel': (m) => FloaltPanelModel.fromJson(m),
-    'OsramB40RW': (m) => OsramB40RWModel.fromJson(m),
-    'OsramPlug': (m) => OsramPlugModel.fromJson(m),
-    'TradfriLedBulb': (m) => TradfriLedBulbModel.fromJson(m),
-  };
-
-  static final jsonFactory = <Type, BaseModel Function(Map<String, dynamic>)>{
-    // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-    HeaterModel: (m) => HeaterModel.fromJson(m),
-    TempSensorModel: (m) => TempSensorModel.fromJson(m),
-    LedStripModel: (m) => LedStripModel.fromJson(m),
-    FloaltPanelModel: (m) => FloaltPanelModel.fromJson(m),
-    OsramB40RWModel: (m) => OsramB40RWModel.fromJson(m),
-    OsramPlugModel: (m) => OsramPlugModel.fromJson(m),
-    TradfriLedBulbModel: (m) => TradfriLedBulbModel.fromJson(m)
-  };
-
-  static void stopSubbing() {
-    sub = false;
-  }
-
-  static void loadDevices(subs, List<int> ids, HubConnection hubConnection) {
-    for (var id in ids) {
-      var sub = subs.firstWhere((x) => x["id"] == id, orElse: () => null);
-      var type = PreferencesManager.instance.getString("Type" + id.toString());
-      BaseModel model = stringNameJsonFactory[type!]!(jsonDecode(PreferencesManager.instance.getString("Json" + id.toString())!));
-      model.isConnected = false;
-
-      model.friendlyName += "(old)";
-      if (sub != null) {
-        model = stringNameJsonFactory[type]!(sub);
-        try {
-          var dev = ctorFactory[type]!(id, model, hubConnection);
-          devices.add(dev as Device<BaseModel>);
-        } catch (e) {}
+      if (types.isEmpty) {
+        type = PreferencesManager.instance.getString("Type$id");
       } else {
-        var dev = ctorFactory[type]!(id, model, hubConnection);
-        devices.add(dev as Device<BaseModel>);
-        notSubscribedDevices.add(dev);
-        subToNonSubscribed(hubConnection);
+        for (final item in types) {
+          if (!stringNameJsonFactory.containsKey(item)) {
+            continue;
+          }
+          type = item;
+          break;
+        }
+      }
+      try {
+        model = stringNameJsonFactory[type]!(sub, types);
+        final dev = deviceCtorFactory[type]!(id, types.first);
+        devices.add(dev);
+        ref.read(stateServiceProvider.notifier).updateAndGetStores(id, sub);
+        if (sub["dynamicStateData"] case final Map<String, dynamic>? extData
+            when extData != null) {
+          ref
+              .read(stateServiceProvider.notifier)
+              .updateAndGetStores(id, extData);
+        }
+        final toRemove = baseModels.firstOrDefault(
+          (final element) => element.id == id,
+        );
+        if (toRemove != null) {
+          baseModels.remove(toRemove);
+        }
+        baseModels.add(model);
+        // final _ = ref.read(deviceInstanceLayoutProvider(id));
+        // futures.add(DeviceLayoutService.loadInitialLayoutAsync(id, types));
+      } catch (e) {
+        print(e);
       }
     }
-    var deviceGroups = PreferencesManager.instance.getString("deviceGroups");
+    final deviceGroups = PreferencesManager.instance.getString("deviceGroups");
 
-    if (deviceGroups == null) return;
-    var devicesGroups = deviceGroups.split("\u0001");
+    if (deviceGroups != null) {
+      final devicesGroups = deviceGroups.split("\u0001");
 
-    for (var item in devicesGroups) {
-      var deviceGroup = item.split("\u0002");
-      var deviceId = deviceGroup.first;
-      var groups = deviceGroup.last.split("\u0003");
-      var dev = devices.firstOrNull((element) => element.id.toString() == deviceId);
-      if (dev != null) {
-        dev.groups.clear();
-        dev.groups.addAll(groups);
+      for (final item in devicesGroups) {
+        final deviceGroup = item.split("\u0002");
+        final deviceId = deviceGroup.first;
+        final groups = deviceGroup.last.split("\u0003");
+        final dev = devices.firstOrDefault(
+          (final element) => element.id.toString() == deviceId,
+        );
+        if (dev != null) {
+          try {
+            final groupings = ref.read(
+              Device.groupsByIdProvider(dev.id).notifier,
+            );
+
+            groupings.state = groups;
+          } catch (ex) {
+            print(ex);
+          }
+        }
       }
     }
+    // try {
+    //   final deviceIdState = ref.read(deviceIdProvider.notifier);
+    //   deviceIdState.state = devices.map((final e) => e.id).toList();
+    // } catch (ex) {
+    //   print(ex);
+    //   return;
+    // }
+
+    ref.read(baseModelsProvider.notifier).storeModels(baseModels);
+    return devices;
+  }
+
+  Future reloadCurrentDevices() async {
+    final baseModels = ref.read(baseModelsProvider).toList();
+    if (baseModels.isNotEmpty) {
+      final api = ref.read(apiProvider);
+
+      final res = await api.appDeviceGet();
+      final devices = res.bodyOrThrow;
+      for (int i = baseModels.length - 1; i >= 0; i--) {
+        final baseModel = baseModels[i];
+        final existingDevice = devices.firstOrDefault(
+          (final element) => element.id == baseModel.id,
+        );
+        if (existingDevice == null) continue;
+
+        baseModels.remove(baseModel);
+        baseModels.add(existingDevice.lastModel!);
+      }
+      ref.read(baseModelsProvider.notifier).storeModels(baseModels);
+    }
+  }
+
+  void removeAllDevices() {
+    final devices = state.value?.map((final x) => x.id).toList() ?? _deviceIds;
+    if (devices.isEmpty) {
+      _deviceIds.clear();
+      return;
+    }
+    for (int i = devices.length - 1; i >= 0; i--) {
+      final d = devices.elementAt(i);
+      PreferencesManager.instance.remove("SHD$d");
+      PreferencesManager.instance.remove("Json$d");
+      PreferencesManager.instance.remove("Type$d");
+    }
+    _deviceIds.clear();
+    _syncDevices(
+      [],
+      devices.map((final x) => DiffIdModel(x, Action.removed)).toList(),
+    );
+
+    saveDeviceGroups();
+  }
+
+  Future<List<Device<BaseModel>>> _syncDevices(
+    final List<Device<BaseModel>> current,
+    final List<DiffIdModel> diffIds,
+  ) async {
+    final connection = _connection;
+    if (connection == null ||
+        connection.state != HubConnectionState.Connected) {
+      return current;
+    }
+
+    if (diffIds.any((final element) => element.action == Action.added)) {
+      final deviceIds = diffIds
+          .where((final x) => x.action == Action.added)
+          .map((final x) => x.id)
+          .toList();
+      final subs = await connection.invoke("Subscribe", args: [deviceIds]);
+      current.addAll(_loadDevices(subs as List, deviceIds));
+      for (final id in deviceIds) {
+        if (PreferencesManager.instance.containsKey("SHD$id")) continue;
+        PreferencesManager.instance.setInt("SHD$id", id);
+        if (Platform.isAndroid || Platform.isIOS) {
+          FirebaseMessaging.instance.subscribeToTopic("device_$id");
+        }
+      }
+    }
+    if (diffIds.any((final element) => element.action == Action.removed)) {
+      final deviceIds = diffIds
+          .where((final x) => x.action == Action.removed)
+          .map((final x) => x.id)
+          .toList();
+      await connection.invoke("Unsubscribe", args: [deviceIds]);
+
+      for (final diffId in diffIds) {
+        current.removeWhere((final d) => d.id == diffId.id);
+        if (Platform.isAndroid || Platform.isIOS) {
+          FirebaseMessaging.instance.unsubscribeFromTopic("device_$diffId");
+        }
+      }
+
+      for (final id in deviceIds) {
+        PreferencesManager.instance.remove("SHD$id");
+        PreferencesManager.instance.remove("Json$id");
+        PreferencesManager.instance.remove("Type$id");
+        PreferencesManager.instance.remove("Types$id");
+      }
+    }
+    return current;
   }
 }
 
-enum DeviceTypes { Heater, XiaomiTempSensor, LedStrip, FloaltPanel, OsramB40RW, OsramPlug, TradfriLedBulb }
+enum DeviceTypes {
+  Heater,
+  XiaomiTempSensor,
+  LedStrip,
+  FloaltPanel,
+  OsramB40RW,
+  OsramPlug,
+  TradfriLedBulb,
+  TradfriControlOutlet,
+  TradfriMotionSensor,
+  ZigbeeLamp,
+  Generic,
+}
 
 enum SortTypes { NameAsc, NameDesc, TypeAsc, TypeDesc, IdAsd, IdDesc }

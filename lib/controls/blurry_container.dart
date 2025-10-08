@@ -1,50 +1,46 @@
 //Copied from https://github.com/ranjeetrocky/blurry_container
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/helper/preference_manager.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
-
-const double kBlur = 1.0;
 const EdgeInsetsGeometry kDefaultPadding = EdgeInsets.all(0);
 const EdgeInsetsGeometry kDefaultMargin = EdgeInsets.all(0);
 const Color kDefaultColor = Colors.transparent;
 const BorderRadius kBorderRadius = BorderRadius.all(Radius.circular(10));
 const BlendMode kblendMode = BlendMode.srcOver;
 
-class BlurryContainer extends StatelessWidget {
+final blurryContainerBlurProvider = StateProvider<double>((final ref) {
+  return PreferencesManager.instance.getDouble("BlurryContainerBlur") ?? 0;
+});
+
+class BlurryContainer extends ConsumerWidget {
   final Widget? child;
-  final double blur;
   final EdgeInsetsGeometry padding;
   final Color color;
   final EdgeInsetsGeometry margin;
   final BorderRadius borderRadius;
   final BlendMode blendMode;
 
-
-  BlurryContainer(
+  const BlurryContainer(
       {this.child,
-      this.blur = 5,
       this.padding = kDefaultPadding,
       this.color = kDefaultColor,
       this.borderRadius = kBorderRadius,
       this.margin = kDefaultMargin,
-      this.blendMode = kblendMode
-      });
+      this.blendMode = kblendMode,
+      super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     return ClipRRect(
       borderRadius: borderRadius,
-      child: BackdropFilter(
-        blendMode: blendMode,
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: padding,
-          margin: margin,
-          color: color,
-          child: child,
-        ),
+      child: Container(
+        padding: padding,
+        margin: margin,
+        color: color,
+        child: child,
       ),
     );
   }
