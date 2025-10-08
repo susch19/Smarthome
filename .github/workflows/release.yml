@@ -25,7 +25,7 @@ jobs:
           future_release: ${{ github.ref }}
           since_tag: ${{ steps.get_latest_release.outputs.release }}
       - name: Upload changelog
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: changelog
           path: CHANGELOG.md
@@ -44,13 +44,13 @@ jobs:
         name: changelog
     - name: Draft release with changelog
       id: create_release
-      uses: actions/create-release@v1
+      uses: ncipollo/release-action@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Smarthome ${{ github.ref }}
-        body_path: CHANGELOG.md
+        tag: ${{ github.ref }}
+        name: Smarthome ${{ github.ref }}
+        bodyFile: CHANGELOG.md
         draft: true
         prerelease: false
 
@@ -65,7 +65,7 @@ jobs:
         - os: windows-latest
           target: Windows
           build_target: windows
-          build_path: build\windows\runner\Release
+          build_path: build\windows\x64\runner\Release
           asset_extension: .zip
           asset_content_type: application/zip
         - os: ubuntu-latest
@@ -167,11 +167,13 @@ jobs:
     # Upload the build.
     - name: Add packaged build to release draft
       id: upload_release_asset
-      uses: actions/upload-release-asset@v1
+      uses: ncipollo/release-action@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ needs.draft-release.outputs.upload_url }}
-        asset_path: ./smarthome_${{ matrix.target }}${{ matrix.asset_extension }}
-        asset_name: smarthome_${{ matrix.target }}${{ matrix.asset_extension }}
-        asset_content_type: ${{ matrix.asset_content_type }}
+        tag: ${{ github.ref }}
+        name: Smarthome ${{ github.ref }}
+        draft: true
+        prerelease: false
+        allowUpdates: true
+        artifacts: smarthome_${{ matrix.target }}${{ matrix.asset_extension }}
