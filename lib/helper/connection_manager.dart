@@ -28,7 +28,7 @@ part 'connection_manager.g.dart';
 
 final hubConnectionConnectedProvider = Provider<HubConnection?>((final ref) {
   final val = ref.watch(connectionManagerProvider);
-  final hubConnection = val.valueOrNull;
+  final hubConnection = val.value;
   if (hubConnection == null) return null;
   // if (hubConnectionState == HubConnectionState.connected) return hubConnection;
   if (hubConnection.connectionState == HubConnectionState.Connected) {
@@ -81,8 +81,9 @@ class ConnectionManager extends _$ConnectionManager {
     final connection = newConnectionState.connection;
     if (connection == null) return HubConnectionContainer(connection, null);
     ref.onDispose(() {
-      connection.off("Update");
-      connection.off("UpdateUi");
+      state.value?.connection?.off("Update");
+      state.value?.connection?.off("UpdateUi");
+      state.value?.connection?.stop();
     });
     connection.serverTimeoutInMilliseconds = 30000;
 
@@ -141,7 +142,7 @@ class ConnectionManager extends _$ConnectionManager {
 
   void onReconnecting({final Exception? error}) {
     connectionIconChanged.value = Icons.error_outline;
-    final connection = state.valueOrNull?.connection;
+    final connection = state.value?.connection;
     if (connection == null) return;
     connection.off("Update");
     connection.off("UpdateUi");
@@ -151,7 +152,7 @@ class ConnectionManager extends _$ConnectionManager {
 
   Future newHubConnection() async {
     connectionIconChanged.value = Icons.refresh;
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current != null) {
       current.connection?.off("Update");
       current.connection?.off("UpdateUi");

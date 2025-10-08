@@ -12,10 +12,7 @@ import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/restapi/swagger.swagger.dart';
 
 class BasicIcon extends ConsumerWidget {
-  const BasicIcon({
-    super.key,
-    required this.info,
-  });
+  const BasicIcon({super.key, required this.info});
   final LayoutBasePropertyInfo info;
 
   @override
@@ -31,8 +28,10 @@ class BasicIcon extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 4.0),
       child: Icon(
-        IconData(raw["CodePoint"] as int,
-            fontFamily: raw["FontFamily"] ?? 'MaterialIcons'),
+        IconData(
+          raw["CodePoint"] as int,
+          fontFamily: raw["FontFamily"] ?? 'MaterialIcons',
+        ),
         color: color == null ? null : Color(color),
         size: (raw["Size"] as num?)?.toDouble(),
       ),
@@ -61,11 +60,14 @@ class BasicButton extends ConsumerWidget {
     final child = Row(
       children: [
         BasicIcon(info: info),
-        Text(editInfo.display!,
-            style: TextStyle(
-                fontWeight: valueModel?.currentValue == editInfo.activeValue
-                    ? FontWeight.bold
-                    : FontWeight.normal)),
+        Text(
+          editInfo.display!,
+          style: TextStyle(
+            fontWeight: valueModel?.currentValue == editInfo.activeValue
+                ? FontWeight.bold
+                : FontWeight.normal,
+          ),
+        ),
       ],
     );
     final onPressed = (() async {
@@ -76,34 +78,37 @@ class BasicButton extends ConsumerWidget {
       }
     });
     if (raisedButton) {
-      return ElevatedButton(
-        onPressed: onPressed,
-        child: child,
-      );
+      return ElevatedButton(onPressed: onPressed, child: child);
     }
 
-    return MaterialButton(
-      onPressed: onPressed,
-      child: child,
-    );
+    return MaterialButton(onPressed: onPressed, child: child);
   }
 
-  static void pushTempSettings(final BuildContext context, final int id,
-      final LayoutBasePropertyInfo e, final WidgetRef ref) async {
+  static void pushTempSettings(
+    final BuildContext context,
+    final int id,
+    final LayoutBasePropertyInfo e,
+    final WidgetRef ref,
+  ) async {
     final res = await Navigator.push(
-        context,
-        MaterialPageRoute<(bool, List<HeaterConfig>)>(
-            builder: (final BuildContext context) => TempScheduling(id),
-            fullscreenDialog: true));
+      context,
+      MaterialPageRoute<(bool, List<HeaterConfig>)>(
+        builder: (final BuildContext context) => TempScheduling(id),
+        fullscreenDialog: true,
+      ),
+    );
     if (res == null || !res.$1) return;
 
-    ref.read(apiProvider).appSmarthomePost(
-            message: JsonApiSmarthomeMessage(
-          parameters: ["store", ...res.$2.map((final f) => jsonEncode(f))],
-          id: id,
-          messageType: MessageType.options,
-          command: Command2.temp,
-        ));
+    ref
+        .read(apiProvider)
+        .appSmarthomePost(
+          body: JsonApiSmarthomeMessage(
+            parameters: ["store", ...res.$2.map((final f) => jsonEncode(f))],
+            id: id,
+            messageType: MessageType.options,
+            command: Command.temp.value!,
+          ),
+        );
   }
 }
 
@@ -126,17 +131,23 @@ class BasicDropdown extends ConsumerWidget {
         BasicIcon(info: info),
         DropdownButton(
           items: editInfo.editParameter
-              .map((final e) => DropdownMenuItem(
-                    value: e.$value,
-                    child: Text(e.displayName ?? e.$value.toString()),
-                  ))
+              .map(
+                (final e) => DropdownMenuItem(
+                  value: e.$value,
+                  child: Text(e.displayName ?? e.$value.toString()),
+                ),
+              )
               .toList(),
           onChanged: (final value) async {
             await Device.postMessage(
-                id, editInfo, ref.read(apiProvider), valueModel?.currentValue);
+              id,
+              editInfo,
+              ref.read(apiProvider),
+              valueModel?.currentValue,
+            );
           },
           value: valueModel?.currentValue,
-        )
+        ),
       ],
     );
   }
@@ -158,9 +169,10 @@ class BasicIconButton extends ConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final editInfo = info.editInfo!;
     final edit = editInfo.editParameter.firstWhere(
-        (final element) =>
-            valueModel != null && element.$value == valueModel!.currentValue,
-        orElse: () => editInfo.editParameter.first);
+      (final element) =>
+          valueModel != null && element.$value == valueModel!.currentValue,
+      orElse: () => editInfo.editParameter.first,
+    );
     final raw = edit.extensionData ?? {};
     final color = raw["Color"] as int?;
     if (raw["Disable"] == true) return const SizedBox();
@@ -168,11 +180,17 @@ class BasicIconButton extends ConsumerWidget {
     return IconButton(
       onPressed: (() async {
         await Device.postMessage(
-            id, editInfo, ref.read(apiProvider), valueModel?.currentValue);
+          id,
+          editInfo,
+          ref.read(apiProvider),
+          valueModel?.currentValue,
+        );
       }),
       icon: Icon(
-        IconData(raw["CodePoint"] as int,
-            fontFamily: raw["FontFamily"] ?? 'MaterialIcons'),
+        IconData(
+          raw["CodePoint"] as int,
+          fontFamily: raw["FontFamily"] ?? 'MaterialIcons',
+        ),
         color: color == null ? null : Color(color),
         size: raw["Size"],
       ),
@@ -181,11 +199,12 @@ class BasicIconButton extends ConsumerWidget {
 }
 
 class BasicToggle extends ConsumerWidget {
-  const BasicToggle(
-      {super.key,
-      required this.id,
-      required this.valueModel,
-      required this.info});
+  const BasicToggle({
+    super.key,
+    required this.id,
+    required this.valueModel,
+    required this.info,
+  });
 
   final int id;
   final ValueStore? valueModel;
@@ -195,7 +214,8 @@ class BasicToggle extends ConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final editInfo = info.editInfo!;
     final edit = editInfo.editParameter.firstWhere(
-        (final element) => element.$value != valueModel?.currentValue);
+      (final element) => element.$value != valueModel?.currentValue,
+    );
     if (edit.extensionData?["Disable"] == true) return const SizedBox();
 
     return Row(
@@ -206,7 +226,11 @@ class BasicToggle extends ConsumerWidget {
         Switch(
           onChanged: ((final _) async {
             await Device.postMessage(
-                id, editInfo, ref.read(apiProvider), valueModel?.currentValue);
+              id,
+              editInfo,
+              ref.read(apiProvider),
+              valueModel?.currentValue,
+            );
           }),
           value: valueModel?.currentValue == editInfo.activeValue,
         ),
@@ -248,8 +272,9 @@ class BasicSlider extends HookConsumerWidget {
         }
       }
       sliderTheme = sliderTheme.copyWith(
-        trackShape:
-            GradientRoundedRectSliderTrackShape(LinearGradient(colors: colors)),
+        trackShape: GradientRoundedRectSliderTrackShape(
+          LinearGradient(colors: colors),
+        ),
       );
     }
 
@@ -269,12 +294,13 @@ class BasicSlider extends HookConsumerWidget {
           },
           onChangeEnd: (final value) async {
             await Device.postMessage(
-                id,
-                editInfo,
-                ref.read(apiProvider),
-                customLabels[value.round()].values.first,
-                [],
-                edit.parameters ?? []);
+              id,
+              editInfo,
+              ref.read(apiProvider),
+              customLabels[value.round()].values.first,
+              [],
+              edit.parameters ?? [],
+            );
           },
           value: sliderVal,
           label: customLabels[sliderValue.value.round()].keys.first,
@@ -300,13 +326,19 @@ class BasicSlider extends HookConsumerWidget {
             },
             onChangeEnd: (final value) async {
               await Device.postMessage(
-                  id, editInfo, ref.read(apiProvider), value);
+                id,
+                editInfo,
+                ref.read(apiProvider),
+                value,
+              );
             },
             value: sliderVal,
             label: editInfo.display == ""
                 ? null
                 : editInfo.display ??
-                    valueModel.getValueAsString(precision: info.precision ?? 1),
+                      valueModel.getValueAsString(
+                        precision: info.precision ?? 1,
+                      ),
           ),
         ),
       ],

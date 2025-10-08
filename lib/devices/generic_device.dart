@@ -174,7 +174,6 @@ class GenericDevice extends Device<BaseModel> {
     if (valueModel.currentValue is num) {
       final val = (valueModel.currentValue as num);
       return info.editParameter.firstOrDefault((final element) {
-        if (element.extensionData?['Name'] != name) return false;
         final lower = element.extensionData?["Min"] as num?;
         final upper = element.extensionData?["Max"] as num?;
         if (lower != null && upper != null) {
@@ -185,13 +184,11 @@ class GenericDevice extends Device<BaseModel> {
     } else if (valueModel.currentValue is bool) {
       final val = (valueModel.currentValue as bool);
       return info.editParameter.firstOrDefault((final element) {
-        if (element.extensionData?['Name'] != name) return false;
         return element.$value == val;
       });
     } else if (valueModel.currentValue is String) {
       final val = (valueModel.currentValue as String);
       return info.editParameter.firstOrDefault((final element) {
-        if (element.extensionData?['Name'] != name) return false;
         return element.$value == val;
       });
     } else {

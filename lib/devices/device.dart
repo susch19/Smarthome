@@ -3,7 +3,9 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:quiver/core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -16,30 +18,37 @@ import 'package:smarthome/devices/generic/icons/icon_manager.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smarthome/models/command.dart';
 import 'package:smarthome/restapi/swagger.swagger.dart';
 
 part 'device.g.dart';
 
 @riverpod
 FutureOr<History> historyPropertyName(
-    final Ref ref,
-    final int id,
-    final DateTime fromTime,
-    final DateTime toTime,
-    final String propertyName) async {
+  final Ref ref,
+  final int id,
+  final DateTime fromTime,
+  final DateTime toTime,
+  final String propertyName,
+) async {
   final api = ref.watch(apiProvider);
   final res = await api.appHistoryRangeGet(
-      id: id, from: fromTime, to: toTime, propertyName: propertyName);
+    id: id,
+    from: fromTime,
+    to: toTime,
+    propertyName: propertyName,
+  );
   return res.bodyOrThrow;
 }
 
 @riverpod
 Widget iconWidget(
-    final Ref ref,
-    final List<String> typeNames,
-    final Device device,
-    final AdaptiveThemeManager themeManager,
-    final bool withMargin) {
+  final Ref ref,
+  final List<String> typeNames,
+  final Device device,
+  final AdaptiveThemeManager themeManager,
+  final bool withMargin,
+) {
   final brightness = ref.watch(brightnessProvider(themeManager));
   final icon = ref.watch(iconByTypeNamesProvider(typeNames));
 
@@ -54,16 +63,18 @@ Widget iconWidgetSingle(
   final AdaptiveThemeManager themeManager,
   final bool withMargin,
 ) {
-  return ref
-      .watch(iconWidgetProvider([typeName], device, themeManager, withMargin));
+  return ref.watch(
+    iconWidgetProvider([typeName], device, themeManager, withMargin),
+  );
 }
 
 abstract class Device<T extends BaseModel> {
   static const fromJsonFactory = _$DeviceRequestFromJson;
 
   static Device _$DeviceRequestFromJson(final Map<String, dynamic> json) {
-    final types =
-        (json["typeNames"] as List).map((final x) => x.toString()).toList();
+    final types = (json["typeNames"] as List)
+        .map((final x) => x.toString())
+        .toList();
     String type = "Device";
     for (final item in types) {
       if (!stringNameJsonFactory.containsKey(item)) {
@@ -86,10 +97,13 @@ abstract class Device<T extends BaseModel> {
     return null;
   });
 
-  static final groupsByIdProvider =
-      StateProvider.family<List<String>, int>((final ref, final id) {
-    final friendlyNameSplit =
-        ref.watch(BaseModel.friendlyNameProvider(id)).split(" ");
+  static final groupsByIdProvider = StateProvider.family<List<String>, int>((
+    final ref,
+    final id,
+  ) {
+    final friendlyNameSplit = ref
+        .watch(BaseModel.friendlyNameProvider(id))
+        .split(" ");
     return [friendlyNameSplit.first];
   });
 
@@ -102,12 +116,13 @@ abstract class Device<T extends BaseModel> {
 
   Device(this.id, this.typeName, {this.iconData, this.lastModel});
 
-  Widget _createIcon(final Brightness themeMode, final Uint8List? iconBytes,
-      final bool withMargin) {
+  Widget _createIcon(
+    final Brightness themeMode,
+    final Uint8List? iconBytes,
+    final bool withMargin,
+  ) {
     if (iconData != null) {
-      return Icon(
-        iconData,
-      );
+      return Icon(iconData);
     }
     if (iconBytes != null) {
       return createIconFromSvgByteList(iconBytes, themeMode, withMargin);
@@ -115,8 +130,11 @@ abstract class Device<T extends BaseModel> {
     return const SizedBox();
   }
 
-  Widget createIconFromSvgByteList(final Uint8List list,
-      final Brightness brightness, final bool withMargin) {
+  Widget createIconFromSvgByteList(
+    final Uint8List list,
+    final Brightness brightness,
+    final bool withMargin,
+  ) {
     if (withMargin) {
       return Container(
         margin: const EdgeInsets.all(8),
@@ -124,8 +142,9 @@ abstract class Device<T extends BaseModel> {
           child: SvgPicture.memory(
             list,
             colorFilter: ColorFilter.mode(
-                brightness == Brightness.light ? Colors.black : Colors.white,
-                BlendMode.srcIn),
+              brightness == Brightness.light ? Colors.black : Colors.white,
+              BlendMode.srcIn,
+            ),
           ),
         ),
       );
@@ -134,8 +153,9 @@ abstract class Device<T extends BaseModel> {
         child: SvgPicture.memory(
           list,
           colorFilter: ColorFilter.mode(
-              brightness == Brightness.light ? Colors.black : Colors.white,
-              BlendMode.srcIn),
+            brightness == Brightness.light ? Colors.black : Colors.white,
+            BlendMode.srcIn,
+          ),
         ),
       );
     }
@@ -152,8 +172,11 @@ abstract class Device<T extends BaseModel> {
   //   return baseModel.updateFromJson(message);
   // }
 
-  Future<dynamic> getFromServer(final String methodName,
-      final List<Object>? args, final HubConnectionContainer container) async {
+  Future<dynamic> getFromServer(
+    final String methodName,
+    final List<Object>? args,
+    final HubConnectionContainer container,
+  ) async {
     if (container.connectionState != HubConnectionState.Connected ||
         container.connection == null) {
       return;
@@ -170,14 +193,19 @@ abstract class Device<T extends BaseModel> {
   int get hashCode => hash2(id, typeName);
 
   @mustCallSuper
-  Future sendToServer(final MessageType messageType, final Command2 command,
-      final List<String> parameters, final Swagger container) async {
+  Future sendToServer(
+    final MessageType messageType,
+    final Command command,
+    final List<String> parameters,
+    final Swagger container,
+  ) async {
     final message = JsonApiSmarthomeMessage(
-        parameters: parameters,
-        messageType: messageType,
-        command: command,
-        id: id);
-    await container.appSmarthomePost(message: message);
+      parameters: parameters,
+      messageType: messageType,
+      command: command.value!,
+      id: id,
+    );
+    await container.appSmarthomePost(body: message);
   }
 
   static Future postMessage(
@@ -188,24 +216,42 @@ abstract class Device<T extends BaseModel> {
     final List<Object> preParameters = const [],
     final List<Object> postParamters = const [],
   ]) async {
-    final editParameter = editInfo.editParameter.first;
+    final editParameter =
+        editInfo.editParameter.firstWhereOrNull((final x) => x.$value == value) ??
+        editInfo.editParameter.firstOrNull;
+    if (editParameter == null) return;
+    dynamic valueParam = value;
+    if (editParameter.extensionData?.containsKey("Digits") ?? false) {
+      if (value is double) {
+        valueParam = value.toStringAsFixed(
+          editParameter.extensionData!["Digits"],
+        );
+      }
+    }
+
     await api.appSmarthomePost(
-        message: JsonApiSmarthomeMessage(
-      parameters: [
-        ...preParameters,
-        value,
-        ...postParamters,
-      ],
-      id: id,
-      messageType: editParameter.messageType ?? editInfo.messageType,
-      command: Command2.values[editParameter.command.index],
-    ));
+      body: JsonApiSmarthomeMessage(
+        parameters: [
+          ...preParameters,
+          ...(editParameter.parameters ?? []),
+          valueParam,
+          ...postParamters,
+        ],
+        id: id,
+        messageType: editParameter.messageType ?? editInfo.messageType,
+        command: editParameter.command,
+      ),
+    );
   }
 
   Future updateDeviceOnServer(
-      final int id, final String friendlyName, final Swagger api) async {
+    final int id,
+    final String friendlyName,
+    final Swagger api,
+  ) async {
     await api.appDevicePatch(
-        request: DeviceRenameRequest(id: id, newName: friendlyName));
+      body: DeviceRenameRequest(id: id, newName: friendlyName),
+    );
   }
 
   DeviceTypes getDeviceType();

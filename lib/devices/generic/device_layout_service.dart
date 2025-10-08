@@ -12,7 +12,6 @@ import 'package:path/path.dart' as path;
 
 import 'generic_device_exporter.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'device_layout_service.g.dart';
 
@@ -37,14 +36,13 @@ class LayoutIcons extends _$LayoutIcons {
       {final bool updateStorage = false}) async {
     final deviceLayout = DeviceLayout.fromJson(deviceLayoutJson);
 
-    final curState = state.valueOrNull;
+    final curState = state.value;
     if (curState == null) return;
 
     final api = ref.read(apiProvider);
     final res = await api.appLayoutSingleGet(
         typeName: deviceLayout.typeName,
-        iconName: deviceLayout.iconName,
-        deviceId: null);
+        iconName: deviceLayout.iconName);
     if (res.body case final LayoutResponse layoutRes) {
       final existingLayout = curState.firstOrDefault(
           (final e) => e.layout?.uniqueName == deviceLayout.uniqueName);
@@ -142,7 +140,9 @@ DetailPropertyInfo? fabLayout(
   final layoutProvider = ref.watch(detailDeviceLayoutProvider(id, typeName));
   final props = layoutProvider?.propertyInfos;
   return props?.firstOrDefault(
-      (final element) => element.editInfo?.editType == "floatingactionbutton");
+    (final element) =>
+        element.editInfo?.editType.toLowerCase() == "floatingactionbutton",
+  );
 }
 
 @riverpod

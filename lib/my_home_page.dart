@@ -3,7 +3,6 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:smarthome/controls/dashboard_card.dart';
@@ -22,12 +21,13 @@ import 'package:smarthome/helper/simple_dialog_single_input.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/helper/update_manager.dart';
 import 'package:smarthome/main.dart';
-import 'package:smarthome/restapi/swagger.swagger.dart';
 import 'package:smarthome/screens/screen_export.dart';
 import 'package:smarthome/screens/settings_page.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
-final _groupCollapsedProvider =
-    StateProvider.family<bool, String>((final _, final __) => false);
+final _groupCollapsedProvider = StateProvider.family<bool, String>(
+  (final _, final __) => false,
+);
 
 class DashboardGroup extends ConsumerWidget {
   const DashboardGroup({super.key, required this.deviceGroup});
@@ -45,26 +45,32 @@ class DashboardGroup extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(child: Consumer(
-                builder: (final context, final ref, final child) {
-                  final groupName = ref.watch(
-                      DeviceManager.customGroupNameProvider(deviceGroup.key));
-                  return MaterialButton(
-                    onPressed: (() {
-                      final oldCollapsed = ref.read(
-                          _groupCollapsedProvider(deviceGroup.key).notifier);
-                      oldCollapsed.state = !oldCollapsed.state;
-                    }),
-                    child: Text(
-                      groupName,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  );
-                },
-              )),
+              Flexible(
+                child: Consumer(
+                  builder: (final context, final ref, final child) {
+                    final groupName = ref.watch(
+                      DeviceManager.customGroupNameProvider(deviceGroup.key),
+                    );
+                    return MaterialButton(
+                      onPressed: (() {
+                        final oldCollapsed = ref.read(
+                          _groupCollapsedProvider(deviceGroup.key).notifier,
+                        );
+                        oldCollapsed.state = !oldCollapsed.state;
+                      }),
+                      child: Text(
+                        groupName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    );
+                  },
+                ),
+              ),
               Consumer(
                 builder: (final context, final ref, final child) {
                   return PopupMenuButton<String>(
@@ -72,16 +78,22 @@ class DashboardGroup extends ConsumerWidget {
                         groupOption(context, ref, o, deviceGroup),
                     itemBuilder: (final BuildContext context) =>
                         <PopupMenuItem<String>>[
-                      const PopupMenuItem<String>(
-                          value: 'Rename', child: Text("Umbenennen")),
-                      const PopupMenuItem<String>(
-                          value: 'Delete', child: Text("Entfernen")),
-                      const PopupMenuItem<String>(
-                          value: 'Edit', child: Text("Geräte zuordnen")),
-                    ],
+                          const PopupMenuItem<String>(
+                            value: 'Rename',
+                            child: Text("Umbenennen"),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'Delete',
+                            child: Text("Entfernen"),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'Edit',
+                            child: Text("Geräte zuordnen"),
+                          ),
+                        ],
                   );
                 },
-              )
+              ),
             ],
           ),
         ),
@@ -106,33 +118,39 @@ class DashboardGroup extends ConsumerWidget {
   }
 
   void groupOption(
-      final BuildContext context,
-      final WidgetRef ref,
-      final String value,
-      final MapEntry<String, List<Device<BaseModel>>> deviceGroup) {
+    final BuildContext context,
+    final WidgetRef ref,
+    final String value,
+    final MapEntry<String, List<Device<BaseModel>>> deviceGroup,
+  ) {
     switch (value) {
       case 'Rename':
         final sd = SimpleDialogSingleInput.create(
-            hintText: "Name der Gruppe",
-            labelText: "Name",
-            acceptButtonText: "Umbenennen",
-            cancelButtonText: "Abbrechen",
-            defaultText: ref
-                .read(DeviceManager.customGroupNameProvider(deviceGroup.key)),
-            onSubmitted: (final s) {
-              ref
-                  .read(deviceManagerProvider.notifier)
-                  .changeGroupName(deviceGroup.key, s);
-            },
-            title: "Gruppenname ändern",
-            context: context);
+          hintText: "Name der Gruppe",
+          labelText: "Name",
+          acceptButtonText: "Umbenennen",
+          cancelButtonText: "Abbrechen",
+          defaultText: ref.read(
+            DeviceManager.customGroupNameProvider(deviceGroup.key),
+          ),
+          onSubmitted: (final s) {
+            ref
+                .read(deviceManagerProvider.notifier)
+                .changeGroupName(deviceGroup.key, s);
+          },
+          title: "Gruppenname ändern",
+          context: context,
+        );
         showDialog(
-            builder: (final BuildContext context) => sd, context: context);
+          builder: (final BuildContext context) => sd,
+          context: context,
+        );
         break;
       case 'Delete':
         for (final element in deviceGroup.value) {
-          final groupsState =
-              ref.read(Device.groupsByIdProvider(element.id).notifier);
+          final groupsState = ref.read(
+            Device.groupsByIdProvider(element.id).notifier,
+          );
           final groups = groupsState.state.toList();
 
           groups.remove(deviceGroup.key);
@@ -146,9 +164,11 @@ class DashboardGroup extends ConsumerWidget {
         break;
       case 'Edit':
         Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (final c) => GroupDevices(deviceGroup.key, false)));
+          context,
+          MaterialPageRoute(
+            builder: (final c) => GroupDevices(deviceGroup.key, false),
+          ),
+        );
 
         break;
 
@@ -164,10 +184,12 @@ class MyHomePage extends ConsumerWidget {
 
   Widget buildBodyGrouped(final BuildContext context, final WidgetRef ref) {
     final deviceGroupsRaw = ref.watch(filteredDevicesProvider);
-    final deviceGroupsMap = deviceGroupsRaw
-        .groupManyBy((final x) => ref.watch(Device.groupsByIdProvider(x.id)));
-    final deviceGroups = deviceGroupsMap.entries
-        .sorted((final a, final b) => b.value.length.compareTo(a.value.length));
+    final deviceGroupsMap = deviceGroupsRaw.groupManyBy(
+      (final x) => ref.watch(Device.groupsByIdProvider(x.id)),
+    );
+    final deviceGroups = deviceGroupsMap.entries.sorted(
+      (final a, final b) => b.value.length.compareTo(a.value.length),
+    );
 
     final versionAndUrl = ref.watch(versionAndUrlProvider);
     if (versionAndUrl != null) {
@@ -187,11 +209,13 @@ class MyHomePage extends ConsumerWidget {
             final deviceGroup = deviceGroups.elementAt(i);
             //if (deviceGroup == null) return const Text("Empty Entry");
             return Container(
-              margin:
-                  const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
-              child: DashboardGroup(
-                deviceGroup: deviceGroup,
+              margin: const EdgeInsets.only(
+                left: 2,
+                top: 4,
+                right: 2,
+                bottom: 2,
               ),
+              child: DashboardGroup(deviceGroup: deviceGroup),
             );
           },
         );
@@ -210,8 +234,12 @@ class MyHomePage extends ConsumerWidget {
           itemBuilder: (final context, final i) {
             final device = devices[i];
             return Container(
-              margin:
-                  const EdgeInsets.only(left: 2, top: 4, right: 2, bottom: 2),
+              margin: const EdgeInsets.only(
+                left: 2,
+                top: 4,
+                right: 2,
+                bottom: 2,
+              ),
               child: DashboardCard(
                 device: device,
                 onLongPress: () {
@@ -227,7 +255,10 @@ class MyHomePage extends ConsumerWidget {
   }
 
   static void deviceAction(
-      final BuildContext context, final WidgetRef ref, final Device d) {
+    final BuildContext context,
+    final WidgetRef ref,
+    final Device d,
+  ) {
     final actions = <Widget>[];
 
     actions.add(
@@ -247,7 +278,8 @@ class MyHomePage extends ConsumerWidget {
       title: Consumer(
         builder: (final context, final ref, final child) {
           return Text(
-              "Gerät ${ref.watch(BaseModel.friendlyNameProvider(d.id))}");
+            "Gerät ${ref.watch(BaseModel.friendlyNameProvider(d.id))}",
+          );
         },
       ),
       children: actions,
@@ -256,14 +288,19 @@ class MyHomePage extends ConsumerWidget {
   }
 
   static Future addDevice(
-      final DeviceOverviewModel device, final WidgetRef ref) async {
+    final DeviceOverviewModel device,
+    final WidgetRef ref,
+  ) async {
     for (final item in device.typeNames) {
       if (await tryCreateDevice(device, item, ref)) return;
     }
   }
 
-  static Future<bool> tryCreateDevice(final DeviceOverviewModel device,
-      final String item, final WidgetRef ref) async {
+  static Future<bool> tryCreateDevice(
+    final DeviceOverviewModel device,
+    final String item,
+    final WidgetRef ref,
+  ) async {
     if (!deviceCtorFactory.containsKey(item) ||
         !stringNameJsonFactory.containsKey(item)) {
       return false;
@@ -282,8 +319,9 @@ class MyHomePage extends ConsumerWidget {
       appBar: AppBar(
         title: ref.watch(getTitleWidgetProvider),
         leading: IconButton(
-            icon: Icon(ref.watch(infoIconProvider)),
-            onPressed: () => ref.invalidate(connectionManagerProvider)),
+          icon: Icon(ref.watch(infoIconProvider)),
+          onPressed: () => ref.invalidate(connectionManagerProvider),
+        ),
         actions: <Widget>[
           // ref.watch(showPinProvider).when(
           //       data: (final data) {
@@ -299,41 +337,47 @@ class MyHomePage extends ConsumerWidget {
           //       loading: () => const SizedBox(),
           //     ),
           IconButton(
-              onPressed: () {
-                final notifier = ref.watch(searchEnabledProvider.notifier);
-                notifier.state = !notifier.state;
-              },
-              icon: ref.watch(searchEnabledProvider)
-                  ? const Icon(Icons.cancel_outlined)
-                  : const Icon(Icons.search)),
+            onPressed: () {
+              final notifier = ref.watch(searchEnabledProvider.notifier);
+              notifier.state = !notifier.state;
+            },
+            icon: ref.watch(searchEnabledProvider)
+                ? const Icon(Icons.cancel_outlined)
+                : const Icon(Icons.search),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             onSelected: (final v) => selectedSort(ref, v),
             itemBuilder: (final BuildContext context) =>
                 <PopupMenuItem<String>>[
-              const PopupMenuItem<String>(value: 'Name', child: Text("Name")),
-              const PopupMenuItem<String>(
-                  value: 'Typ', child: Text("Gerätetyp")),
-              const PopupMenuItem<String>(value: 'Id', child: Text("Id")),
-            ],
+                  const PopupMenuItem<String>(
+                    value: 'Name',
+                    child: Text("Name"),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'Typ',
+                    child: Text("Gerätetyp"),
+                  ),
+                  const PopupMenuItem<String>(value: 'Id', child: Text("Id")),
+                ],
           ),
           PopupMenuButton<String>(
             onSelected: (final v) => selectedOption(context, v, ref),
             itemBuilder: (final BuildContext context) =>
                 <PopupMenuItem<String>>[
-              const PopupMenuItem<String>(
-                value: 'RemoveAll',
-                child: Text("Entferne alle Geräte"),
-              ),
-              const PopupMenuItem<String>(
-                value: 'Notifications',
-                child: Text("Alle Benachrichtigungen"),
-              ),
-              const PopupMenuItem<String>(
-                value: 'Settings',
-                child: Text("Einstellungen"),
-              ),
-            ],
+                  const PopupMenuItem<String>(
+                    value: 'RemoveAll',
+                    child: Text("Entferne alle Geräte"),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'Notifications',
+                    child: Text("Alle Benachrichtigungen"),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'Settings',
+                    child: Text("Einstellungen"),
+                  ),
+                ],
           ),
         ],
       ),
@@ -367,8 +411,11 @@ class MyHomePage extends ConsumerWidget {
     );
   }
 
-  static Future selectedOption(final BuildContext context, final String value,
-      final WidgetRef ref) async {
+  static Future selectedOption(
+    final BuildContext context,
+    final String value,
+    final WidgetRef ref,
+  ) async {
     switch (value) {
       case "Debug":
         DeviceManager.showDebugInformation =
@@ -381,50 +428,62 @@ class MyHomePage extends ConsumerWidget {
         ref.read(deviceManagerProvider.notifier).removeAllDevices();
         break;
       case "Info":
-        Navigator.push(context,
-            MaterialPageRoute(builder: (final c) => const AboutPage()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (final c) => const AboutPage()),
+        );
         break;
       case "Notifications":
-        final allLayouts = ref.read(deviceLayoutsProvider);
         final layoutNotifier = ref.read(deviceLayoutsProvider.notifier);
         final connection = ref.read(apiProvider);
 
-        final serverDevices =
-            await connection.appDeviceOverviewGet(onlyShowInApp: false);
+        final serverDevices = await connection.appDeviceOverviewGet(
+          onlyShowInApp: false,
+        );
         final devices = serverDevices.bodyOrThrow;
 
-        final globals = allLayouts
-            .mapMany((final x) => x.notificationSetup ?? <NotificationSetup>[])
-            .where((final x) => x.global)
+        final globalsServer = await connection
+            .notificationAllGlobalNotificationsGet();
+        final globals = globalsServer.bodyOrThrow
             .map((final x) => ("Global", null, x))
             .toList();
+
         final perDevice = devices
             .map((final x) => (x, layoutNotifier.getLayout(x.id, x.typeName)))
             .where((final x) => x.$2?.notificationSetup?.isNotEmpty ?? false)
-            .mapMany((final x) =>
-                x.$2!.notificationSetup!.map((final y) => (x.$1, y)))
-            .where((final x) =>
-                !x.$2.global &&
-                (x.$2.deviceIds == null ||
-                    x.$2.deviceIds!.isEmpty ||
-                    x.$2.deviceIds!.contains(x.$1.id)))
+            .mapMany(
+              (final x) => x.$2!.notificationSetup!.map((final y) => (x.$1, y)),
+            )
+            .where(
+              (final x) =>
+                  !x.$2.global &&
+                  (x.$2.deviceIds == null ||
+                      x.$2.deviceIds!.isEmpty ||
+                      x.$2.deviceIds!.contains(x.$1.id)),
+            )
             .map((final x) => (x.$1.friendlyName, x.$1.id, x.$2))
             .toList();
 
-        ref
-            .read(notificationServiceProvider.notifier)
-            .showNotificationDialog(context, [...globals, ...perDevice]);
+        ref.read(notificationServiceProvider.notifier).showNotificationDialog(
+          context,
+          [...globals, ...perDevice],
+        );
         break;
       case 'Settings':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (final c) => const SettingsPage()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (final c) => const SettingsPage()),
+        );
         break;
     }
   }
 
   static Future removeDevice(
-      final BuildContext context, final WidgetRef ref, final int id,
-      {final bool pop = true}) async {
+    final BuildContext context,
+    final WidgetRef ref,
+    final int id, {
+    final bool pop = true,
+  }) async {
     if (pop) Navigator.pop(context);
 
     final devices = ref.read(deviceManagerProvider.notifier);
@@ -433,19 +492,24 @@ class MyHomePage extends ConsumerWidget {
   }
 
   static void renameDevice(
-      final BuildContext context, final WidgetRef ref, final Device x) {
+    final BuildContext context,
+    final WidgetRef ref,
+    final Device x,
+  ) {
     showDialog(
+      context: context,
+      builder: (final BuildContext context) => SimpleDialogSingleInput.create(
         context: context,
-        builder: (final BuildContext context) => SimpleDialogSingleInput.create(
-            context: context,
-            title: "Gerät benennen",
-            hintText: "Name für das Gerät",
-            labelText: "Name",
-            defaultText: ref.read(BaseModel.friendlyNameProvider(x.id)),
-            maxLines: 2,
-            onSubmitted: (final s) async {
-              x.updateDeviceOnServer(x.id, s, ref.read(apiProvider));
-            })).then((final x) => Navigator.of(context).pop());
+        title: "Gerät benennen",
+        hintText: "Name für das Gerät",
+        labelText: "Name",
+        defaultText: ref.read(BaseModel.friendlyNameProvider(x.id)),
+        maxLines: 2,
+        onSubmitted: (final s) async {
+          x.updateDeviceOnServer(x.id, s, ref.read(apiProvider));
+        },
+      ),
+    ).then((final x) => Navigator.of(context).pop());
   }
 
   void selectedSort(final WidgetRef ref, final String value) {
@@ -463,8 +527,9 @@ class MyHomePage extends ConsumerWidget {
             : SortTypes.TypeAsc;
         break;
       case "Id":
-        newSort =
-            newSort == SortTypes.IdAsd ? SortTypes.IdDesc : SortTypes.IdAsd;
+        newSort = newSort == SortTypes.IdAsd
+            ? SortTypes.IdDesc
+            : SortTypes.IdAsd;
         break;
     }
     currentSortState.state = newSort;
@@ -472,7 +537,9 @@ class MyHomePage extends ConsumerWidget {
   }
 
   static Future addNewDevice(
-      final BuildContext context, final WidgetRef ref) async {
+    final BuildContext context,
+    final WidgetRef ref,
+  ) async {
     final connection = ref.read(apiProvider);
 
     final serverDevices = await connection.appDeviceOverviewGet();
@@ -482,116 +549,100 @@ class MyHomePage extends ConsumerWidget {
     final devicesFuture = ref.read(deviceManagerProvider);
     if (!devicesFuture.hasValue) return;
 
-    final dialog = SimpleDialog(
-      title: Text("Add new Smarthome Device"),
-      children: [
-        HookConsumer(
-          builder: (final context, final ref, final child) {
-            final devices = devicesFuture.requireValue;
-            final devicesToSelect = <Widget>[];
-            final selecteds = useState<List<int>>([]);
-            for (final dev in serverDevicesList) {
-              if (!devices.any((final x) => x.id == dev.id)) {
-                devicesToSelect.add(
-                  Consumer(
-                    builder: (final context, final ref, final child) {
-                      final selected = selecteds.value.contains(dev.id);
-                      return SimpleDialogOption(
-                        child: CheckboxListTile(
-                          value: selected,
-                          onChanged: (final c) {
-                            if (selected) {
-                              selecteds.value = [
-                                ...selecteds.value
-                                    .where((final x) => x != dev.id)
-                              ];
-                            } else {
-                              selecteds.value = [...selecteds.value, dev.id];
-                            }
-                          },
-                          title: Text(dev.friendlyName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(dev.typeName),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }
-            }
-            final allSelected =
-                selecteds.value.length == serverDevicesList.length;
-            if (devicesToSelect.length > 1) {
-              devicesToSelect.insert(
-                0,
-                SimpleDialogOption(
-                  child: allSelected
-                      ? const Text("Deselect all")
-                      : const Text("Select all"),
-                  onPressed: () async {
-                    selecteds.value = allSelected
-                        ? []
-                        : serverDevicesList.map((final x) => x.id).toList();
-                  },
-                ),
-              );
-            }
-            devicesToSelect.add(
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SimpleDialogOption(
-                    child: MaterialButton(
-                      onPressed: () =>
-                          subscribeTo(context, ref, selecteds.value),
-                      child: const Text("Subscribe to selected"),
+    final dialog = HookConsumer(
+      builder: (final context, final ref, final child) {
+        final devices = devicesFuture.requireValue;
+        final dialogRows = <Widget>[];
+        final selecteds = useState<List<int>>([]);
+        final allSelected = selecteds.value.length == serverDevicesList.length;
+        return AlertDialog(
+          title: Text("Add new Smarthome Device"),
+
+          content: Builder(
+            builder: (final context) {
+              for (final dev in serverDevicesList) {
+                if (!devices.any((final x) => x.id == dev.id)) {
+                  final selected = selecteds.value.contains(dev.id);
+                  dialogRows.add(
+                    CheckboxListTile(
+                      value: selected,
+                      onChanged: (final c) {
+                        if (selected) {
+                          selecteds.value = [
+                            ...selecteds.value.where((final x) => x != dev.id),
+                          ];
+                        } else {
+                          selecteds.value = [...selecteds.value, dev.id];
+                        }
+                      },
+                      title: Text(
+                        dev.friendlyName,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(dev.typeName),
                     ),
-                    onPressed: () {
-                      subscribeTo(context, ref, selecteds.value);
-                    },
-                  ),
-                ],
-              ),
-            );
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: devicesToSelect,
-            );
-          },
-        )
-      ],
+                  );
+                }
+              }
+
+              return SingleChildScrollView(child: Column(children: dialogRows));
+            },
+          ),
+          actions: [
+            SimpleDialogOption(
+              child: allSelected
+                  ? const Text("Deselect all")
+                  : const Text("Select all"),
+              onPressed: () async {
+                selecteds.value = allSelected
+                    ? []
+                    : serverDevicesList.map((final x) => x.id).toList();
+              },
+            ),
+
+            MaterialButton(
+              onPressed: () => subscribeTo(context, ref, selecteds.value),
+              child: const Text("Subscribe to selected"),
+            ),
+          ],
+        );
+      },
     );
     await showDialog(context: context, builder: (final b) => dialog);
   }
 
-  static void subscribeTo(final BuildContext context, final WidgetRef ref,
-      final List<int> devices) {
+  static void subscribeTo(
+    final BuildContext context,
+    final WidgetRef ref,
+    final List<int> devices,
+  ) {
     ref.read(deviceManagerProvider.notifier).subscribeToDevices(devices);
     Navigator.pop(context);
   }
 
   static void refresh(final WidgetRef ref) {
-    ref
-        .read(connectionManagerProvider.notifier)
-        .newHubConnection()
-        .then((final value) async {
+    ref.read(connectionManagerProvider.notifier).newHubConnection().then((
+      final value,
+    ) async {
       await ref.read(deviceManagerProvider.notifier).reloadCurrentDevices();
     });
   }
 
   static void addGroup(final BuildContext context) {
     final sd = SimpleDialogSingleInput.create(
-        hintText: "Name der neuen Gruppe",
-        labelText: "Name",
-        acceptButtonText: "Erstellen",
-        cancelButtonText: "Abbrechen",
-        onSubmitted: (final s) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (final c) => GroupDevices(s, true)));
-        },
-        title: "Neue Gruppe",
-        context: context);
+      hintText: "Name der neuen Gruppe",
+      labelText: "Name",
+      acceptButtonText: "Erstellen",
+      cancelButtonText: "Abbrechen",
+      onSubmitted: (final s) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (final c) => GroupDevices(s, true)),
+        );
+      },
+      title: "Neue Gruppe",
+      context: context,
+    );
     showDialog(builder: (final BuildContext context) => sd, context: context);
   }
 }

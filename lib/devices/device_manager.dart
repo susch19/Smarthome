@@ -16,12 +16,12 @@ import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/store_service.dart';
 import 'package:smarthome/devices/painless_led_strip/led_strip_model.dart';
-import 'package:smarthome/devices/zigbee/zigbee_switch_model.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/firebase_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../icons/smarthome_icons.dart';
 import 'device_exporter.dart';
@@ -55,7 +55,10 @@ Device? deviceById(final Ref ref, final int id) {
 
 @riverpod
 Device? deviceByIdValueStoreKey(
-    final Ref ref, final String valueKey, final int id) {
+  final Ref ref,
+  final String valueKey,
+  final int id,
+) {
   final dm = ref.watch(deviceByIdProvider(id));
   final valueStores = ref.watch(valueStoreChangedProvider(valueKey, id));
   if (valueStores != null) {
@@ -65,8 +68,10 @@ Device? deviceByIdValueStoreKey(
   return null;
 }
 
-final devicesByValueStoreKeyProvider =
-    Provider.family<List<Device>, String>((final ref, final key) {
+final devicesByValueStoreKeyProvider = Provider.family<List<Device>, String>((
+  final ref,
+  final key,
+) {
   final dm = ref.watch(deviceManagerProvider);
   if (!dm.hasValue) return [];
 
@@ -88,21 +93,27 @@ final sortedDeviceProvider = Provider<List<Device>>((final ref) {
   switch (sort) {
     case SortTypes.NameAsc:
       devices.sort(
-          (final x, final b) => baseModels[x.id]!.compareTo(baseModels[b.id]!));
+        (final x, final b) => baseModels[x.id]!.compareTo(baseModels[b.id]!),
+      );
       break;
     case SortTypes.NameDesc:
       devices.sort(
-          (final x, final b) => baseModels[b.id]!.compareTo(baseModels[x.id]!));
+        (final x, final b) => baseModels[b.id]!.compareTo(baseModels[x.id]!),
+      );
       break;
     case SortTypes.TypeAsc:
-      devices.sort((final x, final b) => x.typeName.runtimeType
-          .toString()
-          .compareTo(b.runtimeType.toString()));
+      devices.sort(
+        (final x, final b) => x.typeName.runtimeType.toString().compareTo(
+          b.runtimeType.toString(),
+        ),
+      );
       break;
     case SortTypes.TypeDesc:
-      devices.sort((final x, final b) => b.typeName.runtimeType
-          .toString()
-          .compareTo(x.runtimeType.toString()));
+      devices.sort(
+        (final x, final b) => b.typeName.runtimeType.toString().compareTo(
+          x.runtimeType.toString(),
+        ),
+      );
       break;
     case SortTypes.IdAsd:
       devices.sort((final x, final b) => x.id.compareTo(b.id));
@@ -115,8 +126,9 @@ final sortedDeviceProvider = Provider<List<Device>>((final ref) {
   return devices.toList();
 });
 
-final deviceSortProvider =
-    StateProvider<SortTypes>((final _) => SortTypes.NameAsc);
+final deviceSortProvider = StateProvider<SortTypes>(
+  (final _) => SortTypes.NameAsc,
+);
 
 enum Action { removed, added }
 
@@ -128,41 +140,16 @@ class DiffIdModel {
 }
 
 final deviceCtorFactory = <String, Device Function(int id, String typeName)>{
-  //'LedStripMesh': (i, s, h, sp) => LedStrip(i, s, h, Icon(Icons.lightbulb_outline), sp),
   'Heater': (final i, final n) => Heater(i, n, Icons.whatshot),
-  // 'XiaomiTempSensor': (i, s) => XiaomiTempSensor(i, n, "Temperatursensor",
-  //     s as TempSensorModel, ConnectionManager.hubConnection,
-  //     icon: SmarthomeIcons.xiaomiTempSensor),
   'LedStrip': (final i, final n) => LedStrip(i, n, Icons.lightbulb_outline),
-  'FloaltPanel': (final i, final n) => FloaltPanel(i, n, Icons.crop_square),
-  'OsramB40RW': (final i, final n) => OsramB40RW(i, n, Icons.lightbulb_outline),
-  'ZigbeeLamp': (final i, final n) => ZigbeeLamp(i, n, Icons.lightbulb_outline),
-  'OsramPlug': (final i, final n) =>
-      OsramPlug(i, n, Icons.radio_button_checked),
-  'TradfriLedBulb': (final i, final n) =>
-      TradfriLedBulb(i, n, Icons.lightbulb_outline),
-  'TradfriControlOutlet': (final i, final n) =>
-      TradfriControlOutlet(i, n, Icons.radio_button_checked),
-  'TradfriMotionSensor': (final i, final n) =>
-      TradfriMotionSensor(i, n, Icons.sensors),
   'Device': (final i, final n) => GenericDevice(i, n),
 };
 final stringNameJsonFactory =
     <String, BaseModel Function(Map<String, dynamic>, List<String>)>{
-  // 'LedStripMesh': (m) => LedStripModel.fromJson(m),
-  'Heater': (final m, final _) => HeaterModel.fromJson(m),
-  // 'XiaomiTempSensor': (m) => TempSensorModel.fromJson(m),
-  'LedStrip': (final m, final _) => LedStripModel.fromJson(m),
-  'ZigbeeLamp': (final m, final _) => ZigbeeLampModel.fromJson(m),
-  'FloaltPanel': (final m, final _) => ZigbeeLampModel.fromJson(m),
-  'OsramB40RW': (final m, final _) => ZigbeeLampModel.fromJson(m),
-  'OsramPlug': (final m, final _) => ZigbeeSwitchModel.fromJson(m),
-  'TradfriLedBulb': (final m, final _) => TradfriLedBulbModel.fromJson(m),
-  'TradfriControlOutlet': (final m, final _) => ZigbeeSwitchModel.fromJson(m),
-  'TradfriMotionSensor': (final m, final _) =>
-      TradfriMotionSensorModel.fromJson(m),
-  'Device': (final m, final t) => BaseModel.fromJson(m, t)
-};
+      'Heater': (final m, final _) => HeaterModel.fromJson(m),
+      'LedStrip': (final m, final _) => LedStripModel.fromJson(m),
+      'Device': (final m, final t) => BaseModel.fromJson(m, t),
+    };
 
 @Riverpod(keepAlive: true)
 class DeviceManager extends _$DeviceManager {
@@ -175,8 +162,10 @@ class DeviceManager extends _$DeviceManager {
   late HubConnection? _connection;
 
   static final Map<String, String> _groupNames = <String, String>{};
-  static final customGroupNameProvider =
-      StateProvider.family<String, String>((final ref, final name) {
+  static final customGroupNameProvider = StateProvider.family<String, String>((
+    final ref,
+    final name,
+  ) {
     return _groupNames[name] ?? name;
   });
 
@@ -190,16 +179,18 @@ class DeviceManager extends _$DeviceManager {
     _connection = connection;
 
     final ids = HashSet<int>();
-    for (final key in PreferencesManager.instance
-        .getKeys()
-        .where((final x) => x.startsWith("SHD"))) {
+    for (final key in PreferencesManager.instance.getKeys().where(
+      (final x) => x.startsWith("SHD"),
+    )) {
       final id = PreferencesManager.instance.getInt(key);
       if (id == null) continue;
       ids.add(id);
     }
     _deviceIds = ids;
     return await _syncDevices(
-        [], ids.map((final x) => DiffIdModel(x, Action.added)).toList());
+      [],
+      ids.map((final x) => DiffIdModel(x, Action.added)).toList(),
+    );
   }
 
   static void init() {
@@ -216,8 +207,7 @@ class DeviceManager extends _$DeviceManager {
 
   Future subscribeToDevice(final int id) async {
     if (!_deviceIds.add(id)) return;
-    await _syncDevices(
-        state.valueOrNull ?? [], [DiffIdModel(id, Action.added)]);
+    await _syncDevices(state.value ?? [], [DiffIdModel(id, Action.added)]);
   }
 
   Future subscribeToDevices(final List<int> deviceIds) async {
@@ -227,22 +217,23 @@ class DeviceManager extends _$DeviceManager {
     }
     if (diffs.isEmpty) return;
 
-    await _syncDevices(state.valueOrNull ?? [], diffs);
+    await _syncDevices(state.value ?? [], diffs);
   }
 
   Future removeDevice(final int id) async {
     if (!_deviceIds.remove(id)) return;
-    await _syncDevices(
-        state.valueOrNull ?? [], [DiffIdModel(id, Action.removed)]);
+    await _syncDevices(state.value ?? [], [DiffIdModel(id, Action.removed)]);
   }
 
   void saveDeviceGroups() {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
 
     final deviceGroups = current
-        .map((final e) =>
-            "${e.id}\u0002${ref.read(Device.groupsByIdProvider(e.id)).join("\u0003")}")
+        .map(
+          (final e) =>
+              "${e.id}\u0002${ref.read(Device.groupsByIdProvider(e.id)).join("\u0003")}",
+        )
         .join("\u0001");
     PreferencesManager.instance.setString("deviceGroups", deviceGroups);
   }
@@ -256,8 +247,9 @@ class DeviceManager extends _$DeviceManager {
     ref.read(customGroupNameProvider(key).notifier).state = newName;
     _groupNames[key] = newName;
 
-    final strs =
-        _groupNames.select((final key, final value) => "$key\u0001$value");
+    final strs = _groupNames.select(
+      (final key, final value) => "$key\u0001$value",
+    );
     PreferencesManager.instance.setStringList("customGroupNames", strs);
   }
 
@@ -307,8 +299,9 @@ class DeviceManager extends _$DeviceManager {
               .read(stateServiceProvider.notifier)
               .updateAndGetStores(id, extData);
         }
-        final toRemove =
-            baseModels.firstOrDefault((final element) => element.id == id);
+        final toRemove = baseModels.firstOrDefault(
+          (final element) => element.id == id,
+        );
         if (toRemove != null) {
           baseModels.remove(toRemove);
         }
@@ -329,11 +322,13 @@ class DeviceManager extends _$DeviceManager {
         final deviceId = deviceGroup.first;
         final groups = deviceGroup.last.split("\u0003");
         final dev = devices.firstOrDefault(
-            (final element) => element.id.toString() == deviceId);
+          (final element) => element.id.toString() == deviceId,
+        );
         if (dev != null) {
           try {
-            final groupings =
-                ref.read(Device.groupsByIdProvider(dev.id).notifier);
+            final groupings = ref.read(
+              Device.groupsByIdProvider(dev.id).notifier,
+            );
 
             groupings.state = groups;
           } catch (ex) {
@@ -363,8 +358,9 @@ class DeviceManager extends _$DeviceManager {
       final devices = res.bodyOrThrow;
       for (int i = baseModels.length - 1; i >= 0; i--) {
         final baseModel = baseModels[i];
-        final existingDevice = devices
-            .firstOrDefault((final element) => element.id == baseModel.id);
+        final existingDevice = devices.firstOrDefault(
+          (final element) => element.id == baseModel.id,
+        );
         if (existingDevice == null) continue;
 
         baseModels.remove(baseModel);
@@ -375,8 +371,7 @@ class DeviceManager extends _$DeviceManager {
   }
 
   void removeAllDevices() {
-    final devices =
-        state.valueOrNull?.map((final x) => x.id).toList() ?? _deviceIds;
+    final devices = state.value?.map((final x) => x.id).toList() ?? _deviceIds;
     if (devices.isEmpty) {
       _deviceIds.clear();
       return;
@@ -397,8 +392,9 @@ class DeviceManager extends _$DeviceManager {
   }
 
   Future<List<Device<BaseModel>>> _syncDevices(
-      final List<Device<BaseModel>> current,
-      final List<DiffIdModel> diffIds) async {
+    final List<Device<BaseModel>> current,
+    final List<DiffIdModel> diffIds,
+  ) async {
     final connection = _connection;
     if (connection == null ||
         connection.state != HubConnectionState.Connected) {
@@ -456,7 +452,7 @@ enum DeviceTypes {
   TradfriControlOutlet,
   TradfriMotionSensor,
   ZigbeeLamp,
-  Generic
+  Generic,
 }
 
 enum SortTypes { NameAsc, NameDesc, TypeAsc, TypeDesc, IdAsd, IdDesc }

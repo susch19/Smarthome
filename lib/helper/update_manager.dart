@@ -11,7 +11,7 @@ import 'package:smarthome/main.dart';
 import 'package:smarthome/models/version_and_url.dart';
 import 'package:version/version.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final versionAndUrlProvider =
     StateNotifierProvider<UpdateManager, VersionAndUrl?>((final ref) {
@@ -44,8 +44,9 @@ class UpdateManager extends StateNotifier<VersionAndUrl?> {
 
   static Future<void> initialize() async {
     _packageInfo = await PackageInfo.fromPlatform();
-    lastChecked = PreferencesManager.instance
-        .getDateTime("lastChecked")!
+    lastChecked =
+        (PreferencesManager.instance.getDateTime("lastChecked") ??
+                DateTime.timestamp())
         .add(Duration(days: -1));
 
     onDidReceiveNotificationResponse.stream.listen((final details) {

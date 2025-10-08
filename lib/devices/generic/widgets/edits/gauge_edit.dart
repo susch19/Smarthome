@@ -146,7 +146,7 @@ class GaugeEdit extends HookConsumerWidget {
             curValueProp ?? "",
             id,
           )) ??
-          ValueStore(0, 21.0, "", Command2.none);
+          ValueStore(0, 21.0, "", Command.none);
     }, [curValueProp]);
     useListenable(val);
 

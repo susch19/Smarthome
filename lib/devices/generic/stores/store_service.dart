@@ -5,8 +5,8 @@ import 'package:smarthome/devices/generic/device_layout_service.dart';
 import 'package:smarthome/devices/generic/generic_device_exporter.dart';
 import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
+import 'package:smarthome/models/command.dart';
 import 'package:smarthome/models/message.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 part 'store_service.g.dart';
 // final valueStoreProvider = StateNotifierProvider<StoreService, List<ValueStore>>((final ref) => StoreService());
@@ -68,7 +68,7 @@ class StateService extends _$StateService {
     final Map<String, ValueStore> stores =
         (state[deviceId] ?? []).toMap((final e) => e.key, (final e) => e);
     bool changed = false;
-    bool rebuild = false;
+    bool rebuild = false; 
     for (final item in json.keys) {
       if (!rebuild && !stores.containsKey(item)) {
         rebuild = true;
@@ -88,9 +88,14 @@ class StateService extends _$StateService {
         final val = getValueFromJson(json[item]);
         if (val.runtimeType == DateTime) {
           stores[item] =
-              ValueStore<DateTime>(deviceId, val, item, Command2.none);
+              ValueStore<DateTime>(
+            deviceId,
+            val,
+            item,
+            Command.none,
+          );
         } else {
-          stores[item] = ValueStore(deviceId, val, item, Command2.none);
+          stores[item] = ValueStore(deviceId, val, item, Command.none);
         }
         changed = true;
       } else {
