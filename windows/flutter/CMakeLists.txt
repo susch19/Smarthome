@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.15)
+# This file controls Flutter-level build steps. It should not be edited.
+cmake_minimum_required(VERSION 3.14)
 
 set(EPHEMERAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ephemeral")
 
@@ -28,6 +29,7 @@ list(APPEND FLUTTER_LIBRARY_HEADERS
   "flutter_windows.h"
   "flutter_messenger.h"
   "flutter_plugin_registrar.h"
+  "flutter_texture_registrar.h"
 )
 list(TRANSFORM FLUTTER_LIBRARY_HEADERS PREPEND "${EPHEMERAL_DIR}/")
 add_library(flutter INTERFACE)
@@ -95,7 +97,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E env
     ${FLUTTER_TOOL_ENVIRONMENT}
     "${FLUTTER_ROOT}/packages/flutter_tools/bin/tool_backend.bat"
-      windows-x64 $<CONFIG>
+      ${FLUTTER_TARGET_PLATFORM} $<CONFIG>
   VERBATIM
 )
 add_custom_target(flutter_assemble DEPENDS
