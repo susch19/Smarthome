@@ -11,7 +11,7 @@ class ThemeManager {
       secondaryHeaderColor: Colors.indigo,
       dialogTheme: DialogThemeData(
           backgroundColor: Colors.indigo.shade900.withValues(alpha: 0.95)),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
           color: Colors.indigo.shade800.withValues(alpha: 0.95),
           shadowColor: Colors.black38),
       // backgroundColor: Colors.indigo.shade800.withValues(alpha: 0.95),
@@ -53,7 +53,7 @@ class ThemeManager {
       brightness: Brightness.light,
       dialogTheme:
           DialogThemeData(backgroundColor: indigoColor.withValues(alpha: 0.95)),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
           color: indigoColor.withValues(alpha: 0.95),
           shadowColor: Colors.white54),
       sliderTheme: SliderThemeData(

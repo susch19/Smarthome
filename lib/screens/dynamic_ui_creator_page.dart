@@ -5,6 +5,7 @@ import 'package:smarthome/devices/generic/stores/value_store.dart';
 import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -117,7 +118,7 @@ class EditView extends StatelessWidget {
                           return GenericDevice.getEditWidgetFor(
                             -1,
                             e,
-                            ValueStore(-1, 1.0, "", Command2.brightness),
+                            ValueStore(-1, 1.0, "", Command.brightness),
                           );
                         }).toList(),
                       ),

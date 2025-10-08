@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smarthome/controls/blurry_card.dart';
 import 'package:smarthome/helper/theme_manager.dart';
+import 'package:riverpod/misc.dart';
+
 
 class LogScreen extends ConsumerWidget {
   final ProviderFamily<String, int> _logs;

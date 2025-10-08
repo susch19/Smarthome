@@ -6,6 +6,7 @@ import 'package:smarthome/helper/theme_manager.dart';
 import 'package:smarthome/main.dart';
 import 'package:smarthome/models/ipport.dart';
 import 'package:smarthome/screens/history_configure_screen.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../helper/connection_manager.dart';
 import 'screen_export.dart';

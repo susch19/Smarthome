@@ -4,6 +4,7 @@ import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/theme_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final _serverDevices = FutureProvider<List<dynamic>>((final ref) async {
   final connection = ref.watch(hubConnectionConnectedProvider);
@@ -121,7 +122,7 @@ class HistoryConfigureScreen extends ConsumerWidget {
                                             onChanged: (final v) async {
                                               if (v == null) return;
                                               await api.appHistoryPatch(
-                                                  request: SetHistoryRequest(
+                                              body: SetHistoryRequest(
                                                       enable: v,
                                                       ids: ids,
                                                       name: e));
@@ -175,7 +176,7 @@ class HistoryConfigureScreen extends ConsumerWidget {
                                         if (v == null) return;
 
                                         await api.appHistoryPatch(
-                                            request: SetHistoryRequest(
+                                    body: SetHistoryRequest(
                                                 enable: v,
                                                 ids: [id],
                                                 name: e.key));

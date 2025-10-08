@@ -22,35 +22,43 @@ class HeaterTempSettings extends HookWidget {
   // late TimeOfDay selectedDate;
 
   Future<bool> _onWillPop(
-      final BuildContext context, final ValueNotifier<bool> saveNeeded) async {
+    final BuildContext context,
+    final ValueNotifier<bool> saveNeeded,
+  ) async {
     if (!saveNeeded.value) return true;
 
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!
-        .copyWith(color: theme.textTheme.bodySmall!.color);
+    final TextStyle dialogTextStyle = theme.textTheme.titleMedium!.copyWith(
+      color: theme.textTheme.bodySmall!.color,
+    );
 
     return await (showDialog<bool>(
-            context: context,
-            builder: (final BuildContext context) => AlertDialog(
-                    content: Text("Neue Temperatureinstellung verwerfen?",
-                        style: dialogTextStyle),
-                    actions: <Widget>[
-                      TextButton(
-                          child: const Text("Abbrechen"),
-                          onPressed: () {
-                            Navigator.of(context).pop(false);
-                          }),
-                      TextButton(
-                          child: const Text("Verwerfen"),
-                          onPressed: () {
-                            saveNeeded.value = false;
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((final _) {
-                              Navigator.of(context).pop(true);
-                              Navigator.of(context).pop();
-                            });
-                          })
-                    ]))) ??
+          context: context,
+          builder: (final BuildContext context) => AlertDialog(
+            content: Text(
+              "Neue Temperatureinstellung verwerfen?",
+              style: dialogTextStyle,
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("Abbrechen"),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+              ),
+              TextButton(
+                child: const Text("Verwerfen"),
+                onPressed: () {
+                  saveNeeded.value = false;
+                  WidgetsBinding.instance.addPostFrameCallback((final _) {
+                    Navigator.of(context).pop(true);
+                    Navigator.of(context).pop();
+                  });
+                },
+              ),
+            ],
+          ),
+        )) ??
         false;
   }
 
@@ -59,11 +67,12 @@ class HeaterTempSettings extends HookWidget {
   }
 
   Future<bool> _handleSubmitted(
-      final BuildContext context,
-      final bool saveNeeded,
-      final TimeOfDay selectedDate,
-      final int selected,
-      final double value) async {
+    final BuildContext context,
+    final bool saveNeeded,
+    final TimeOfDay selectedDate,
+    final int selected,
+    final double value,
+  ) async {
     final FormState form = _formKey.currentState!;
     if (!form.validate()) {
       return false;
@@ -90,19 +99,21 @@ class HeaterTempSettings extends HookWidget {
   }
 
   void handlePointerValueChangedEnd(
-      final double value,
-      final ValueNotifier<double> valueNot,
-      final ValueNotifier<String> annotationValue,
-      final ValueNotifier<bool> saveNeeded) {
+    final double value,
+    final ValueNotifier<double> valueNot,
+    final ValueNotifier<String> annotationValue,
+    final ValueNotifier<bool> saveNeeded,
+  ) {
     _setPointerValue(value, valueNot, annotationValue);
     saveNeeded.value = true;
   }
 
   void handlePointerValueChanging(
-      final ValueChangingArgs args,
-      final ValueNotifier<double> value,
-      final ValueNotifier<String> annotationValue,
-      final ValueNotifier<bool> saveNeeded) {
+    final ValueChangingArgs args,
+    final ValueNotifier<double> value,
+    final ValueNotifier<String> annotationValue,
+    final ValueNotifier<bool> saveNeeded,
+  ) {
     value.value = value.value.clamp(5, 35);
     _setPointerValue(value.value, value, annotationValue);
     saveNeeded.value = true;
@@ -110,19 +121,23 @@ class HeaterTempSettings extends HookWidget {
 
   /// method to set the pointer value
   void _setPointerValue(
-      final double value,
-      final ValueNotifier<double> valueNot,
-      final ValueNotifier<String> annotationValue) {
+    final double value,
+    final ValueNotifier<double> valueNot,
+    final ValueNotifier<String> annotationValue,
+  ) {
     valueNot.value = (value.clamp(5, 35) * 10).roundToDouble() / 10;
     annotationValue.value = valueNot.value.toStringAsFixed(1);
   }
 
   Future displayTimePicker(
-      final BuildContext context,
-      final TimeOfDay initalTime,
-      final Function(TimeOfDay time) selectedValue) async {
-    final time =
-        await showTimePicker(context: context, initialTime: initalTime);
+    final BuildContext context,
+    final TimeOfDay initalTime,
+    final Function(TimeOfDay time) selectedValue,
+  ) async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: initalTime,
+    );
 
     if (time != null) {
       selectedValue(time);
@@ -131,20 +146,21 @@ class HeaterTempSettings extends HookWidget {
 
   @override
   Widget build(final BuildContext context) {
-    final heaterConfigs = useState(configs);
-    final selected =
-        useState(configs.bitOr((final x) => dayOfWeekToFlagMap[x.dayOfWeek]!));
+    final selected = useState(
+      configs.bitOr((final x) => dayOfWeekToFlagMap[x.dayOfWeek]!),
+    );
     final saveNeeded = useState(false);
     final value = useState(0.0);
     final annotationValue = useState("");
-    _setPointerValue(timeTemp.$2!, value, annotationValue);
     final selectedDate = useState(timeTemp.$1!);
+    useEffect(() {
+      _setPointerValue(timeTemp.$2!, value, annotationValue);
+      return null;
+    }, [timeTemp.$2]);
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text("Temperatur Einstellungen"),
-      ),
+      appBar: AppBar(title: const Text("Temperatur Einstellungen")),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.save),
         onPressed: () => _handleSubmitted(
@@ -161,13 +177,13 @@ class HeaterTempSettings extends HookWidget {
           key: _formKey,
           canPop: !saveNeeded.value,
           onPopInvokedWithResult: (final didPop, final result) async {
-            _onWillPop(context, saveNeeded);
+            if (!didPop) await _onWillPop(context, saveNeeded);
           },
           // autovalidate: _autovalidate,
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: //heaterConfigs!.map((x) => heaterConfigToWidget(x)).toList()
-                <Widget>[
+            <Widget>[
               Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
@@ -199,19 +215,22 @@ class HeaterTempSettings extends HookWidget {
                   ),
                 ],
               ),
-              Wrap(
-                children: weekdayChips(context, selected, saveNeeded),
-              ),
+              Wrap(children: weekdayChips(context, selected, saveNeeded)),
               Container(
                 margin: const EdgeInsets.only(top: 32.0),
                 child: ElevatedButton(
-                    onPressed: () => displayTimePicker(
-                            context, selectedDate.value, ((final time) {
-                          selectedDate.value = time;
-                          saveNeeded.value = true;
-                        })),
-                    child: Text(
-                        "Uhrzeit einstellen: ${selectedDate.value.format(context)}")),
+                  onPressed: () => displayTimePicker(
+                    context,
+                    selectedDate.value,
+                    ((final time) {
+                      selectedDate.value = time;
+                      saveNeeded.value = true;
+                    }),
+                  ),
+                  child: Text(
+                    "Uhrzeit einstellen: ${selectedDate.value.format(context)}",
+                  ),
+                ),
               ),
               Container(
                 margin: const EdgeInsets.only(top: 16.0),
@@ -227,25 +246,25 @@ class HeaterTempSettings extends HookWidget {
                           maximum: 35,
                           interval: 5,
                           axisLineStyle: const AxisLineStyle(
-                              gradient: SweepGradient(colors: [
-                                Colors.blue,
-                                Colors.amber,
-                                Colors.red
-                              ], stops: [
-                                0.3,
-                                0.5,
-                                1
-                              ]),
-                              color: Colors.red,
-                              thickness: 0.04,
-                              thicknessUnit: GaugeSizeUnit.factor),
+                            gradient: SweepGradient(
+                              colors: [Colors.blue, Colors.amber, Colors.red],
+                              stops: [0.3, 0.5, 1],
+                            ),
+                            color: Colors.red,
+                            thickness: 0.04,
+                            thicknessUnit: GaugeSizeUnit.factor,
+                          ),
                           tickOffset: 0.02,
                           ticksPosition: ElementsPosition.outside,
                           labelOffset: 0.05,
                           offsetUnit: GaugeSizeUnit.factor,
                           onAxisTapped: (final v) =>
                               handlePointerValueChangedEnd(
-                                  v, value, annotationValue, saveNeeded),
+                                v,
+                                value,
+                                annotationValue,
+                                saveNeeded,
+                              ),
                           labelsPosition: ElementsPosition.outside,
                           minorTicksPerInterval: 5,
                           minorTickStyle: const MinorTickStyle(length: 1),
@@ -287,34 +306,48 @@ class HeaterTempSettings extends HookWidget {
                               enableDragging: true,
                               onValueChanged: (final v) =>
                                   handlePointerValueChangedEnd(
-                                      v, value, annotationValue, saveNeeded),
+                                    v,
+                                    value,
+                                    annotationValue,
+                                    saveNeeded,
+                                  ),
                               onValueChangeEnd: (final v) =>
                                   handlePointerValueChangedEnd(
-                                      v, value, annotationValue, saveNeeded),
+                                    v,
+                                    value,
+                                    annotationValue,
+                                    saveNeeded,
+                                  ),
                               onValueChanging: (final v) =>
                                   handlePointerValueChanging(
-                                      v, value, annotationValue, saveNeeded),
+                                    v,
+                                    value,
+                                    annotationValue,
+                                    saveNeeded,
+                                  ),
                               borderColor: Colors.black,
                               borderWidth: 1,
                               color: Colors.white,
-                            )
+                            ),
                           ],
                           annotations: [
                             GaugeAnnotation(
                               widget: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Text(
-                                      annotationValue.value,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 56),
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Text(
+                                    annotationValue.value,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 56,
                                     ),
-                                    const Text(
-                                      ' °C',
-                                      style: TextStyle(fontSize: 56),
-                                    ),
-                                  ]),
+                                  ),
+                                  const Text(
+                                    ' °C',
+                                    style: TextStyle(fontSize: 56),
+                                  ),
+                                ],
+                              ),
                               verticalAlignment: GaugeAlignment.far,
                               angle: 90,
                               positionFactor: 0.1,
@@ -330,10 +363,11 @@ class HeaterTempSettings extends HookWidget {
                         children: <Widget>[
                           MaterialButton(
                             onPressed: () => handlePointerValueChangedEnd(
-                                value.value - 0.1,
-                                value,
-                                annotationValue,
-                                saveNeeded),
+                              value.value - 0.1,
+                              value,
+                              annotationValue,
+                              saveNeeded,
+                            ),
                             child: const Text(
                               "−",
                               style: TextStyle(
@@ -344,10 +378,11 @@ class HeaterTempSettings extends HookWidget {
                           ),
                           MaterialButton(
                             onPressed: () => handlePointerValueChangedEnd(
-                                value.value + 0.1,
-                                value,
-                                annotationValue,
-                                saveNeeded),
+                              value.value + 0.1,
+                              value,
+                              annotationValue,
+                              saveNeeded,
+                            ),
                             child: const Text(
                               "+",
                               style: TextStyle(
@@ -369,8 +404,11 @@ class HeaterTempSettings extends HookWidget {
     );
   }
 
-  List<Widget> weekdayChips(final BuildContext context,
-      final ValueNotifier<int> selected, final ValueNotifier<bool> saveNeeded) {
+  List<Widget> weekdayChips(
+    final BuildContext context,
+    final ValueNotifier<int> selected,
+    final ValueNotifier<bool> saveNeeded,
+  ) {
     return dayOfWeekToStringMap.values
         .map(
           (final value) => Container(
@@ -390,17 +428,18 @@ class HeaterTempSettings extends HookWidget {
               labelStyle: TextStyle(
                 color:
                     (selected.value & (dayOfWeekStringToFlagMap[value] ?? 0) < 1
-                        ? Theme.of(context).textTheme.bodyLarge!.color
-                        : (Theme.of(context)
-                                    .colorScheme
-                                    .secondary
-                                    .computeLuminance() >
-                                0.5
-                            ? Colors.black
-                            : Colors.white)),
+                    ? Theme.of(context).textTheme.bodyLarge!.color
+                    : (Theme.of(
+                                context,
+                              ).colorScheme.secondary.computeLuminance() >
+                              0.5
+                          ? Colors.black
+                          : Colors.white)),
               ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10.0,
+                vertical: 4.0,
+              ),
               selectedColor: Theme.of(context).colorScheme.secondary,
               label: Text(value),
             ),
@@ -417,15 +456,19 @@ class HeaterTempSettings extends HookWidget {
     "Do",
     "Fr",
     "Sa",
-    "So"
+    "So",
   ];
   final List<DropdownMenuItem> itemsForDropdown = buildItems();
 
   static List<DropdownMenuItem> buildItems() {
     final menuItems = <DropdownMenuItem>[];
     for (double d = 5.0; d <= 35.0; d += 0.1) {
-      menuItems.add(DropdownMenuItem(
-          value: (d * 10).round(), child: Text(d.toStringAsFixed(1))));
+      menuItems.add(
+        DropdownMenuItem(
+          value: (d * 10).round(),
+          child: Text(d.toStringAsFixed(1)),
+        ),
+      );
     }
     return menuItems;
   }
