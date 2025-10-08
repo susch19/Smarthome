@@ -34,12 +34,12 @@ jobs:
   draft-release:
     name: Draft Github release
     needs: generate-changelog
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
     - name: Download changelog
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v5
       with:
         name: changelog
     - name: Draft release with changelog
@@ -62,19 +62,19 @@ jobs:
       matrix:
         target: [Android, Windows, Linux] 
         include:
-        - os: windows-2019
+        - os: windows-latest
           target: Windows
           build_target: windows
           build_path: build\windows\runner\Release
           asset_extension: .zip
           asset_content_type: application/zip
-        - os: ubuntu-20.04
+        - os: ubuntu-latest
           target: Linux
           build_target: linux
           build_path: build/linux/x64/release/bundle
           asset_extension: .tar.gz
           asset_content_type: application/gzip
-        - os: ubuntu-20.04
+        - os: ubuntu-latest
           target: Android
           build_target: apk
           build_path: build/app/outputs/flutter-apk
@@ -95,11 +95,14 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libgtk-3-dev libx11-dev pkg-config cmake ninja-build libblkid-dev
+   
     - name: Install Android dependencies
       if: matrix.target == 'Android'
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v5
       with:
-        java-version: '12.x'
+        java-version: "17"
+        distribution: "microsoft"
+
     - name: Enable desktop support
       if: matrix.target != 'Android'
       run: |
@@ -110,7 +113,7 @@ jobs:
 
     # Checkout smarthome code, recreate missing files, and get packages.
     - name: Checkout smarthome code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v5
     - run: flutter create . --project-name smarthome
     - run: flutter pub get
     
