@@ -118,7 +118,7 @@ class GenericDevice extends Device<BaseModel> {
       case "iconbutton":
         return BasicIconButton(id: id, valueModel: valueModel, info: e);
       case "icon":
-        return BasicIcon(info: e);
+        return BasicIcon(id: id, valueModel: valueModel, info: e);
       case "radial":
         return GaugeEdit(id: id, valueModel: valueModel, info: e);
       // case EditType.input:

@@ -60,6 +60,7 @@ class SetupPage extends HookConsumerWidget {
                             controller: urlController,
                             decoration: InputDecoration(
                                 errorText: urlError.value,
+                                
                                 label: Text("URL"),
                                 border: const OutlineInputBorder()),
                           ),

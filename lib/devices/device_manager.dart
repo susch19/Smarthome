@@ -22,6 +22,7 @@ import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:smarthome/main.dart';
 
 import '../icons/smarthome_icons.dart';
 import 'device_exporter.dart';
@@ -400,6 +401,9 @@ class DeviceManager extends _$DeviceManager {
         connection.state != HubConnectionState.Connected) {
       return current;
     }
+    final firebaseInitialized = await ref.read(
+      firebaseInitializedProvider.future,
+    );
 
     if (diffIds.any((final element) => element.action == Action.added)) {
       final deviceIds = diffIds
@@ -411,7 +415,7 @@ class DeviceManager extends _$DeviceManager {
       for (final id in deviceIds) {
         if (PreferencesManager.instance.containsKey("SHD$id")) continue;
         PreferencesManager.instance.setInt("SHD$id", id);
-        if (Platform.isAndroid || Platform.isIOS) {
+        if (firebaseInitialized && (Platform.isAndroid || Platform.isIOS)) {
           FirebaseMessaging.instance.subscribeToTopic("device_$id");
         }
       }
@@ -425,7 +429,7 @@ class DeviceManager extends _$DeviceManager {
 
       for (final diffId in diffIds) {
         current.removeWhere((final d) => d.id == diffId.id);
-        if (Platform.isAndroid || Platform.isIOS) {
+        if (firebaseInitialized && (Platform.isAndroid || Platform.isIOS)) {
           FirebaseMessaging.instance.unsubscribeFromTopic("device_$diffId");
         }
       }

@@ -86,7 +86,7 @@ class HeaterTempSettings extends HookWidget {
       final configs = <HeaterConfig>[];
       final tod = selectedDate;
       for (int i = 0; i < 7; i++) {
-        final flag = 1 << (i + 1);
+        final flag = 1 << i;
 
         if (selected & flag == 0) continue;
         final dayOfWeek = flagToDayOfWeekMap[flag]!;

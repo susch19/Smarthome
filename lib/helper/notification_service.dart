@@ -10,6 +10,7 @@ import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/helper/iterable_extensions.dart';
 import 'package:smarthome/helper/number_extensions.dart';
 import 'package:smarthome/helper/preference_manager.dart';
+import 'package:smarthome/main.dart';
 import 'package:smarthome/models/notification_topic.dart';
 import 'package:smarthome/notifications/app_notification.dart';
 
@@ -32,7 +33,7 @@ class NotificationService extends _$NotificationService {
   static int notificationId = 0;
 
   static final Map<Type, Map<String, void Function(dynamic notification)>>
-      _callbacks = {};
+  _callbacks = {};
 
   @override
   Future build() async {
@@ -54,8 +55,9 @@ class NotificationService extends _$NotificationService {
   void processNotification(final List<Object?>? arguments) {
     final notification = AppNotification.fromJson(arguments!.first as dynamic);
     final topics = PreferencesManager.instance.getNotificationTopics();
-    final topic =
-        topics.firstOrDefault((final x) => x.topic == notification.topic);
+    final topic = topics.firstOrDefault(
+      (final x) => x.topic == notification.topic,
+    );
     if (topic == null) return;
     if (notification.wasOneTime) {
       final idx = topics.indexOf(topic);
@@ -65,7 +67,11 @@ class NotificationService extends _$NotificationService {
 
     if (notification is VisibleAppNotification) {
       flutterLocalNotificationsPlugin.show(
-          notificationId++, notification.title, notification.body, null);
+        notificationId++,
+        notification.title,
+        notification.body,
+        null,
+      );
     }
 
     final callbacks = _callbacks[notification.runtimeType];
@@ -77,17 +83,22 @@ class NotificationService extends _$NotificationService {
   }
 
   static String registerCallback<T>(
-      final String id, final Function(T parameter) func) {
+    final String id,
+    final Function(T parameter) func,
+  ) {
     return _registerCallback(id, T, (final p) => func(p));
   }
 
-  static String _registerCallback(final String id, final Type type,
-      final Function(dynamic parameter) func) {
+  static String _registerCallback(
+    final String id,
+    final Type type,
+    final Function(dynamic parameter) func,
+  ) {
     if (_callbacks.containsKey(type)) {
       _callbacks[type]!.addAll({id: func});
     } else {
       _callbacks.addAll({
-        type: {id: func}
+        type: {id: func},
       });
     }
 
@@ -121,63 +132,72 @@ class NotificationService extends _$NotificationService {
         for (final grp in grouped.entries) {
           final widgets = <Widget>[];
           for (final (_, id, element) in grp.value) {
-            final topic = useState(topics.firstWhere(
-              (final x) =>
-                  x.uniqueName == element.uniqueName && x.deviceId == id,
-              orElse: () {
-                final oneTime = element.times == 1;
-                final String topic;
-                if (oneTime) {
-                  topic = "";
-                } else if (id == null) {
-                  topic = element.uniqueName;
-                } else {
-                  topic = "${element.uniqueName}_${id.toHex()}";
-                }
-                return NotificationTopic(
+            final topic = useState(
+              topics.firstWhere(
+                (final x) =>
+                    x.uniqueName == element.uniqueName && x.deviceId == id,
+                orElse: () {
+                  final oneTime = element.times == 1;
+                  final String topic;
+                  if (oneTime) {
+                    topic = "";
+                  } else if (id == null) {
+                    topic = element.uniqueName;
+                  } else {
+                    topic = "${element.uniqueName}_${id.toHex()}";
+                  }
+                  return NotificationTopic(
                     enabled: false,
                     deviceId: id,
                     oneTime: oneTime,
                     topic: topic,
-                    uniqueName: element.uniqueName);
-              },
-            ));
+                    uniqueName: element.uniqueName,
+                  );
+                },
+              ),
+            );
             if (!topics.contains(topic.value)) topics.add(topic.value);
 
             final checked = useState(topic.value.enabled);
-            widgets.add(CheckboxListTile(
-              value: checked.value,
-              title: Text(element.translatableName),
-              onChanged: (final value) async {
-                checked.value = value ?? false;
-                if (topic.value.topic == "") {
-                  final res = await api.notificationNextNotificationIdGet(
-                    uniqueName: topic.value.uniqueName,
-                    deviceId: id,
-                  );
-                  final notificationTopic = res.bodyOrThrow;
-                  print(notificationTopic);
-                  final idx = topics.indexOf(topic.value);
-                  topic.value = topic.value.copyWith(
-                      topic: notificationTopic, enabled: checked.value);
-                  topics[idx] = topic.value;
-                } else if (checked.value) {
-                  final idx = topics.indexOf(topic.value);
-                  topic.value = topic.value.copyWith(enabled: checked.value);
-                  topics[idx] = topic.value;
-                } else {
-                  final idx = topics.indexOf(topic.value);
-                  topic.value = topic.value.copyWith(enabled: checked.value);
-                  topics[idx] = topic.value;
-                }
-              },
-            ));
+            widgets.add(
+              CheckboxListTile(
+                value: checked.value,
+                title: Text(element.translatableName),
+                onChanged: (final value) async {
+                  checked.value = value ?? false;
+                  if (topic.value.topic == "") {
+                    final res = await api.notificationNextNotificationIdGet(
+                      uniqueName: topic.value.uniqueName,
+                      deviceId: id,
+                    );
+                    final notificationTopic = res.bodyOrThrow;
+                    print(notificationTopic);
+                    final idx = topics.indexOf(topic.value);
+                    topic.value = topic.value.copyWith(
+                      topic: notificationTopic,
+                      enabled: checked.value,
+                    );
+                    topics[idx] = topic.value;
+                  } else if (checked.value) {
+                    final idx = topics.indexOf(topic.value);
+                    topic.value = topic.value.copyWith(enabled: checked.value);
+                    topics[idx] = topic.value;
+                  } else {
+                    final idx = topics.indexOf(topic.value);
+                    topic.value = topic.value.copyWith(enabled: checked.value);
+                    topics[idx] = topic.value;
+                  }
+                },
+              ),
+            );
           }
-          expansionTiles.add(ExpansionTile(
-            title: Text(grp.key),
-            initiallyExpanded: grouped.length == 1,
-            children: widgets,
-          ));
+          expansionTiles.add(
+            ExpansionTile(
+              title: Text(grp.key),
+              initiallyExpanded: grouped.length == 1,
+              children: widgets,
+            ),
+          );
         }
 
         return SingleChildScrollView(
@@ -194,26 +214,32 @@ class NotificationService extends _$NotificationService {
       content: hookedBuilder,
       actions: <Widget>[
         TextButton(
-            child: Text("Abbrechen"),
-            onPressed: () {
-              Navigator.pop(context, false);
-            }),
+          child: Text("Abbrechen"),
+          onPressed: () {
+            Navigator.pop(context, false);
+          },
+        ),
         TextButton(
-            child: Text("Speichern"),
-            onPressed: () {
-              Navigator.pop(context, true);
-            })
+          child: Text("Speichern"),
+          onPressed: () {
+            Navigator.pop(context, true);
+          },
+        ),
       ],
     );
-    final dialogRes =
-        await showDialog(context: context, builder: (final ctx) => ad);
+    final dialogRes = await showDialog(
+      context: context,
+      builder: (final ctx) => ad,
+    );
     if (dialogRes == true) {
       final validTopics = topics
           .where((final x) => x.topic.isNotEmpty && (!x.oneTime || x.enabled))
           .toList();
 
       PreferencesManager.instance.setNotificationTopics(validTopics);
-      if (Platform.isAndroid || Platform.isIOS) {
+
+      final init = await ref.watch(firebaseInitializedProvider.future);
+      if (init && (Platform.isAndroid || Platform.isIOS)) {
         for (final topic in validTopics) {
           if (topic.enabled) {
             FirebaseMessaging.instance.subscribeToTopic(topic.topic);

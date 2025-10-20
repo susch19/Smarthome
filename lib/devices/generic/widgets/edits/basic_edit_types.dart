@@ -12,13 +12,24 @@ import 'package:smarthome/helper/connection_manager.dart';
 import 'package:smarthome/restapi/swagger.swagger.dart';
 
 class BasicIcon extends ConsumerWidget {
-  const BasicIcon({super.key, required this.info});
+  const BasicIcon({
+    super.key,
+    required this.id,
+    this.valueModel,
+    required this.info,
+  });
   final LayoutBasePropertyInfo info;
+  final int id;
+  final ValueStore? valueModel;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     if (info.editInfo == null) return const SizedBox();
-    final edit = GenericDevice.getEditParameter(null, info.editInfo!, "icon");
+    final edit = GenericDevice.getEditParameter(
+      valueModel,
+      info.editInfo!,
+      "icon",
+    );
     if (edit == null) return const SizedBox();
     final raw = edit.extensionData ?? {};
     final color = raw["Color"] as int?;
@@ -59,7 +70,7 @@ class BasicButton extends ConsumerWidget {
     final tempSettingsDialog = editInfo.dialog == "HeaterConfig";
     final child = Row(
       children: [
-        BasicIcon(info: info),
+        BasicIcon(id: id, valueModel: valueModel, info: info),
         Text(
           editInfo.display!,
           style: TextStyle(
@@ -128,7 +139,7 @@ class BasicDropdown extends ConsumerWidget {
     final editInfo = info.editInfo!;
     return Row(
       children: [
-        BasicIcon(info: info),
+        BasicIcon(id: id, valueModel: valueModel, info: info),
         DropdownButton(
           items: editInfo.editParameter
               .map(
@@ -221,7 +232,7 @@ class BasicToggle extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        BasicIcon(info: info),
+        BasicIcon(id: id, valueModel: valueModel, info: info),
         if (edit.displayName != null) Text(edit.displayName!),
         Switch(
           onChanged: ((final _) async {
@@ -310,7 +321,7 @@ class BasicSlider extends HookConsumerWidget {
 
     return Row(
       children: [
-        BasicIcon(info: info),
+        BasicIcon(id: id, valueModel: valueModel, info: info),
         SliderTheme(
           data: sliderTheme,
           child: Slider(
