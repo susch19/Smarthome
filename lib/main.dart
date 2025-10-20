@@ -31,13 +31,19 @@ import 'my_app.dart';
 import 'package:firebase_core/firebase_core.dart'
     show Firebase, FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kDebugMode, kIsWeb;
+    show
+        TargetPlatform,
+        defaultTargetPlatform,
+        kDebugMode,
+        kIsWeb,
+        kProfileMode;
 
 part 'main.g.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(
-    final RemoteMessage message) async {
+  final RemoteMessage message,
+) async {
   print("Handling a background message: ${message.messageId}");
   print(message.toMap().entries.join(','));
   print(message.data);
@@ -49,10 +55,13 @@ Future<void> _firebaseMessagingBackgroundHandler(
 //Implement https://developer.android.com/develop/ui/views/device-control as a seperate build
 //Because having support for android kitkat is still wanted
 
-final _brightnessChangeProvider = ChangeNotifierProvider.family<
-    AdaptiveThemeModeWatcher, AdaptiveThemeManager>((final ref, final b) {
-  return AdaptiveThemeModeWatcher(b);
-});
+final _brightnessChangeProvider =
+    ChangeNotifierProvider.family<
+      AdaptiveThemeModeWatcher,
+      AdaptiveThemeManager
+    >((final ref, final b) {
+      return AdaptiveThemeModeWatcher(b);
+    });
 
 @riverpod
 Brightness brightness(final Ref ref, final AdaptiveThemeManager b) {
@@ -105,10 +114,11 @@ Widget getTitleWidget(final Ref ref) {
   if (!enabled) return const Text("Smart Home App");
 
   return TextField(
-      decoration: const InputDecoration(hintText: "Suche"),
-      // onSubmitted: (x) => _searchProducts(x, 1),
-      autofocus: true,
-      onChanged: (final s) => ref.watch(searchTextProvider.notifier).state = s);
+    decoration: const InputDecoration(hintText: "Suche"),
+    // onSubmitted: (x) => _searchProducts(x, 1),
+    autofocus: true,
+    onChanged: (final s) => ref.watch(searchTextProvider.notifier).state = s,
+  );
 }
 
 @riverpod
@@ -119,24 +129,26 @@ List<Device> filteredDevices(final Ref ref) {
   if (searchText.isEmpty) return devices;
 
   return devices
-      .where((final element) =>
-          element.typeName.toLowerCase().contains(searchText) ||
-          (ref
-                  .read(element.baseModelTProvider(element.id))
-                  ?.friendlyName
-                  .toLowerCase()
-                  .contains(searchText) ??
-              false))
+      .where(
+        (final element) =>
+            element.typeName.toLowerCase().contains(searchText) ||
+            (ref
+                    .read(element.baseModelTProvider(element.id))
+                    ?.friendlyName
+                    .toLowerCase()
+                    .contains(searchText) ??
+                false),
+      )
       .toList();
 }
 
 class CustomScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.stylus,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.stylus,
+  };
 }
 
 class DevHttpOverrides extends HttpOverrides {
@@ -159,19 +171,21 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kDebugMode) {
     SharedPreferences.setPrefix("debug.");
-  } else {
-    SharedPreferences.setPrefix("test.");
+  } else if (kProfileMode) {
+    SharedPreferences.setPrefix("profile.");
   }
+
   final prefs = await SharedPreferences.getInstance();
   // prefs.clear();
-  final String certificate =
-      await rootBundle.loadString('assets/certs/Smarthome.pem');
+  final String certificate = await rootBundle.loadString(
+    'assets/certs/Smarthome.pem',
+  );
 
   HttpOverrides.global = DevHttpOverrides(certificate);
 
   PreferencesManager.instance = PreferencesManager(prefs);
 
-// initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
+  // initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
   final DarwinInitializationSettings initializationSettingsDarwin =
@@ -180,10 +194,10 @@ void main() async {
       LinuxInitializationSettings(defaultActionName: 'Open notification');
   const WindowsInitializationSettings initSettings =
       WindowsInitializationSettings(
-    appName: 'Smarthome',
-    appUserModelId: 'de.susch19.Smarthome',
-    guid: '07DCF00D-5E87-4882-9F37-A5F3242BF1A1',
-  );
+        appName: 'Smarthome',
+        appUserModelId: 'de.susch19.Smarthome',
+        guid: '07DCF00D-5E87-4882-9F37-A5F3242BF1A1',
+      );
 
   final InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
@@ -205,15 +219,15 @@ void main() async {
   Intl.defaultLocale = "de-DE";
   initializeDateFormatting("de-DE").then((final _) {
     // ConnectionManager.startConnection();
-    runApp(ProviderScope(
-      child: OKToast(
-        backgroundColor: Colors.grey.withOpacity(0.3),
-        position: ToastPosition.bottom,
-        child: _EagerInitialization(
-          child: MyApp(savedThemeMode),
+    runApp(
+      ProviderScope(
+        child: OKToast(
+          backgroundColor: Colors.grey.withOpacity(0.3),
+          position: ToastPosition.bottom,
+          child: _EagerInitialization(child: MyApp(savedThemeMode)),
         ),
       ),
-    ));
+    );
   });
   UpdateManager.initialize();
 }
@@ -246,9 +260,11 @@ final infoIconProvider = StateNotifierProvider<InfoIconProvider, IconData>(
   (final ref) => InfoIconProvider(ref),
 );
 
-final maxCrossAxisExtentProvider = StateProvider<double>((final _) =>
-    PreferencesManager.instance.getDouble("DashboardCardSize") ??
-    (!kIsWeb && Platform.isAndroid ? 370 : 300));
+final maxCrossAxisExtentProvider = StateProvider<double>(
+  (final _) =>
+      PreferencesManager.instance.getDouble("DashboardCardSize") ??
+      (!kIsWeb && Platform.isAndroid ? 370 : 300),
+);
 
 class _EagerInitialization extends ConsumerWidget {
   const _EagerInitialization({required this.child});
@@ -262,9 +278,7 @@ class _EagerInitialization extends ConsumerWidget {
       if (value == null) {
         return;
       }
-      await Firebase.initializeApp(
-        options: value,
-      );
+      await Firebase.initializeApp(options: value);
       await FirebaseMessaging.instance.requestPermission();
 
       FirebaseMessaging.onMessage.listen((final element) {
@@ -282,23 +296,32 @@ class _EagerInitialization extends ConsumerWidget {
   }
 }
 
-final _firebaseConfigProvider =
-    FutureProvider<FirebaseOptions?>((final ref) async {
+final _firebaseConfigProvider = FutureProvider<FirebaseOptions?>((
+  final ref,
+) async {
   final connection = ref.watch(apiProvider);
 
   final apiRes = await connection.notificationFirebaseOptionsGet();
   final res = apiRes.bodyOrThrow as Map<String, dynamic>;
-  final plattformName =
-      kIsWeb ? "web" : defaultTargetPlatform.name.toLowerCase();
+  final plattformName = kIsWeb
+      ? "web"
+      : defaultTargetPlatform.name.toLowerCase();
   if (!res.containsKey(plattformName)) return null;
   final subMap = res[plattformName] as Map<String, dynamic>;
 
   return FirebaseOptions(
-      apiKey: subMap["apiKey"]!,
-      appId: subMap["appId"]!,
-      messagingSenderId: subMap["messagingSenderId"]!,
-      projectId: subMap["projectId"]!,
-      storageBucket: subMap["storageBucket"],
-      iosBundleId: subMap["iosBundleId"],
-      authDomain: subMap["authDomain"]);
+    apiKey: subMap["apiKey"]!,
+    appId: subMap["appId"]!,
+    messagingSenderId: subMap["messagingSenderId"]!,
+    projectId: subMap["projectId"]!,
+    storageBucket: subMap["storageBucket"],
+    iosBundleId: subMap["iosBundleId"],
+    authDomain: subMap["authDomain"],
+  );
 });
+
+@riverpod
+FutureOr<bool> firebaseInitialized(Ref ref) async {
+  final val = await ref.watch(_firebaseConfigProvider.future);
+  return val != null;
+}

@@ -51,7 +51,6 @@ jobs:
         name: Smarthome ${{ github.ref }}
         draft: true
         prerelease: false
-        generateReleaseNotes: true
 
 
   create-build:
@@ -176,3 +175,4 @@ jobs:
         prerelease: false
         allowUpdates: true
         artifacts: smarthome_${{ matrix.target }}${{ matrix.asset_extension }}
+        generateReleaseNotes: true
